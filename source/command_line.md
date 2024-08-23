@@ -14,19 +14,72 @@ After reading this guide, you will know:
 
 NOTE: This tutorial assumes you have basic Rails knowledge from reading the [Getting Started with Rails Guide](getting_started.html).
 
+Creating a Rails App
+--------------------
+
+First, let's create a simple Rails application using the `rails new` command.
+
+We will use this application to play and discover all the commands described in this guide.
+
+INFO: You can install the rails gem by typing `gem install rails`, if you don't have it already.
+
+### `rails new`
+
+The first argument we'll pass to the `rails new` command is the application name.
+
+```bash
+$ rails new my_app
+     create
+     create  README.md
+     create  Rakefile
+     create  config.ru
+     create  .gitignore
+     create  Gemfile
+     create  app
+     ...
+     create  tmp/cache
+     ...
+        run  bundle install
+```
+
+Rails will set up what seems like a huge amount of stuff for such a tiny command! We've got the entire Rails directory structure now with all the code we need to run our simple application right out of the box.
+
+If you wish to skip some files from being generated or skip some libraries, you can append any of the following arguments to your `rails new` command:
+
+| Argument                | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| `--skip-git`            | Skip git init, .gitignore, and .gitattributes               |
+| `--skip-keeps`          | Skip source control .keep files                             |
+| `--skip-action-mailer`  | Skip Action Mailer files                                    |
+| `--skip-action-mailbox` | Skip Action Mailbox gem                                     |
+| `--skip-action-text`    | Skip Action Text gem                                        |
+| `--skip-active-record`  | Skip Active Record files                                    |
+| `--skip-active-job`     | Skip Active Job                                             |
+| `--skip-active-storage` | Skip Active Storage files                                   |
+| `--skip-action-cable`   | Skip Action Cable files                                     |
+| `--skip-asset-pipeline` | Skip Asset Pipeline                                         |
+| `--skip-javascript`     | Skip JavaScript files                                       |
+| `--skip-hotwire`        | Skip Hotwire integration                                    |
+| `--skip-jbuilder`       | Skip jbuilder gem                                           |
+| `--skip-test`           | Skip test files                                             |
+| `--skip-system-test`    | Skip system test files                                      |
+| `--skip-bootsnap`       | Skip bootsnap gem                                           |
+
+These are just some of the options that `rails new` accepts. For a full list of options, type `rails new --help`.
+
 Command Line Basics
 -------------------
 
 There are a few commands that are absolutely critical to your everyday usage of Rails. In the order of how much you'll probably use them are:
 
-* `rails console`
-* `rails server`
-* `rails test`
-* `rails generate`
-* `rails db:migrate`
-* `rails db:create`
-* `rails routes`
-* `rails dbconsole`
+* `bin/rails console`
+* `bin/rails server`
+* `bin/rails test`
+* `bin/rails generate`
+* `bin/rails db:migrate`
+* `bin/rails db:create`
+* `bin/rails routes`
+* `bin/rails dbconsole`
 * `rails new app_name`
 
 You can get a list of rails commands available to you, which will often depend on your current directory, by typing `rails --help`. Each command has a description, and should help you find the thing you need.
@@ -56,56 +109,29 @@ In addition to those commands, there are:
  db:rollback                         Rolls the schema back to ...
  db:schema:cache:clear               Clears a db/schema_cache.yml file
  db:schema:cache:dump                Creates a db/schema_cache.yml file
- db:schema:dump                      Creates a db/schema.rb file ...
- db:schema:load                      Loads a schema.rb file ...
+ db:schema:dump                      Creates a database schema file (either db/schema.rb or db/structure.sql ...
+ db:schema:load                      Loads a database schema file (either db/schema.rb or db/structure.sql ...
  db:seed                             Loads the seed data ...
- db:structure:dump                   Dumps the database structure ...
- db:structure:load                   Recreates the databases ...
  db:version                          Retrieves the current schema ...
  ...
  restart                             Restart app by touching ...
  tmp:create                          Creates tmp directories ...
 ```
 
-Let's create a simple Rails application to step through each of these commands in context.
+### `bin/rails server`
 
-### `rails new`
+The `bin/rails server` command launches a web server named Puma which comes bundled with Rails. You'll use this any time you want to access your application through a web browser.
 
-The first thing we'll want to do is create a new Rails application by running the `rails new` command after installing Rails.
-
-INFO: You can install the rails gem by typing `gem install rails`, if you don't have it already.
+With no further work, `bin/rails server` will run our new shiny Rails app:
 
 ```bash
-$ rails new commandsapp
-     create
-     create  README.md
-     create  Rakefile
-     create  config.ru
-     create  .gitignore
-     create  Gemfile
-     create  app
-     ...
-     create  tmp/cache
-     ...
-        run  bundle install
-```
-
-Rails will set you up with what seems like a huge amount of stuff for such a tiny command! You've got the entire Rails directory structure now with all the code you need to run our simple application right out of the box.
-
-### `rails server`
-
-The `rails server` command launches a web server named Puma which comes bundled with Rails. You'll use this any time you want to access your application through a web browser.
-
-With no further work, `rails server` will run our new shiny Rails app:
-
-```bash
-$ cd commandsapp
-$ rails server
+$ cd my_app
+$ bin/rails server
 => Booting Puma
-=> Rails 5.1.0 application starting in development on http://0.0.0.0:3000
-=> Run `rails server -h` for more startup options
+=> Rails 7.0.0 application starting in development
+=> Run `bin/rails server --help` for more startup options
 Puma starting in single mode...
-* Version 3.0.2 (ruby 2.3.0-p0), codename: Plethora of Penguin Pinatas
+* Version 3.12.1 (ruby 2.5.7-p206), codename: Llamas in Pajamas
 * Min threads: 5, max threads: 5
 * Environment: development
 * Listening on tcp://localhost:3000
@@ -114,24 +140,24 @@ Use Ctrl-C to stop
 
 With just three commands we whipped up a Rails server listening on port 3000. Go to your browser and open [http://localhost:3000](http://localhost:3000), you will see a basic Rails app running.
 
-INFO: You can also use the alias "s" to start the server: `rails s`.
+INFO: You can also use the alias "s" to start the server: `bin/rails s`.
 
 The server can be run on a different port using the `-p` option. The default development environment can be changed using `-e`.
 
 ```bash
-$ rails server -e production -p 4000
+$ bin/rails server -e production -p 4000
 ```
 
 The `-b` option binds Rails to the specified IP, by default it is localhost. You can run a server as a daemon by passing a `-d` option.
 
-### `rails generate`
+### `bin/rails generate`
 
-The `rails generate` command uses templates to create a whole lot of things. Running `rails generate` by itself gives a list of available generators:
+The `bin/rails generate` command uses templates to create a whole lot of things. Running `bin/rails generate` by itself gives a list of available generators:
 
-INFO: You can also use the alias "g" to invoke the generator command: `rails g`.
+INFO: You can also use the alias "g" to invoke the generator command: `bin/rails g`.
 
 ```bash
-$ rails generate
+$ bin/rails generate
 Usage: rails generate GENERATOR [args] [options]
 
 ...
@@ -154,11 +180,11 @@ Using generators will save you a large amount of time by writing **boilerplate c
 
 Let's make our own controller with the controller generator. But what command should we use? Let's ask the generator:
 
-INFO: All Rails console utilities have help text. As with most *nix utilities, you can try adding `--help` or `-h` to the end, for example `rails server --help`.
+INFO: All Rails console utilities have help text. As with most *nix utilities, you can try adding `--help` or `-h` to the end, for example `bin/rails server --help`.
 
 ```bash
-$ rails generate controller
-Usage: rails generate controller NAME [action action] [options]
+$ bin/rails generate controller
+Usage: bin/rails generate controller NAME [action action] [options]
 
 ...
 ...
@@ -171,7 +197,7 @@ Description:
     ...
 
 Example:
-    `rails generate controller CreditCards open debit credit close`
+    `bin/rails generate controller CreditCards open debit credit close`
 
     Credit card controller with URLs like /credit_cards/debit.
         Controller: app/controllers/credit_cards_controller.rb
@@ -183,7 +209,7 @@ Example:
 The controller generator is expecting parameters in the form of `generate controller ControllerName action1 action2`. Let's make a `Greetings` controller with an action of **hello**, which will say something nice to us.
 
 ```bash
-$ rails generate controller Greetings hello
+$ bin/rails generate controller Greetings hello
      create  app/controllers/greetings_controller.rb
       route  get 'greetings/hello'
      invoke  erb
@@ -194,9 +220,6 @@ $ rails generate controller Greetings hello
      invoke  helper
      create    app/helpers/greetings_helper.rb
      invoke    test_unit
-     invoke  assets
-     invoke    scss
-     create      app/assets/stylesheets/greetings.scss
 ```
 
 What all did this generate? It made sure a bunch of directories were in our application, and created a controller file, a view file, a functional test file, a helper for the view, a JavaScript file, and a stylesheet file.
@@ -218,10 +241,10 @@ Then the view, to display our message (in `app/views/greetings/hello.html.erb`):
 <p><%= @message %></p>
 ```
 
-Fire up your server using `rails server`.
+Fire up your server using `bin/rails server`.
 
 ```bash
-$ rails server
+$ bin/rails server
 => Booting Puma...
 ```
 
@@ -232,20 +255,23 @@ INFO: With a normal, plain-old Rails application, your URLs will generally follo
 Rails comes with a generator for data models too.
 
 ```bash
-$ rails generate model
+$ bin/rails generate model
 Usage:
-  rails generate model NAME [field[:type][:index] field[:type][:index]] [options]
+  bin/rails generate model NAME [field[:type][:index] field[:type][:index]] [options]
 
 ...
 
-Active Record options:
-      [--migration]            # Indicates when to generate migration
-                               # Default: true
+ActiveRecord options:
+      [--migration], [--no-migration]        # Indicates when to generate migration
+                                             # Default: true
 
 ...
 
 Description:
-    Create rails files for model generator.
+    Generates a new model. Pass the model name, either CamelCased or
+    under_scored, and an optional list of attribute pairs as arguments.
+
+...
 ```
 
 NOTE: For a list of available field types for the `type` parameter, refer to the [API documentation](https://api.rubyonrails.org/classes/ActiveRecord/ConnectionAdapters/SchemaStatements.html#method-i-add_column) for the add_column method for the `SchemaStatements` module. The `index` parameter generates a corresponding index for the column.
@@ -255,7 +281,7 @@ But instead of generating a model directly (which we'll be doing later), let's s
 We will set up a simple resource called "HighScore" that will keep track of our highest score on video games we play.
 
 ```bash
-$ rails generate scaffold HighScore game:string score:integer
+$ bin/rails generate scaffold HighScore game:string score:integer
     invoke  active_record
     create    db/migrate/20190416145729_create_high_scores.rb
     create    app/models/high_score.rb
@@ -283,19 +309,14 @@ $ rails generate scaffold HighScore game:string score:integer
     create      app/views/high_scores/index.json.jbuilder
     create      app/views/high_scores/show.json.jbuilder
     create      app/views/high_scores/_high_score.json.jbuilder
-    invoke  assets
-    invoke    scss
-    create      app/assets/stylesheets/high_scores.scss
-    invoke  scss
-    create    app/assets/stylesheets/scaffolds.scss
 ```
 
-The generator checks that there exist the directories for models, controllers, helpers, layouts, functional and unit tests, stylesheets, creates the views, controller, model and database migration for HighScore (creating the `high_scores` table and fields), takes care of the route for the **resource**, and new tests for everything.
+The generator creates the model, views, controller, **resource** route, and database migration (which creates the `high_scores` table) for HighScore. And it adds tests for those.
 
-The migration requires that we **migrate**, that is, run some Ruby code (living in that `20130717151933_create_high_scores.rb`) to modify the schema of our database. Which database? The SQLite3 database that Rails will create for you when we run the `rails db:migrate` command. We'll talk more about that command below.
+The migration requires that we **migrate**, that is, run some Ruby code (the `20190416145729_create_high_scores.rb` file from the above output) to modify the schema of our database. Which database? The SQLite3 database that Rails will create for you when we run the `bin/rails db:migrate` command. We'll talk more about that command below.
 
 ```bash
-$ rails db:migrate
+$ bin/rails db:migrate
 ==  CreateHighScores: migrating ===============================================
 -- create_table(:high_scores)
    -> 0.0017s
@@ -307,99 +328,105 @@ about code. In unit testing, we take a little part of code, say a method of a mo
 and test its inputs and outputs. Unit tests are your friend. The sooner you make
 peace with the fact that your quality of life will drastically increase when you unit
 test your code, the better. Seriously. Please visit
-[the testing guide](https://guides.rubyonrails.org/testing.html) for an in-depth
+[the testing guide](testing.html) for an in-depth
 look at unit testing.
 
 Let's see the interface Rails created for us.
 
 ```bash
-$ rails server
+$ bin/rails server
 ```
 
 Go to your browser and open [http://localhost:3000/high_scores](http://localhost:3000/high_scores), now we can create new high scores (55,160 on Space Invaders!)
 
-### `rails console`
+### `bin/rails console`
 
-The `console` command lets you interact with your Rails application from the command line. On the underside, `rails console` uses IRB, so if you've ever used it, you'll be right at home. This is useful for testing out quick ideas with code and changing data server-side without touching the website.
+The `console` command lets you interact with your Rails application from the command line. On the underside, `bin/rails console` uses IRB, so if you've ever used it, you'll be right at home. This is useful for testing out quick ideas with code and changing data server-side without touching the website.
 
-INFO: You can also use the alias "c" to invoke the console: `rails c`.
+INFO: You can also use the alias "c" to invoke the console: `bin/rails c`.
 
 You can specify the environment in which the `console` command should operate.
 
 ```bash
-$ rails console -e staging
+$ bin/rails console -e staging
 ```
 
-If you wish to test out some code without changing any data, you can do that by invoking `rails console --sandbox`.
+If you wish to test out some code without changing any data, you can do that by invoking `bin/rails console --sandbox`.
 
 ```bash
-$ rails console --sandbox
-Loading development environment in sandbox (Rails 5.1.0)
+$ bin/rails console --sandbox
+Loading development environment in sandbox (Rails 7.0.0)
 Any modifications you make will be rolled back on exit
 irb(main):001:0>
 ```
 
-#### The app and helper objects
+#### The `app` and `helper` Objects
 
-Inside the `rails console` you have access to the `app` and `helper` instances.
+Inside the `bin/rails console` you have access to the `app` and `helper` instances.
 
 With the `app` method you can access named route helpers, as well as do requests.
 
-```bash
->> app.root_path
+```irb
+irb> app.root_path
 => "/"
 
->> app.get _
+irb> app.get _
 Started GET "/" for 127.0.0.1 at 2014-06-19 10:41:57 -0300
 ...
 ```
 
 With the `helper` method it is possible to access Rails and your application's helpers.
 
-```bash
->> helper.time_ago_in_words 30.days.ago
+```irb
+irb> helper.time_ago_in_words 30.days.ago
 => "about 1 month"
 
->> helper.my_custom_helper
+irb> helper.my_custom_helper
 => "my custom helper"
 ```
 
-### `rails dbconsole`
+### `bin/rails dbconsole`
 
-`rails dbconsole` figures out which database you're using and drops you into whichever command line interface you would use with it (and figures out the command line parameters to give to it, too!). It supports MySQL (including MariaDB), PostgreSQL, and SQLite3.
+`bin/rails dbconsole` figures out which database you're using and drops you into whichever command line interface you would use with it (and figures out the command line parameters to give to it, too!). It supports MySQL (including MariaDB), PostgreSQL, and SQLite3.
 
-INFO: You can also use the alias "db" to invoke the dbconsole: `rails db`.
+INFO: You can also use the alias "db" to invoke the dbconsole: `bin/rails db`.
 
-### `rails runner`
+If you are using multiple databases, `bin/rails dbconsole` will connect to the primary database by default. You can specify which database to connect to using `--database` or `--db`:
+
+```bash
+$ bin/rails dbconsole --database=animals
+```
+
+### `bin/rails runner`
 
 `runner` runs Ruby code in the context of Rails non-interactively. For instance:
 
 ```bash
-$ rails runner "Model.long_running_method"
+$ bin/rails runner "Model.long_running_method"
 ```
 
-INFO: You can also use the alias "r" to invoke the runner: `rails r`.
+INFO: You can also use the alias "r" to invoke the runner: `bin/rails r`.
 
 You can specify the environment in which the `runner` command should operate using the `-e` switch.
 
 ```bash
-$ rails runner -e staging "Model.long_running_method"
+$ bin/rails runner -e staging "Model.long_running_method"
 ```
 
 You can even execute ruby code written in a file with runner.
 
 ```bash
-$ rails runner lib/code_to_be_run.rb
+$ bin/rails runner lib/code_to_be_run.rb
 ```
 
-### `rails destroy`
+### `bin/rails destroy`
 
 Think of `destroy` as the opposite of `generate`. It'll figure out what generate did, and undo it.
 
-INFO: You can also use the alias "d" to invoke the destroy command: `rails d`.
+INFO: You can also use the alias "d" to invoke the destroy command: `bin/rails d`.
 
 ```bash
-$ rails generate model Oops
+$ bin/rails generate model Oops
       invoke  active_record
       create    db/migrate/20120528062523_create_oops.rb
       create    app/models/oops.rb
@@ -408,7 +435,7 @@ $ rails generate model Oops
       create      test/fixtures/oops.yml
 ```
 ```bash
-$ rails destroy model Oops
+$ bin/rails destroy model Oops
       invoke  active_record
       remove    db/migrate/20120528062523_create_oops.rb
       remove    app/models/oops.rb
@@ -417,45 +444,45 @@ $ rails destroy model Oops
       remove      test/fixtures/oops.yml
 ```
 
-### `rails about`
+### `bin/rails about`
 
-`rails about` gives information about version numbers for Ruby, RubyGems, Rails, the Rails subcomponents, your application's folder, the current Rails environment name, your app's database adapter, and schema version. It is useful when you need to ask for help, check if a security patch might affect you, or when you need some stats for an existing Rails installation.
+`bin/rails about` gives information about version numbers for Ruby, RubyGems, Rails, the Rails subcomponents, your application's folder, the current Rails environment name, your app's database adapter, and schema version. It is useful when you need to ask for help, check if a security patch might affect you, or when you need some stats for an existing Rails installation.
 
 ```bash
-$ rails about
+$ bin/rails about
 About your application's environment
-Rails version             6.0.0
-Ruby version              2.5.0 (x86_64-linux)
+Rails version             7.0.0
+Ruby version              2.7.0 (x86_64-linux)
 RubyGems version          2.7.3
 Rack version              2.0.4
 JavaScript Runtime        Node.js (V8)
 Middleware:               Rack::Sendfile, ActionDispatch::Static, ActionDispatch::Executor, ActiveSupport::Cache::Strategy::LocalCache::Middleware, Rack::Runtime, Rack::MethodOverride, ActionDispatch::RequestId, ActionDispatch::RemoteIp, Sprockets::Rails::QuietAssets, Rails::Rack::Logger, ActionDispatch::ShowExceptions, WebConsole::Middleware, ActionDispatch::DebugExceptions, ActionDispatch::Reloader, ActionDispatch::Callbacks, ActiveRecord::Migration::CheckPending, ActionDispatch::Cookies, ActionDispatch::Session::CookieStore, ActionDispatch::Flash, Rack::Head, Rack::ConditionalGet, Rack::ETag
-Application root          /home/foobar/commandsapp
+Application root          /home/foobar/my_app
 Environment               development
 Database adapter          sqlite3
 Database schema version   20180205173523
 ```
 
-### `rails assets:`
+### `bin/rails assets:`
 
-You can precompile the assets in `app/assets` using `rails assets:precompile`, and remove older compiled assets using `rails assets:clean`. The `assets:clean` command allows for rolling deploys that may still be linking to an old asset while the new assets are being built.
+You can precompile the assets in `app/assets` using `bin/rails assets:precompile`, and remove older compiled assets using `bin/rails assets:clean`. The `assets:clean` command allows for rolling deploys that may still be linking to an old asset while the new assets are being built.
 
-If you want to clear `public/assets` completely, you can use `rails assets:clobber`.
+If you want to clear `public/assets` completely, you can use `bin/rails assets:clobber`.
 
-### `rails db:`
+### `bin/rails db:`
 
-The most common commands of the `db:` rails namespace are `migrate` and `create`, and it will pay off to try out all of the migration rails commands (`up`, `down`, `redo`, `reset`). `rails db:version` is useful when troubleshooting, telling you the current version of the database.
+The most common commands of the `db:` rails namespace are `migrate` and `create`, and it will pay off to try out all of the migration rails commands (`up`, `down`, `redo`, `reset`). `bin/rails db:version` is useful when troubleshooting, telling you the current version of the database.
 
 More information about migrations can be found in the [Migrations](active_record_migrations.html) guide.
 
-### `rails notes`
+### `bin/rails notes`
 
-`rails notes` searches through your code for comments beginning with a specific keyword. You can refer to `rails notes --help` for information about usage.
+`bin/rails notes` searches through your code for comments beginning with a specific keyword. You can refer to `bin/rails notes --help` for information about usage.
 
 By default, it will search in `app`, `config`, `db`, `lib`, and `test` directories for FIXME, OPTIMIZE, and TODO annotations in files with extension `.builder`, `.rb`, `.rake`, `.yml`, `.yaml`, `.ruby`, `.css`, `.js`, and `.erb`.
 
 ```bash
-$ rails notes
+$ bin/rails notes
 app/controllers/admin/users_controller.rb:
   * [ 20] [TODO] any other way to do this?
   * [132] [FIXME] high priority for next deploy
@@ -471,7 +498,7 @@ You can pass specific annotations by using the `--annotations` argument. By defa
 Note that annotations are case sensitive.
 
 ```bash
-$ rails notes --annotations FIXME RELEASE
+$ bin/rails notes --annotations FIXME RELEASE
 app/controllers/admin/users_controller.rb:
   * [101] [RELEASE] We need to look at this before next release
   * [132] [FIXME] high priority for next deploy
@@ -489,7 +516,7 @@ config.annotations.register_tags("DEPRECATEME", "TESTME")
 ```
 
 ```bash
-$ rails notes
+$ bin/rails notes
 app/controllers/admin/users_controller.rb:
   * [ 20] [TODO] do A/B testing on this
   * [ 42] [TESTME] this needs more functional tests
@@ -505,7 +532,7 @@ config.annotations.register_directories("spec", "vendor")
 ```
 
 ```bash
-$ rails notes
+$ bin/rails notes
 app/controllers/admin/users_controller.rb:
   * [ 20] [TODO] any other way to do this?
   * [132] [FIXME] high priority for next deploy
@@ -530,7 +557,7 @@ config.annotations.register_extensions("scss", "sass") { |annotation| /\/\/\s*(#
 ```
 
 ```bash
-$ rails notes
+$ bin/rails notes
 app/controllers/admin/users_controller.rb:
   * [ 20] [TODO] any other way to do this?
   * [132] [FIXME] high priority for next deploy
@@ -552,39 +579,41 @@ vendor/tools.rb:
   * [ 56] [TODO] Get rid of this dependency
 ```
 
-### `rails routes`
+### `bin/rails routes`
 
-`rails routes` will list all of your defined routes, which is useful for tracking down routing problems in your app, or giving you a good overview of the URLs in an app you're trying to get familiar with.
+`bin/rails routes` will list all of your defined routes, which is useful for tracking down routing problems in your app, or giving you a good overview of the URLs in an app you're trying to get familiar with.
 
-### `rails test`
+### `bin/rails test`
 
 INFO: A good description of unit testing in Rails is given in [A Guide to Testing Rails Applications](testing.html)
 
 Rails comes with a test framework called minitest. Rails owes its stability to the use of tests. The commands available in the `test:` namespace helps in running the different tests you will hopefully write.
 
-### `rails tmp:`
+### `bin/rails tmp:`
 
 The `Rails.root/tmp` directory is, like the *nix /tmp directory, the holding place for temporary files like process id files and cached actions.
 
 The `tmp:` namespaced commands will help you clear and create the `Rails.root/tmp` directory:
 
-* `rails tmp:cache:clear` clears `tmp/cache`.
-* `rails tmp:sockets:clear` clears `tmp/sockets`.
-* `rails tmp:screenshots:clear` clears `tmp/screenshots`.
-* `rails tmp:clear` clears all cache, sockets, and screenshot files.
-* `rails tmp:create` creates tmp directories for cache, sockets, and pids.
+* `bin/rails tmp:cache:clear` clears `tmp/cache`.
+* `bin/rails tmp:sockets:clear` clears `tmp/sockets`.
+* `bin/rails tmp:screenshots:clear` clears `tmp/screenshots`.
+* `bin/rails tmp:clear` clears all cache, sockets, and screenshot files.
+* `bin/rails tmp:create` creates tmp directories for cache, sockets, and pids.
 
 ### Miscellaneous
 
-* `rails stats` is great for looking at statistics on your code, displaying things like KLOCs (thousands of lines of code) and your code to test ratio.
-* `rails secret` will give you a pseudo-random key to use for your session secret.
-* `rails time:zones:all` lists all the timezones Rails knows about.
+* `bin/rails initializers` prints out all defined initializers in the order they are invoked by Rails.
+* `bin/rails middleware` lists Rack middleware stack enabled for your app.
+* `bin/rails stats` is great for looking at statistics on your code, displaying things like KLOCs (thousands of lines of code) and your code to test ratio.
+* `bin/rails secret` will give you a pseudo-random key to use for your session secret.
+* `bin/rails time:zones:all` lists all the timezones Rails knows about.
 
 ### Custom Rake Tasks
 
 Custom rake tasks have a `.rake` extension and are placed in
 `Rails.root/lib/tasks`. You can create these custom rake tasks with the
-`rails generate task` command.
+`bin/rails generate task` command.
 
 ```ruby
 desc "I am short, but comprehensive description for my cool task"
@@ -616,9 +645,10 @@ end
 Invocation of the tasks will look like:
 
 ```bash
-$ rails task_name
-$ rails "task_name[value 1]" # entire argument string should be quoted
-$ rails db:nothing
+$ bin/rails task_name
+$ bin/rails "task_name[value 1]" # entire argument string should be quoted
+$ bin/rails "task_name[value 1,value2,value3]" # separate multiple args with a comma
+$ bin/rails db:nothing
 ```
 
 NOTE: If you need to interact with your application models, perform database queries, and so on, your task should depend on the `environment` task, which will load your application code.
@@ -663,7 +693,7 @@ We had to create the **gitapp** directory and initialize an empty git repository
 
 ```bash
 $ cat config/database.yml
-# PostgreSQL. Versions 9.1 and up are supported.
+# PostgreSQL. Versions 9.3 and up are supported.
 #
 # Install the pg driver:
 #   gem install pg

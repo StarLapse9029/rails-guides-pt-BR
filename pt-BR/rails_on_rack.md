@@ -1,3 +1,4 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
 Rails on Rack
@@ -33,11 +34,11 @@ Rails on Rack
 application. Any Rack compliant web server should be using
 `Rails.application` object to serve a Rails application.
 
-### `rails server`
+### `bin/rails server`
 
-`rails server` does the basic job of creating a `Rack::Server` object and starting the web server.
+`bin/rails server` does the basic job of creating a `Rack::Server` object and starting the web server.
 
-Here's how `rails server` creates an instance of `Rack::Server`
+Here's how `bin/rails server` creates an instance of `Rack::Server`
 
 ```ruby
 Rails::Server.new.tap do |server|
@@ -52,7 +53,7 @@ The `Rails::Server` inherits from `Rack::Server` and calls the `Rack::Server#sta
 ```ruby
 class Server < ::Rack::Server
   def start
-    ...
+    # ...
     super
   end
 end
@@ -60,11 +61,11 @@ end
 
 ### `rackup`
 
-To use `rackup` instead of Rails' `rails server`, you can put the following inside `config.ru` of your Rails application's root directory:
+To use `rackup` instead of Rails' `bin/rails server`, you can put the following inside `config.ru` of your Rails application's root directory:
 
 ```ruby
 # Rails.root/config.ru
-require_relative 'config/environment'
+require_relative "config/environment"
 run Rails.application
 ```
 
@@ -80,7 +81,7 @@ To find out more about different `rackup` options, you can run:
 $ rackup --help
 ```
 
-### Development and auto-reloading
+### Development and Auto-reloading
 
 Middlewares are loaded once and are not monitored for changes. You will have to restart the server for changes to be reflected in the running application.
 
@@ -97,7 +98,7 @@ but is built for better flexibility and more features to meet Rails' requirement
 Rails has a handy command for inspecting the middleware stack in use:
 
 ```bash
-$ rails middleware
+$ bin/rails middleware
 ```
 
 For a freshly generated Rails application, this might produce something like:
@@ -116,6 +117,7 @@ use Rails::Rack::Logger
 use ActionDispatch::ShowExceptions
 use WebConsole::Middleware
 use ActionDispatch::DebugExceptions
+use ActionDispatch::ActionableExceptions
 use ActionDispatch::Reloader
 use ActionDispatch::Callbacks
 use ActiveRecord::Migration::CheckPending
@@ -134,7 +136,9 @@ The default middlewares shown here (and some others) are each summarized in the 
 
 ### Configuring Middleware Stack
 
-Rails provides a simple configuration interface `config.middleware` for adding, removing, and modifying the middlewares in the middleware stack via `application.rb` or the environment specific configuration file `environments/<environment>.rb`.
+Rails provides a simple configuration interface [`config.middleware`][] for adding, removing, and modifying the middlewares in the middleware stack via `application.rb` or the environment specific configuration file `environments/<environment>.rb`.
+
+[`config.middleware`]: configuring.html#config-middleware
 
 #### Adding a Middleware
 
@@ -181,7 +185,7 @@ And now if you inspect the middleware stack, you'll find that `Rack::Runtime` is
 not a part of it.
 
 ```bash
-$ rails middleware
+$ bin/rails middleware
 (in /Users/lifo/Rails/blog)
 use ActionDispatch::Static
 use #<ActiveSupport::Cache::Strategy::LocalCache::Middleware:0x00000001c304c8>
@@ -205,17 +209,28 @@ And to remove browser related middleware,
 config.middleware.delete Rack::MethodOverride
 ```
 
+If you want an error to be raised when you try to delete a non-existent item, use `delete!` instead.
+
+```ruby
+# config/application.rb
+config.middleware.delete! ActionDispatch::Executor
+```
+
 ### Internal Middleware Stack
 
 Much of Action Controller's functionality is implemented as Middlewares. The following list explains the purpose of each of them:
 
 **`Rack::Sendfile`**
 
-* Sets server specific X-Sendfile header. Configure this via `config.action_dispatch.x_sendfile_header` option.
+* Sets server specific X-Sendfile header. Configure this via [`config.action_dispatch.x_sendfile_header`][] option.
+
+[`config.action_dispatch.x_sendfile_header`]: configuring.html#config-action-dispatch-x-sendfile-header
 
 **`ActionDispatch::Static`**
 
-* Used to serve static files from the public directory. Disabled if `config.public_file_server.enabled` is `false`.
+* Used to serve static files from the public directory. Disabled if [`config.public_file_server.enabled`][] is `false`.
+
+[`config.public_file_server.enabled`]: configuring.html#config-public-file-server-enabled
 
 **`Rack::Lock`**
 
@@ -261,6 +276,10 @@ Much of Action Controller's functionality is implemented as Middlewares. The fol
 
 * Responsible for logging exceptions and showing a debugging page in case the request is local.
 
+**`ActionDispatch::ActionableExceptions`**
+
+* Provides a way to dispatch actions from Rails' error pages.
+
 **`ActionDispatch::Reloader`**
 
 * Provides prepare and cleanup callbacks, intended to assist with code reloading during development.
@@ -283,7 +302,9 @@ Much of Action Controller's functionality is implemented as Middlewares. The fol
 
 **`ActionDispatch::Flash`**
 
-* Sets up the flash keys. Only available if `config.action_controller.session_store` is set to a value.
+* Sets up the flash keys. Only available if [`config.session_store`][] is set to a value.
+
+[`config.session_store`]: configuring.html#config-session-store
 
 **`ActionDispatch::ContentSecurityPolicy::Middleware`**
 

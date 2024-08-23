@@ -1,48 +1,46 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
 Action Controller Overview
 ==========================
 
-In this guide you will learn how controllers work and how they fit into the request cycle in your application.
+Nesse guia você irá aprender como `controllers` trabalham e como eles se encaixam no ciclo de requisições da sua aplicação.
 
-After reading this guide, you will know:
+Depois de ler este guia, você irá saber:
 
-* How to follow the flow of a request through a controller.
-* How to restrict parameters passed to your controller.
-* How and why to store data in the session or cookies.
-* How to work with filters to execute code during request processing.
-* How to use Action Controller's built-in HTTP authentication.
-* How to stream data directly to the user's browser.
-* How to filter sensitive parameters so they do not appear in the application's log.
-* How to deal with exceptions that may be raised during request processing.
-
+* Como seguir o fluxo de uma requisição através de um *controller*.
+* Como restringir parâmetros passados ao seu *controller*.
+* Como e porque salvar dados na sessão ou nos `cookies`.
+* Como trabalhar com filtros para executar código durante o processamento de uma requisição.
+* Como utilizar o autenticador HTTP nativo do `ActionController`.
+* Como transmitir dados diretamente ao navegador do usuário.
+* Como filtrar parâmetros sensíveis, para que não apareçam no *log* da aplicação.
+* Como lidar com erros que podem surgir durante o processamento de uma requisição.
 --------------------------------------------------------------------------------
 
-What Does a Controller Do?
+O que um *Controller* faz?
 --------------------------
 
-Action Controller is the C in [MVC](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller). After the router has determined which controller to use for a request, the controller is responsible for making sense of the request, and producing the appropriate output. Luckily, Action Controller does most of the groundwork for you and uses smart conventions to make this as straightforward as possible.
+*ActionController* é o _C_ em [MVC](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller). Após o `router` determinar qual _controller_ usar para a requisição, o _controller_ será responsável por entender a requisição e retornar a resposta apropriada. Por sorte, *ActionController* faz a maior parte do trabalho fundamental pra você e usa convenções inteligentes pra fazer esse processo ser tão intuitivo quanto possível.
 
-For most conventional [RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer) applications, the controller will receive the request (this is invisible to you as the developer), fetch or save data from a model, and use a view to create HTML output. If your controller needs to do things a little differently, that's not a problem, this is just the most common way for a controller to work.
+Para a maior parte das aplicações [RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer),o *controller* receberá a requisição (o que é "invisível" a você que está desenvolvendo), busca e/ou salva dados de um *model*, e usa a *view* para criar a saída HTML. Se seu *controller* precisa tratar requisições um pouco diferente, isso não é um problema, este é apenas o jeito mais comum de um *controller* trabalhar.
 
-A controller can thus be thought of as a middleman between models and views. It makes the model data available to the view so it can display that data to the user, and it saves or updates user data to the model.
+Um *controller* pode então ser pensado como um intermediário entre um *model* e uma *view*. Isso faz com que os dados do *model* fiquem disponíveis para a *view*, para que possa ser mostrado ao usuário, e ele salva ou atualiza dados do usuário no *model*.
 
-NOTE: For more details on the routing process, see [Rails Routing from the Outside In](routing.html).
+NOTE: Para mais detalhes sobre processo de roteamento, veja [Rails Routing from the Outside In](routing.html)
 
-Controller Naming Convention
+Convenção para Nomeclatura de *Controllers*
 ----------------------------
+A convenção para nomenclatura de *controllers* no Rails favorece a pluralização da última palavra do nome do *controller*, embora não seja estritamente necessário (ex: `ApplicationController`). Por exemplo, `ClientsController` é recomendado ao invés de `ClientController`, `SiteAdminsController` é recomendado ao invés de `SiteAdminController` ou `SitesAdminsController`, e assim por diante.
 
-The naming convention of controllers in Rails favors pluralization of the last word in the controller's name, although it is not strictly required (e.g. `ApplicationController`). For example, `ClientsController` is preferable to `ClientController`, `SiteAdminsController` is preferable to `SiteAdminController` or `SitesAdminsController`, and so on.
+Seguindo essa convenção será possível utilizar o gerador de rotas padrão (ex: `resources`, etc) sem precisar configurar cada `:path` ou `:controller`, e ainda manter consistente o uso dos auxiliares de rotas em todo o seu projeto. Veja [Layouts e Guia de Renderização](layouts_and_rendering.html) para mais detalhes.
 
-Following this convention will allow you to use the default route generators (e.g. `resources`, etc) without needing to qualify each `:path` or `:controller`, and will keep named route helpers' usage consistent throughout your application. See [Layouts & Rendering Guide](layouts_and_rendering.html) for more details.
+NOTE: A convenção para nomenclatura de *controllers* difere da convenção para nomenclatura de *models*, que devem ser nomeados na forma singular.
 
-NOTE: The controller naming convention differs from the naming convention of models, which are expected to be named in singular form.
-
-
-Methods and Actions
+Métodos e Actions
 -------------------
 
-A controller is a Ruby class which inherits from `ApplicationController` and has methods just like any other class. When your application receives a request, the routing will determine which controller and action to run, then Rails creates an instance of that controller and runs the method with the same name as the action.
+Um *controller* é uma classe do Ruby que herda de `ApplicationController` e tem métodos como qualquer outra classe. Quando a sua aplicação recebe uma requisição, o roteamento irá determinar qual *controller* e qual *action* serão executados, e então o Rails irá criar uma instância desse *controller* e executará o método que possui o mesmo nome da *action*.
 
 ```ruby
 class ClientsController < ApplicationController
@@ -51,7 +49,7 @@ class ClientsController < ApplicationController
 end
 ```
 
-As an example, if a user goes to `/clients/new` in your application to add a new client, Rails will create an instance of `ClientsController` and call its `new` method. Note that the empty method from the example above would work just fine because Rails will by default render the `new.html.erb` view unless the action says otherwise. By creating a new `Client`, the `new` method can make a `@client` instance variable accessible in the view:
+Como exemplo, se um usuário acessar `/clients/new` na sua aplicação para adicionar um novo cliente, o Rails irá criar uma instância de `ClientsController` e irá chamar o método `new` dele. Repare que o método vazio do exemplo acima funcionaria normalmente porque o Rails por padrão vai renderizar a *view* `new.html.erb` a menos que a `action` indique outro caminho. Ao criar um novo `Client` o método `new` pode tornar uma variável de instância `@client` acessível na `view`.
 
 ```ruby
 def new
@@ -59,24 +57,31 @@ def new
 end
 ```
 
-The [Layouts & Rendering Guide](layouts_and_rendering.html) explains this in more detail.
+O [Guia de Layouts e Renderização](layouts_and_rendering.html) explica essa etapa mais detalhadamente.
 
-`ApplicationController` inherits from `ActionController::Base`, which defines a number of helpful methods. This guide will cover some of these, but if you're curious to see what's in there, you can see all of them in the [API documentation](https://api.rubyonrails.org/classes/ActionController.html) or in the source itself.
+O `ApplicationController` herda de [`ActionController::Base`][], que define uma quantidade de métodos úteis. Este guia vai cobrir alguns destes métodos, mas se você tiver curiosidade para ver o que há neles, você pode ver todos eles na [Documentação da API](https://api.rubyonrails.org/classes/ActionController.html) ou no próprio código fonte.
 
-Only public methods are callable as actions. It is a best practice to lower the visibility of methods (with `private` or `protected`) which are not intended to be actions, like auxiliary methods or filters.
+Apenas métodos públicos são executáveis como *actions*. É uma boa prática diminuir a visibilidade de métodos (utilizando `private` ou `protected`) que não foram designados para serem *actions*, como métodos auxiliares ou filtros.
 
-Parameters
+WARNING: Alguns nomes de métodos são reservados pelo *Action Controller*. Redefini-los acidentalmente como *actions*, ou mesmo como métodos auxiliares (*helpers*), pode resultar no erro `SystemStackError`. Se você limitar seus *controllers* a apenas *actions* RESTful [Resource Routing][] você não precisará se preocupar com isso.
+
+NOTE: Se você precisar usar um método reservado como um nome de *action*, uma solução alternativa é usar uma rota personalizada para mapear o nome do método reservado para o método da *action* não reservado.
+
+[`ActionController::Base`]: https://api.rubyonrails.org/classes/ActionController/Base.html
+[Resource Routing]: routing.html#resource-routing-the-rails-default
+
+Parâmetros
 ----------
 
-You will probably want to access data sent in by the user or other parameters in your controller actions. There are two kinds of parameters possible in a web application. The first are parameters that are sent as part of the URL, called query string parameters. The query string is everything after "?" in the URL. The second type of parameter is usually referred to as POST data. This information usually comes from an HTML form which has been filled in by the user. It's called POST data because it can only be sent as part of an HTTP POST request. Rails does not make any distinction between query string parameters and POST parameters, and both are available in the `params` hash in your controller:
+Você provavelmente vai querer acessar os dados enviados pelo usuário ou outros parâmetros nas *actions* do seu *controller*. Existem dois tipos de parâmetros possíveis numa aplicação *web*. O primeiro são os parâmetros que são enviados como parte da URL, chamados parâmetros de *query string*. A *query string* é tudo o que vem após o "?" na URL. O segundo tipo de parâmetro é geralmente referido como os dados de POST. Essa informação geralmente vem de um formulário HTML que foi preenchido pelo usuário. Se chamam dados de POST porque estes dados somente podem ser enviados como parte de uma requisição HTTP usando o verbo POST. O Rails não faz distinção sobre parâmetros de *query string* e parâmetros de POST, ambos são acessíveis por meio do *hash* [`params`][] no seu *controller*:
 
 ```ruby
 class ClientsController < ApplicationController
-  # This action uses query string parameters because it gets run
-  # by an HTTP GET request, but this does not make any difference
-  # to the way in which the parameters are accessed. The URL for
-  # this action would look like this in order to list activated
-  # clients: /clients?status=activated
+  # Essa action usa parâmetros de query string porque ela é
+  # executada através de uma requisição HTTP GET, mas isso
+  # não faz nenhuma diferença como os parâmetros
+  # são acessados. A URL para essa action seria desse jeito
+  # para mostrar os clientes ativos: /clients?status=activated
   def index
     if params[:status] == "activated"
       @clients = Client.activated
@@ -85,40 +90,40 @@ class ClientsController < ApplicationController
     end
   end
 
-  # This action uses POST parameters. They are most likely coming
-  # from an HTML form which the user has submitted. The URL for
-  # this RESTful request will be "/clients", and the data will be
-  # sent as part of the request body.
+  # Essa action usa parâmetros de POST. Eles provavelmente estão
+  # vindo de um formulário HTML que o usuário submeteu. A URL
+  # para essa requisição RESTful será "/clients", e os dados
+  # serão enviados como parte do corpo da requisição.
   def create
     @client = Client.new(params[:client])
     if @client.save
       redirect_to @client
     else
-      # This line overrides the default rendering behavior, which
-      # would have been to render the "create" view.
+      # Essa linha sobrescreve o método padrão de renderização,
+      # que seria chamado para renderizar a *view* "*create*"
       render "new"
     end
   end
 end
 ```
 
-### Hash and Array Parameters
+[`params`]: https://api.rubyonrails.org/classes/ActionController/StrongParameters.html#method-i-params
 
-The `params` hash is not limited to one-dimensional keys and values. It can contain nested arrays and hashes. To send an array of values, append an empty pair of square brackets "[]" to the key name:
+### Hash e Parâmetros de Array
+
+O *hash* `params` não é limitado a um vetor unidimensional de chaves e valores. Ele pode conter *arrays* e *hashes* aninhados. Para enviar um *array* de valores, concatene um par de colchetes vazio "[]" ao nome da chave:
 
 ```
 GET /clients?ids[]=1&ids[]=2&ids[]=3
 ```
 
-NOTE: The actual URL in this example will be encoded as "/clients?ids%5b%5d=1&ids%5b%5d=2&ids%5b%5d=3" as the "[" and "]" characters are not allowed in URLs. Most of the time you don't have to worry about this because the browser will encode it for you, and Rails will decode it automatically, but if you ever find yourself having to send those requests to the server manually you should keep this in mind.
+NOTE: A URL efetiva neste neste exemplo será codificada como "/clients?ids%5b%5d=1&ids%5b%5d=2&ids%5b%5d=3", visto que os caracteres "[" e "]" não são permitidos em URLs. Na maioria do tempo você não precisa se preocupar com isso porque o navegador irá codificar os dados para você, e o Rails vai decodificá-los automaticamente, porém se por acaso você se encontrar na situação de ter que enviar este tipo de requisição ao servidor manualmente você deve ter em mente essa questão.
 
-The value of `params[:ids]` will now be `["1", "2", "3"]`. Note that parameter values are always strings; Rails makes no attempt to guess or cast the type.
+O valor de `params[:ids]` será neste caso `["1", "2", "3"]`. Note que os valores de parâmetros são sempre *strings*; o Rails não tenta adivinhar ou converter o tipo.
 
-NOTE: Values such as `[nil]` or `[nil, nil, ...]` in `params` are replaced
-with `[]` for security reasons by default. See [Security Guide](security.html#unsafe-query-generation)
-for more information.
+NOTE: Valores como `[nil]` ou `[nil, nil, ...]` em `params` são substituídos por `[]` por motivos de segurança por padrão. Veja o [Guia de Segurança](security.html#unsafe-query-generation) para mais informações.
 
-To send a hash, you include the key name inside the brackets:
+Para enviar um *hash*, você inclui o nome da chave dentro dos colchetes:
 
 ```html
 <form accept-charset="UTF-8" action="/clients" method="post">
@@ -129,51 +134,56 @@ To send a hash, you include the key name inside the brackets:
 </form>
 ```
 
-When this form is submitted, the value of `params[:client]` will be `{ "name" => "Acme", "phone" => "12345", "address" => { "postcode" => "12345", "city" => "Carrot City" } }`. Note the nested hash in `params[:client][:address]`.
+Quando esse formulário é enviado o valor de `params[:client]` será `{ "name" => "Acme", "phone" => "12345", "address" => { "postcode" => "12345", "city" => "Carrot City" } }`. Repare o *hash* aninhado em `params[:client][:address]`.
 
-The `params` object acts like a Hash, but lets you use symbols and strings interchangeably as keys.
+O objeto `params` atua como um *hash*, mas permite que você use *symbols* e *strings* indistintamente como chaves.
 
-### JSON parameters
+### Parâmetros JSON
 
-If you're writing a web service application, you might find yourself more comfortable accepting parameters in JSON format. If the "Content-Type" header of your request is set to "application/json", Rails will automatically load your parameters into the `params` hash, which you can access as you would normally.
+Se você está construindo uma aplicação *web*, você pode achar mais confortável receber parâmetros no formato JSON. Se o *header* "Content-Type" da sua requisição estiver definido como "application/json" o Rails vai automaticamente carregar os seus parâmetros no *hash* `params`, que você pode acessar como acessaria normalmente.
 
-So for example, if you are sending this JSON content:
+Então por exemplo, se você estiver enviando este conteúdo JSON:
 
 ```json
 { "company": { "name": "acme", "address": "123 Carrot Street" } }
 ```
 
-Your controller will receive `params[:company]` as `{ "name" => "acme", "address" => "123 Carrot Street" }`.
+O seu *controller* vai receber `params[:company]` no formato `{ "name" => "acme", "address" => "123 Carrot Street" }`.
 
-Also, if you've turned on `config.wrap_parameters` in your initializer or called `wrap_parameters` in your controller, you can safely omit the root element in the JSON parameter. In this case, the parameters will be cloned and wrapped with a key chosen based on your controller's name. So the above JSON request can be written as:
+Além disso, se você tiver ativado `config.wrap_parameters` no seu inicializador ou chamado [`wrap_parameters`][] no seu *controller*, você pode omitir o elemento raiz no seu parâmetro JSON. Neste caso, os parâmetros serão clonados e enpacotados sob uma chave baseada no nome do seu *controller*. Então a requisição JSON acima pode ser escrita como:
 
 ```json
 { "name": "acme", "address": "123 Carrot Street" }
 ```
 
-And, assuming that you're sending the data to `CompaniesController`, it would then be wrapped within the `:company` key like this:
+E, assumindo que você está enviando os dados para `CompaniesController`, eles serão então encapsulados na chave `:company` desta maneira:
 
 ```ruby
 { name: "acme", address: "123 Carrot Street", company: { name: "acme", address: "123 Carrot Street" } }
 ```
 
-You can customize the name of the key or specific parameters you want to wrap by consulting the [API documentation](https://api.rubyonrails.org/classes/ActionController/ParamsWrapper.html)
+Você pode customizar o nome da chave ou parâmetros específicos que você quer envelopar consultando a [documentação da API](https://api.rubyonrails.org/classes/ActionController/ParamsWrapper.html)
 
-NOTE: Support for parsing XML parameters has been extracted into a gem named `actionpack-xml_parser`.
+NOTE: Suporte para interpretar parâmetros XML foi extraído para uma *gem* chamada `actionpack-xml_parser`.
 
-### Routing Parameters
+[`wrap_parameters`]: https://api.rubyonrails.org/classes/ActionController/ParamsWrapper/Options/ClassMethods.html#method-i-wrap_parameters
 
-The `params` hash will always contain the `:controller` and `:action` keys, but you should use the methods `controller_name` and `action_name` instead to access these values. Any other parameters defined by the routing, such as `:id`, will also be available. As an example, consider a listing of clients where the list can show either active or inactive clients. We can add a route which captures the `:status` parameter in a "pretty" URL:
+### Parâmetros de Rota
+
+O *hash* `params` sempre irá conter as chaves `:controller` e `:action`, mas você deve usar os métodos [`controller_name`][] e [`action_name`][] para acessar estes valores. Quaisquer outros parâmetros definidos pela rota, como `:id`, também estarão disponíveis. Por exemplo, considere uma listagem de clientes onde a lista pode mostrar os clientes ativos e inativos. Nós podemos adicionar uma rota que captura o parâmetro `:status` numa URL "normalizada":
 
 ```ruby
 get '/clients/:status', to: 'clients#index', foo: 'bar'
 ```
 
-In this case, when a user opens the URL `/clients/active`, `params[:status]` will be set to "active". When this route is used, `params[:foo]` will also be set to "bar", as if it were passed in the query string. Your controller will also receive `params[:action]` as "index" and `params[:controller]` as "clients".
+Neste caso, quando um usuário abrir a URL `/clients/active`, `params[:status]` estará definido como "active". Quando esta rota é usada, `params[:foo]` também será definido como "bar", como se tivesse sido enviado por meio da *query string*. O seu *controller* também irá receber `params[:action]` com o valor "index" e `params[:controller]` com o valor "clients".
+
+[`controller_name`]: https://api.rubyonrails.org/classes/ActionController/Metal.html#method-i-controller_name
+[`action_name`]: https://api.rubyonrails.org/classes/AbstractController/Base.html#method-i-action_name
 
 ### `default_url_options`
 
-You can set global default parameters for URL generation by defining a method called `default_url_options` in your controller. Such a method must return a hash with the desired defaults, whose keys must be symbols:
+Você pode determinar parâmetros padrão globais para a geração de URLs definindo um método chamado `default_url_options` no seu *controller*. Este método deve retornar um *hash* com os dados padrão desejados, cujas chaves devem ser símbolos:
 
 ```ruby
 class ApplicationController < ActionController::Base
@@ -183,39 +193,31 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-These options will be used as a starting point when generating URLs, so it's possible they'll be overridden by the options passed to `url_for` calls.
+Estas opções serão usadas como um ponto de partida na geração de URLs, então é possível que elas sejam sobrescritas pelas opções passadas para chamadas a `url_for`.
 
-If you define `default_url_options` in `ApplicationController`, as in the example above, these defaults will be used for all URL generation. The method can also be defined in a specific controller, in which case it only affects URLs generated there.
+Se você definir `default_url_options` em `ApplicationController`, como no exemplo acima, estes padrões irão ser usados para todas as gerações de URL. O método pode também ser definido num *controller* específico, neste caso afetando somente as URLs geradas a partir desse escopo.
 
-In a given request, the method is not actually called for every single generated URL; for performance reasons, the returned hash is cached, there is at most one invocation per request.
+Numa requisição o método não é de fato chamado para toda URL gerada. Por questões de performance o *hash* retornado é cacheado, e há no máximo uma invocação por requisição.
 
-### Strong Parameters
+### Parâmetros Fortes
 
-With strong parameters, Action Controller parameters are forbidden to
-be used in Active Model mass assignments until they have been
-permitted. This means that you'll have to make a conscious decision about
-which attributes to permit for mass update. This is a better security
-practice to help prevent accidentally allowing users to update sensitive
-model attributes.
+Com parâmetros fortes (*strong parameters*), os parâmetros do *Action Controller* são proibidos de serem usados nas atribuições em massa no *Active Model* até que sejam deliberadamente permitidos. Isso significa que você tem que tomar uma decisão consciente sobre quais atributos podem ser permitidos para um *update* em massa. Esta é uma prática mais segura para ajudar a prevenir que acidentalmente os usuários atualizem atributos sensíveis do *model*.
 
-In addition, parameters can be marked as required and will flow through a
-predefined raise/rescue flow that will result in a 400 Bad Request being
-returned if not all required parameters are passed in.
+Além disso, os parâmetros podem ser marcados como obrigatórios e irão seguir por um fluxo de erro e tratamento predefinido que irá resultar num código 400 *Bad Request* sendo retornado caso todos os parâmetros obrigatórios não forem informados.
 
 ```ruby
 class PeopleController < ActionController::Base
-  # This will raise an ActiveModel::ForbiddenAttributesError exception
-  # because it's using mass assignment without an explicit permit
-  # step.
+  # Isso vai lançar uma exceção do tipo ActiveModel::ForbiddenAttributesError
+  # porque está usando atribuição em massa sem passar pela etapa de permitir
+  # explicitamente os parâmetros.
   def create
     Person.create(params[:person])
   end
 
-  # This will pass with flying colors as long as there's a person key
-  # in the parameters, otherwise it'll raise an
-  # ActionController::ParameterMissing exception, which will get
-  # caught by ActionController::Base and turned into a 400 Bad
-  # Request error.
+  # Isso irá passar contanto que exista uma chave de *person* nos parâmetros,
+  # caso contrário o código irá lançar uma exceção do tipo
+  # ActionController::ParameterMissing, que será capturada pelo
+  # ActionController::Base e transformada num erro 400 Bad Request.
   def update
     person = current_account.people.find(params[:id])
     person.update!(person_params)
@@ -223,67 +225,58 @@ class PeopleController < ActionController::Base
   end
 
   private
-    # Using a private method to encapsulate the permissible parameters
-    # is just a good pattern since you'll be able to reuse the same
-    # permit list between create and update. Also, you can specialize
-    # this method with per-user checking of permissible attributes.
+    # Usar um método privado para encapsular os parâmetros permissíveis
+    # é um bom padrão visto que que você poderá reusar a mesma lista
+    # para as actions create e update. Você também pode especificar
+    # este método com a checagem de atributos permitidos de acordo com
+    # cada usuário.
     def person_params
       params.require(:person).permit(:name, :age)
     end
 end
 ```
 
-#### Permitted Scalar Values
+#### Valores Escalares Permitidos
 
-Given
+Chamando [`permit`][] como:
 
 ```ruby
 params.permit(:id)
 ```
 
-the key `:id` will be permitted for inclusion if it appears in `params` and
-it has a permitted scalar value associated. Otherwise, the key is going
-to be filtered out, so arrays, hashes, or any other objects cannot be
-injected.
+permite a chave especificada (`:id`) para inclusão se ela aparecer em `params` e ela tiver um valor escalar permitido associado a ela. Caso contrário a chave será filtrada, então *arrays*, *hashes*, ou quaisquer outros objetos não poderão ser adicionados.
 
-The permitted scalar types are `String`, `Symbol`, `NilClass`,
-`Numeric`, `TrueClass`, `FalseClass`, `Date`, `Time`, `DateTime`,
-`StringIO`, `IO`, `ActionDispatch::Http::UploadedFile`, and
-`Rack::Test::UploadedFile`.
+Os tipos escalares permitidos são `String`, `Symbol`, `NilClass`, `Numeric`, `TrueClass`, `FalseClass`, `Date`, `Time`, `DateTime`, `StringIO`, `IO`, `ActionDispatch::Http::UploadedFile`, e `Rack::Test::UploadedFile`.
 
-To declare that the value in `params` must be an array of permitted
-scalar values, map the key to an empty array:
+Para declarar que o valor em `params` deve ser um *array* de valores escalares permitidos, mapeie a chave para um *array* vazio.
 
 ```ruby
 params.permit(id: [])
 ```
 
-Sometimes it is not possible or convenient to declare the valid keys of
-a hash parameter or its internal structure. Just map to an empty hash:
+Às vezes não é possível ou conveniente declarar as chaves válidas de um parâmetro de *hash* ou sua estrutura interna. Apenas mapeie para um *hash* vazio:
 
 ```ruby
 params.permit(preferences: {})
 ```
 
-but be careful because this opens the door to arbitrary input. In this
-case, `permit` ensures values in the returned structure are permitted
-scalars and filters out anything else.
+entretanto fique atento porque isso abre a porta para *input* arbitrário. Neste caso, `permit` garante que os valores na estrutura retornada são valores escalares permitidos e faz a filtragem de tudo o que houver além deles.
 
-To permit an entire hash of parameters, the `permit!` method can be
-used:
+Para permitir um *hash* completo de parâmetros, o método [`permit!`][] pode ser usado:
 
 ```ruby
 params.require(:log_entry).permit!
 ```
 
-This marks the `:log_entry` parameters hash and any sub-hash of it as
-permitted and does not check for permitted scalars, anything is accepted.
-Extreme care should be taken when using `permit!`, as it will allow all current
-and future model attributes to be mass-assigned.
+Este código marca o *hash* de parâmetros `:log_entry` e qualquer *sub-hash* dele como valores permitidos e não verifica por escalares permitidos, sendo qualquer coisa a partir dele aceita.
+Extremo cuidado deve ser considerado ao usar o método `permit!`, visto que ele irá permitir que todos os atuais e futuros atributos do `model` sejam preenchidos em massa.
 
-#### Nested Parameters
+[`permit`]: https://api.rubyonrails.org/classes/ActionController/Parameters.html#method-i-permit
+[`permit!`]: https://api.rubyonrails.org/classes/ActionController/Parameters.html#method-i-permit-21
 
-You can also use `permit` on nested parameters, like:
+#### Parâmetros Aninhados
+
+Você também pode usar `permit` em parâmetros aninhados, da seguinte forma:
 
 ```ruby
 params.permit(:name, { emails: [] },
@@ -291,53 +284,36 @@ params.permit(:name, { emails: [] },
                          { family: [ :name ], hobbies: [] }])
 ```
 
-This declaration permits the `name`, `emails`, and `friends`
-attributes. It is expected that `emails` will be an array of permitted
-scalar values, and that `friends` will be an array of resources with
-specific attributes: they should have a `name` attribute (any
-permitted scalar values allowed), a `hobbies` attribute as an array of
-permitted scalar values, and a `family` attribute which is restricted
-to having a `name` (any permitted scalar values allowed here, too).
+Esta declaração permite o preenchimento dos atributos `name`, `emails`, e `friends`. É esperado que `emails` seja um *array* de valores permitidos escalares, e que `friends` seja um *array* de recursos com atributos específicos: deve possuir um atributo `name` (com quaisquer valores escalares permitidos), um atributo `hobbies` como um *array* de valores permitidos escalares, e um atributo `family` que é restrito a ter um `name` (com qualquer valor escalar permitido também).
 
-#### More Examples
+#### Mais Exemplos
 
-You may want to also use the permitted attributes in your `new`
-action. This raises the problem that you can't use `require` on the
-root key because, normally, it does not exist when calling `new`:
+Você pode também querer usar os atributos permitidos na sua *action* `new`. Isso traz o problema que você não pode chamar [`require`][] na chave raiz porque normalmente ela não existe no momento da chamada de `new`
 
 ```ruby
-# using `fetch` you can supply a default and use
-# the Strong Parameters API from there.
+# usando fetch você pode fornecer um valor padrão e visualizar
+# a API de Parâmetros Fortes a partir dele.
 params.fetch(:blog, {}).permit(:title, :author)
 ```
 
-The model class method `accepts_nested_attributes_for` allows you to
-update and destroy associated records. This is based on the `id` and `_destroy`
-parameters:
+O método da classe *model* `accepts_nested_attributes_for` te permite atualizar e destruir outros *models* associados. Isso é baseado nos parâmetros `id` e `_destroy`:
 
 ```ruby
-# permit :id and :_destroy
+# permite :id e :_destroy
 params.require(:author).permit(:name, books_attributes: [:title, :id, :_destroy])
 ```
 
-Hashes with integer keys are treated differently, and you can declare
-the attributes as if they were direct children. You get these kinds of
-parameters when you use `accepts_nested_attributes_for` in combination
-with a `has_many` association:
+*Hashes* com chaves de valor do tipo inteiro são tratados de maneira diferente, e você pode declarar os atributos como se eles fossem atributos filhos imediatos. Você obtém estes tipos de parâmetros quando você usa `accepts_nested_attributes_for` combinado com uma associação `has_many`:
 
 ```ruby
-# To permit the following data:
+# Para permitir os seguintes dados:
 # {"book" => {"title" => "Some Book",
 #             "chapters_attributes" => { "1" => {"title" => "First Chapter"},
 #                                        "2" => {"title" => "Second Chapter"}}}}
-
 params.require(:book).permit(:title, chapters_attributes: [:title])
 ```
 
-Imagine a scenario where you have parameters representing a product
-name and a hash of arbitrary data associated with that product, and
-you want to permit the product name attribute and also the whole
-data hash:
+Imagine um cenário onde você tem parâmetros representando um nome de produto e um *hash* de dados arbitrários associado a esse produto, e você queira permitir o preenchimento do atributo de nome do produto e também o *hash* de dados:
 
 ```ruby
 def product_params
@@ -345,34 +321,33 @@ def product_params
 end
 ```
 
-#### Outside the Scope of Strong Parameters
+[`require`]: https://api.rubyonrails.org/classes/ActionController/Parameters.html#method-i-require
 
-The strong parameter API was designed with the most common use cases
-in mind. It is not meant as a silver bullet to handle all of your
-parameter filtering problems. However, you can easily mix the API with your
-own code to adapt to your situation.
+#### Fora do Escopo de Parâmetros Fortes
 
-Session
--------
+A API de parâmetros fortes foi desenhada com os casos mais comuns em mente. Não houve a intenção de torná-la uma bala prateada para lidar com todos os seus problemas de filtragem de parâmetros. Entretanto, você pode facilmente misturar a API com seu próprio código para se adaptar à sua situação.
 
-Your application has a session for each user in which you can store small amounts of data that will be persisted between requests. The session is only available in the controller and the view and can use one of a number of different storage mechanisms:
+Sessão
+------
 
-* `ActionDispatch::Session::CookieStore` - Stores everything on the client.
-* `ActionDispatch::Session::CacheStore` - Stores the data in the Rails cache.
-* `ActionDispatch::Session::ActiveRecordStore` - Stores the data in a database using Active Record. (require `activerecord-session_store` gem).
-* `ActionDispatch::Session::MemCacheStore` - Stores the data in a memcached cluster (this is a legacy implementation; consider using CacheStore instead).
+Sua aplicação possui uma sessão para cada usuário, na qual pode-se armazenar quantidades pequenas de dados que serão persistidos entre as requisições. A sessão fica disponível apenas no *controller* e na *view* e pode utilizar um dentre vários mecanismos diferentes de armazenamento:
 
-All session stores use a cookie to store a unique ID for each session (you must use a cookie, Rails will not allow you to pass the session ID in the URL as this is less secure).
+* [`ActionDispatch::Session::CookieStore`][] - Armazena tudo no cliente.
+* [`ActionDispatch::Session::CacheStore`][] - Armazena os dados no *cache* do Rails.
+* `ActionDispatch::Session::ActiveRecordStore` - Armazena os dados em um banco de dados utilizando o *Active Record*. (a gem `activerecord-session_store` é necessária).
+* [`ActionDispatch::Session::MemCacheStore`][] - Armazena os dados em um *cluster* de *cache* de memória (esta é uma implementação legada; considere utilizar o `CacheStore` como alternativa)
 
-For most stores, this ID is used to look up the session data on the server, e.g. in a database table. There is one exception, and that is the default and recommended session store - the CookieStore - which stores all session data in the cookie itself (the ID is still available to you if you need it). This has the advantage of being very lightweight and it requires zero setup in a new application in order to use the session. The cookie data is cryptographically signed to make it tamper-proof. And it is also encrypted so anyone with access to it can't read its contents. (Rails will not accept it if it has been edited).
+Todos os armazenamentos de sessão utilizam um *cookie* para armazenar um ID único para cada sessão (você deve utilizar um *cookie*, o Rails não permitirá que você passe o ID da sessão na URL, pois isso é menos seguro).
 
-The CookieStore can store around 4kB of data - much less than the others - but this is usually enough. Storing large amounts of data in the session is discouraged no matter which session store your application uses. You should especially avoid storing complex objects (anything other than basic Ruby objects, the most common example being model instances) in the session, as the server might not be able to reassemble them between requests, which will result in an error.
+Para a maioria dos armazenamentos, esse ID é utilizado para procurar os dados da sessão no servidor, por exemplo, em uma tabela do banco de dados. Há apenas uma exceção, que é o armazenamento de sessão recomendado por padrão - o *CookieStore* - que armazena todos os dados da sessão no próprio *cookie* (o ID ainda estará disponível para você, se você precisar). A vantagem é a de ser muito leve e requer zero configuração em uma nova aplicação para utilizar a sessão. Os dados do *cookie* são assinados criptograficamente para torná-los invioláveis, e também é criptografado para que qualquer pessoa com acesso não leia o seu conteúdo. (O Rails não aceitará se estiver sido editado).
 
-If your user sessions don't store critical data or don't need to be around for long periods (for instance if you just use the flash for messaging), you can consider using `ActionDispatch::Session::CacheStore`. This will store sessions using the cache implementation you have configured for your application. The advantage of this is that you can use your existing cache infrastructure for storing sessions without requiring any additional setup or administration. The downside, of course, is that the sessions will be ephemeral and could disappear at any time.
+O *CookieStore* pode armazenar cerca de 4 kB de dados - muito menos que os demais - mas geralmente é o suficiente. O armazenamento de grandes quantidades de dados na sessão não é recomendado, independentemente de qual armazenamento de sessão sua aplicação utiliza. Você deve evitar armazenar objetos complexos (como instâncias de `model`) na sessão, pois o servidor pode não ser capaz de remontá-los entre as requisições, o que resultará em um erro.
 
-Read more about session storage in the [Security Guide](security.html).
+Se as suas sessões de usuário não armazenam dados críticos ou não precisam durar por longos períodos (por exemplo, se você apenas utiliza o *flash* para mensagens), considere o uso do `ActionDispatch::Session::CacheStore`. Isso armazenará as sessões utilizando a implementação de *cache* que você configurou para a sua aplicação. A vantagem é que você pode utilizar sua infraestrutura de *cache* existente para armazenar sessões sem precisar de nenhuma configuração ou administração adicional. A desvantagem é que as sessões serão temporárias e poderão desaparecer a qualquer momento.
 
-If you need a different session storage mechanism, you can change it in an initializer:
+Leia mais sobre armazenamento de sessão no [Guia de Segurança](security.html).
+
+Se você precisar de um mecanismo diferente de sessão de armazenamento, você poderá alterá-lo no *initializer*:
 
 ```ruby
 # Use the database for sessions instead of the cookie-based default,
@@ -381,23 +356,23 @@ If you need a different session storage mechanism, you can change it in an initi
 # Rails.application.config.session_store :active_record_store
 ```
 
-Rails sets up a session key (the name of the cookie) when signing the session data. These can also be changed in an initializer:
+O Rails configura uma chave de sessão (o nome do *cookie*) ao assinar os dados da sessão. Estes também podem ser alterados no *initializer*:
 
 ```ruby
 # Be sure to restart your server when you modify this file.
 Rails.application.config.session_store :cookie_store, key: '_your_app_session'
 ```
 
-You can also pass a `:domain` key and specify the domain name for the cookie:
+Você também pode passar uma chave `:domain` e especificar o nome do domínio para o *cookie*:
 
 ```ruby
 # Be sure to restart your server when you modify this file.
 Rails.application.config.session_store :cookie_store, key: '_your_app_session', domain: ".example.com"
 ```
 
-Rails sets up (for the CookieStore) a secret key used for signing the session data in `config/credentials.yml.enc`. This can be changed with `rails credentials:edit`.
+O Rails configura (para o *CookieStore*) uma chave secreta utilizada para assinar os dados da sessão em `config/credentials.yml.enc`. Isso pode ser alterado com o comando `bin/rails credentials:edit`.
 
-```ruby
+```yaml
 # aws:
 #   access_key_id: 123
 #   secret_access_key: 345
@@ -406,15 +381,19 @@ Rails sets up (for the CookieStore) a secret key used for signing the session da
 secret_key_base: 492f...
 ```
 
-NOTE: Changing the secret_key_base when using the `CookieStore` will invalidate all existing sessions.
+NOTE: Alterar a `secret_key_base` ao utilizar o `CookieStore` invalidará todas as sessões existentes.
 
-### Accessing the Session
+[`ActionDispatch::Session::CookieStore`]: https://api.rubyonrails.org/classes/ActionDispatch/Session/CookieStore.html
+[`ActionDispatch::Session::CacheStore`]: https://api.rubyonrails.org/classes/ActionDispatch/Session/CacheStore.html
+[`ActionDispatch::Session::MemCacheStore`]: https://api.rubyonrails.org/classes/ActionDispatch/Session/MemCacheStore.html
 
-In your controller you can access the session through the `session` instance method.
+### Acessando a Sessão
 
-NOTE: Sessions are lazily loaded. If you don't access sessions in your action's code, they will not be loaded. Hence you will never need to disable sessions, just not accessing them will do the job.
+No seu *controller*, você pode acessar a sessão através do método de instância `session`.
 
-Session values are stored using key/value pairs like a hash:
+NOTE: As sessões são [*lazy loading*](https://pt.wikipedia.org/wiki/Lazy_loading) (carregamento lento). Se você não acessá-las no código da sua *action*, elas não serão carregadas. Portanto, você nunca precisará desativar as sessões, basta apenas não acessá-las.
+
+Os valores da sessão são armazenados utilizando pares de chave/valor como em um *hash*:
 
 ```ruby
 class ApplicationController < ActionController::Base
@@ -432,7 +411,7 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-To store something in the session, just assign it to the key like a hash:
+Para armazenar algo na sessão, basta atribuí-lo à chave como em um *hash*:
 
 ```ruby
 class LoginsController < ApplicationController
@@ -448,7 +427,7 @@ class LoginsController < ApplicationController
 end
 ```
 
-To remove something from the session, delete the key/value pair:
+Para remover algo da sessão, exclua o par de chave/valor:
 
 ```ruby
 class LoginsController < ApplicationController
@@ -458,40 +437,42 @@ class LoginsController < ApplicationController
     session.delete(:current_user_id)
     # Clear the memoized current user
     @_current_user = nil
-    redirect_to root_url
+    redirect_to root_url, status: :see_other
   end
 end
 ```
 
-To reset the entire session, use `reset_session`.
+Para redefinir a sessão inteira, utilize [`reset_session`][].
 
-### The Flash
+[`reset_session`]: https://api.rubyonrails.org/classes/ActionController/Metal.html#method-i-reset_session
 
-The flash is a special part of the session which is cleared with each request. This means that values stored there will only be available in the next request, which is useful for passing error messages etc.
+### O *Flash*
 
-It is accessed in much the same way as the session, as a hash (it's a [FlashHash](https://api.rubyonrails.org/classes/ActionDispatch/Flash/FlashHash.html) instance).
+O *flash* é uma parte especial da sessão, que é limpo a cada requisição. Isso significa que os valores armazenados nele estarão disponíveis somente para a próxima requisição, sendo úteis para enviar mensagens de erro, etc.
 
-Let's use the act of logging out as an example. The controller can send a message which will be displayed to the user on the next request:
+O *flash* é acessado através do método [`flash`][]. Assim como a sessão, o *flash* é representado por um objeto *hash*.
+
+Usaremos o evento de *logout* do usuário como exemplo. O *controller* pode enviar uma mensagem que será exibida na próxima requisição:
 
 ```ruby
 class LoginsController < ApplicationController
   def destroy
     session.delete(:current_user_id)
-    flash[:notice] = "You have successfully logged out."
-    redirect_to root_url
+    flash[:notice] = "Você foi deslogado com sucesso."
+    redirect_to root_url, status: :see_other
   end
 end
 ```
 
-Note that it is also possible to assign a flash message as part of the redirection. You can assign `:notice`, `:alert` or the general purpose `:flash`:
+Observe que também é possível definir uma mensagem *flash* como parte do redirecionamento. Você pode usar `:notice`, `:alert` ou o mais genérico, `:flash`:
 
 ```ruby
-redirect_to root_url, notice: "You have successfully logged out."
-redirect_to root_url, alert: "You're stuck here!"
+redirect_to root_url, notice: "Você foi deslogado com sucesso."
+redirect_to root_url, alert: "Você está preso aqui!"
 redirect_to root_url, flash: { referral_code: 1234 }
 ```
 
-The `destroy` action redirects to the application's `root_url`, where the message will be displayed. Note that it's entirely up to the next action to decide what, if anything, it will do with what the previous action put in the flash. It's conventional to display any error alerts or notices from the flash in the application's layout:
+A *action* `destroy` redireciona para a `root_url` da aplicação, onde a mensagem será exibida. Note que é responsabilidade da próxima *action* decidir o que (e até mesmo se algo) será feito com o valor anterior contido no *flash*. É comum exibir quaisquer erros, alertas ou avisos vindos do *flash* no *layout* da aplicação:
 
 ```erb
 <html>
@@ -501,14 +482,14 @@ The `destroy` action redirects to the application's `root_url`, where the messag
       <%= content_tag :div, msg, class: name %>
     <% end -%>
 
-    <!-- more content -->
+    <!-- resto do conteúdo -->
   </body>
 </html>
 ```
 
-This way, if an action sets a notice or an alert message, the layout will display it automatically.
+Dessa forma, se uma *action* gerar um aviso, alerta ou mensagem, o *layout* o exibirá automaticamente.
 
-You can pass anything that the session can store; you're not limited to notices and alerts:
+É possível armazenar qualquer valor aceito pela *session* no *flash*, não ficando limitado somente aos avisos, alertas e mensagens:
 
 ```erb
 <% if flash[:just_signed_up] %>
@@ -516,65 +497,70 @@ You can pass anything that the session can store; you're not limited to notices 
 <% end %>
 ```
 
-If you want a flash value to be carried over to another request, use the `keep` method:
+Se quiser que um *flash* seja acessado em uma outra requisição, use [`flash.keep`][]:
 
 ```ruby
 class MainController < ApplicationController
-  # Let's say this action corresponds to root_url, but you want
-  # all requests here to be redirected to UsersController#index.
-  # If an action sets the flash and redirects here, the values
-  # would normally be lost when another redirect happens, but you
-  # can use 'keep' to make it persist for another request.
+  # Digamos que essa action corresponde à root_url, mas você quer que
+  # todas as requisições sejam redirecionadas para UsersController#index.
+  # Se uma action definir o flash e for redirecionada para cá, os valores
+  # seriam perdidos quando um ocorrer um outro redirecionamento.
+  # Para persistir os valores e evitar que isso ocorra, utilize 'keep'.
   def index
-    # Will persist all flash values.
+    # Persistirá os valores.
     flash.keep
 
-    # You can also use a key to keep only some kind of value.
+    # Usando uma chave é possível persistir somente um tipo de valor:
     # flash.keep(:notice)
     redirect_to users_url
   end
 end
 ```
 
+[`flash`]: https://api.rubyonrails.org/classes/ActionDispatch/Flash/RequestMethods.html#method-i-flash
+[`flash.keep`]: https://api.rubyonrails.org/classes/ActionDispatch/Flash/FlashHash.html#method-i-keep
+
 #### `flash.now`
 
-By default, adding values to the flash will make them available to the next request, but sometimes you may want to access those values in the same request. For example, if the `create` action fails to save a resource and you render the `new` template directly, that's not going to result in a new request, but you may still want to display a message using the flash. To do this, you can use `flash.now` in the same way you use the normal `flash`:
+Por padrão, adicionar valores ao *flash* os tornará disponíveis somente na próxima requisição, mas em alguns casos, você pode querer acessar estes valores em uma mesma requisição. Por exemplo, se a *action* `create` falhar ao salvar um recurso e você renderizar o *template* `new` diretamente, isso não resultará em uma nova requisição, mas você ainda pode querer exibir a mensagem usando o *flash*. Para isso, é possível usar o [`flash.now`][], de maneira similar ao `flash` simples:
 
 ```ruby
 class ClientsController < ApplicationController
   def create
-    @client = Client.new(params[:client])
+    @client = Client.new(client_params)
     if @client.save
       # ...
     else
-      flash.now[:error] = "Could not save client"
+      flash.now[:error] = "Não foi possível salvar o cliente."
       render action: "new"
     end
   end
 end
 ```
 
+[`flash.now`]: https://api.rubyonrails.org/classes/ActionDispatch/Flash/FlashHash.html#method-i-now
+
 Cookies
 -------
 
-Your application can store small amounts of data on the client - called cookies - that will be persisted across requests and even sessions. Rails provides easy access to cookies via the `cookies` method, which - much like the `session` - works like a hash:
+Sua Aplicação pode armazemar pequenas quantidades de dados no cliente - chamados de *cookies* - que serão mantidas entre requisições e até as sessões. O Rails fornece um fácil acesso para os *cookies* através do método [`cookies`][], que - assim como a `session` - funciona como um hash:
 
 ```ruby
 class CommentsController < ApplicationController
   def new
-    # Auto-fill the commenter's name if it has been stored in a cookie
+    # Preencher automaticamente o nome de quem comentou se ele estiver armazenado em um cookie
     @comment = Comment.new(author: cookies[:commenter_name])
   end
 
   def create
-    @comment = Comment.new(params[:comment])
+    @comment = Comment.new(comment_params)
     if @comment.save
       flash[:notice] = "Thanks for your comment!"
       if params[:remember_name]
-        # Remember the commenter's name.
+        # Lembrar o nome de quem fez o comentário
         cookies[:commenter_name] = @comment.author
       else
-        # Delete cookie for the commenter's name cookie, if any.
+        # Deletar o cookie do nome de quem fez o comentário, caso exista.
         cookies.delete(:commenter_name)
       end
       redirect_to @comment.article
@@ -585,43 +571,43 @@ class CommentsController < ApplicationController
 end
 ```
 
-Note that while for session values you set the key to `nil`, to delete a cookie value you should use `cookies.delete(:key)`.
+Perceba que enquanto para valores de sessão você pode definir a chave como `nil`, para deletar um valor de *cookie* você deve usar ` cookies.delete(:key)`.
 
-Rails also provides a signed cookie jar and an encrypted cookie jar for storing
-sensitive data. The signed cookie jar appends a cryptographic signature on the
-cookie values to protect their integrity. The encrypted cookie jar encrypts the
-values in addition to signing them, so that they cannot be read by the end user.
-Refer to the [API documentation](https://api.rubyonrails.org/classes/ActionDispatch/Cookies.html)
-for more details.
+O Rails também fornece um *cookie jar* assinado e um *cookie jar* criptografado para amazenar
+dados sensíveis. O *cookie jar* assinado anexa uma assinaura criptográfica nos
+valores do *cookie* para proteger sua integridade. O *cookie jar* criptografado, criptografa os
+valores além de assiná-los, para que eles não possam ser lidos pelo usuário final.
+Consulte a [documentação da API (em inglês)](https://api.rubyonrails.org/classes/ActionDispatch/Cookies.html)
+para mais detalhes.
 
-These special cookie jars use a serializer to serialize the assigned values into
-strings and deserializes them into Ruby objects on read.
+Esses *cookie jars* especiais usam um *serializer* para serializar os valores atribuídos em
+strings e desserializa-os em objetos Ruby na leitura.
 
-You can specify what serializer to use:
+Você pode especificar qual *serializer* usar:
 
 ```ruby
 Rails.application.config.action_dispatch.cookies_serializer = :json
 ```
 
-The default serializer for new applications is `:json`. For compatibility with
-old applications with existing cookies, `:marshal` is used when `serializer`
-option is not specified.
+O *serializer* padrão para novas aplicações é `:json`. Para compatibilidade com
+aplicações antigas que usam *cookies*, o `:marshal` é usado quando a opção
+`serializer` não está especificada.
 
-You may also set this option to `:hybrid`, in which case Rails would transparently
-deserialize existing (`Marshal`-serialized) cookies on read and re-write them in
-the `JSON` format. This is useful for migrating existing applications to the
-`:json` serializer.
+Você também pode definir esta opção como `:hybrid`, nesse caso o Rails desserializaria
+de forma transparente os *cookies* (serializados no formato `Marshal`) existentes ao ler e reescrevê-los
+no formaro `JSON`. Isso é útil para migrar aplicações existentes para o
+*serializer* `:json`.
 
-It is also possible to pass a custom serializer that responds to `load` and
+Também é possível passar um *serializer* personalizado que responda a `load` e
 `dump`:
 
 ```ruby
 Rails.application.config.action_dispatch.cookies_serializer = MyCustomSerializer
 ```
 
-When using the `:json` or `:hybrid` serializer, you should beware that not all
-Ruby objects can be serialized as JSON. For example, `Date` and `Time` objects
-will be serialized as strings, and `Hash`es will have their keys stringified.
+Ao usar o *serializer* `:json` ou `:hybrid`, lembre-se de que nem todos os
+os objetos Ruby podem ser serializados como JSON. Por exemplo, objetos `Date` e` Time`
+serão serializados como strings, e os `Hash`es terão suas chaves transformadas em string também.
 
 ```ruby
 class CookiesController < ApplicationController
@@ -636,17 +622,18 @@ class CookiesController < ApplicationController
 end
 ```
 
-It's advisable that you only store simple data (strings and numbers) in cookies.
-If you have to store complex objects, you would need to handle the conversion
-manually when reading the values on subsequent requests.
+É aconselhável que você armazene apenas dados simples (strings e números) nos *cookies*.
+Se você precisar armazenar objetos complexos, precisará lidar com a conversão
+manualmente ao ler os valores em requisições subsequentes.
 
-If you use the cookie session store, this would apply to the `session` and
-`flash` hash as well.
+Se você usar o *cookie* de armazenamento de sessão, isso também se aplicaria aos *hashes* `session` e `flash`.
 
-Rendering XML and JSON data
+[`cookies`]: https://api.rubyonrails.org/classes/ActionController/Cookies.html#method-i-cookies
+
+Renderizando Dados XML e JSON
 ---------------------------
 
-ActionController makes it extremely easy to render `XML` or `JSON` data. If you've generated a controller using scaffolding, it would look something like this:
+O *ActionController* faz com que renderizar dados `XML` ou `JSON` seja extremamente fácil. Se você gerou um *controller* usando o *scaffold*, será algo mais ou menos assim:
 
 ```ruby
 class UsersController < ApplicationController
@@ -661,35 +648,33 @@ class UsersController < ApplicationController
 end
 ```
 
-You may notice in the above code that we're using `render xml: @users`, not `render xml: @users.to_xml`. If the object is not a String, then Rails will automatically invoke `to_xml` for us.
+Você pode observar que no código acima estamos usando `render xml: @users`, e não `render xml: @users.to_xml`. Se o objeto não é uma *String*, então o Rails automaticamente chama `to_xml` por nós.
 
-Filters
+Filtros
 -------
 
-Filters are methods that are run "before", "after" or "around" a controller action.
+Filtros são métodos que rodam "before" (antes de), "after" (depois de) ou "around" (em torno de) de uma ação de *controller*.
 
-Filters are inherited, so if you set a filter on `ApplicationController`, it will be run on every controller in your application.
+Filtros são herdados, então se você configurou um filtro em `ApplicationController`, o mesmo irá rodar em cada *controller* da sua aplicação.
 
-"before" filters may halt the request cycle. A common "before" filter is one which requires that a user is logged in for an action to be run. You can define the filter method this way:
+Filtros "before" são registrados através do método [`before_action`][]. Eles podem interromper o ciclo de uma requisição. Um filtro comum para "before" é o que requer que um usuário está logado para que uma ação seja executada. Você pode definir o método do filtro dessa forma:
 
 ```ruby
 class ApplicationController < ActionController::Base
   before_action :require_login
 
   private
-
-  def require_login
-    unless logged_in?
-      flash[:error] = "You must be logged in to access this section"
-      redirect_to new_login_url # halts request cycle
+    def require_login
+        unless logged_in?
+        flash[:error] = "You must be logged in to access this section"
+        redirect_to new_login_url # interrompe o ciclo da requisição
+        end
     end
-  end
 end
 ```
+Esse método simplesmente armazena uma mensagem de erro no *flash* e redireciona para o formulário de login se o usuário não estiver logado. Se um filtro "before" renderiza ou redireciona, a ação não será executada. Se filtros adicionais estão programados para executar após esse filtro, eles são cancelados também.
 
-The method simply stores an error message in the flash and redirects to the login form if the user is not logged in. If a "before" filter renders or redirects, the action will not run. If there are additional filters scheduled to run after that filter, they are also cancelled.
-
-In this example the filter is added to `ApplicationController` and thus all controllers in the application inherit it. This will make everything in the application require the user to be logged in in order to use it. For obvious reasons (the user wouldn't be able to log in in the first place!), not all controllers or actions should require this. You can prevent this filter from running before particular actions with `skip_before_action`:
+Nesse exemplo, o filtro é adicionado ao `ApplicationController` e dessa forma todos os *controllers* na aplicação irão herdar ele. Isso fará com que tudo na aplicação requeira que o usuário esteja logado para que ele possa usar. Por razões óbvias (o usuário não conseguiria fazer o log in para começo de conversa!), nem todos os *controllers* devem requerer isso. Você pode evitar esse filtro de ser executado antes de ações em particular com [`skip_before_action`][]:
 
 ```ruby
 class LoginsController < ApplicationController
@@ -697,63 +682,74 @@ class LoginsController < ApplicationController
 end
 ```
 
-Now, the `LoginsController`'s `new` and `create` actions will work as before without requiring the user to be logged in. The `:only` option is used to skip this filter only for these actions, and there is also an `:except` option which works the other way. These options can be used when adding filters too, so you can add a filter which only runs for selected actions in the first place.
+Agora, as ações de `new` e `create` do `LoginsController` irão funcionar como antes sem requerer que o usuário esteja logado. A opção `:only` é usada para pular esse filtro somente para essas ações, e existe também a opção `:except` que funciona de maneira contrária. Essas opções podem ser utilizadas quando adicionamos filtros também, para que você possa adicionar um filtro que somente executa para as ações selecionadas.
 
-NOTE: Calling the same filter multiple times with different options will not work,
-since the last filter definition will overwrite the previous ones.
+NOTE: Chamar o mesmo filtro múltiplas vezes com diferentes opções não irá funcionar,
+já que a última definição do filtro irá sobreescrever as anteriores.
 
-### After Filters and Around Filters
+[`before_action`]: https://api.rubyonrails.org/classes/AbstractController/Callbacks/ClassMethods.html#method-i-before_action
+[`skip_before_action`]: https://api.rubyonrails.org/classes/AbstractController/Callbacks/ClassMethods.html#method-i-skip_before_action
 
-In addition to "before" filters, you can also run filters after an action has been executed, or both before and after.
+### Filtros after e around
 
-"after" filters are similar to "before" filters, but because the action has already been run they have access to the response data that's about to be sent to the client. Obviously, "after" filters cannot stop the action from running. Please note that "after" filters are executed only after a successful action, but not when an exception is raised in the request cycle.
+Além de filtros "before", você pode também executar filtros depois que uma ação tenha sido executada, ou antes e depois em conjunto.
 
-"around" filters are responsible for running their associated actions by yielding, similar to how Rack middlewares work.
+Filtros "after" são registrados através do método [`after_action`][]. Eles são similares aos filtros "before", mas porque a ação já foi executada eles tem acesso a dados da resposta que serão enviados para o cliente. Obviamente, filtros "after" não podem impedir uma ação de ser executada. Note também que filtros "after" são executados somente após uma ação bem sucedida, mas não quando uma exceção é gerada durante o ciclo de uma requisição.
 
-For example, in a website where changes have an approval workflow an administrator could be able to preview them easily, just apply them within a transaction:
+Filtros "around" são registrados através do método [`around_action`][]. Eles são responsáveis por executar as ações associadas por *yield*, simular a como os *middlewares* do Rack funcionam.
+
+Por exemplo, em um *website* aonde alterações possuem um fluxo de aprovação, um administrador pode pré-visualizar as mesmas facilmente, aplicando-as dentro de uma transação.
 
 ```ruby
 class ChangesController < ApplicationController
   around_action :wrap_in_transaction, only: :show
 
   private
-
-  def wrap_in_transaction
-    ActiveRecord::Base.transaction do
-      begin
-        yield
-      ensure
-        raise ActiveRecord::Rollback
-      end
+    def wrap_in_transaction
+        ActiveRecord::Base.transaction do
+        begin
+            yield
+        ensure
+            raise ActiveRecord::Rollback
+        end
+        end
     end
-  end
 end
 ```
 
-Note that an "around" filter also wraps rendering. In particular, if in the example above, the view itself reads from the database (e.g. via a scope), it will do so within the transaction and thus present the data to preview.
+Note que um filtro "around" também envolve a renderização. Em particular, no exemplo acima, se a _view_ efetuar uma leitura no banco de dados (p. ex. usando um *scope*), a mesma é efetuada dentro de uma transação e então apresenta a informação para visualização.
 
-You can choose not to yield and build the response yourself, in which case the action will not be run.
+Você pode escolher não efetuar *yield* e montar a resposta você mesmo, o que faria com que a ação não fosse executada.
 
-### Other Ways to Use Filters
+[`after_action`]: https://api.rubyonrails.org/classes/AbstractController/Callbacks/ClassMethods.html#method-i-after_action
+[`around_action`]: https://api.rubyonrails.org/classes/AbstractController/Callbacks/ClassMethods.html#method-i-around_action
 
-While the most common way to use filters is by creating private methods and using *_action to add them, there are two other ways to do the same thing.
+### Outras Formas de Usar Filtros
 
-The first is to use a block directly with the *\_action methods. The block receives the controller as an argument. The `require_login` filter from above could be rewritten to use a block:
+Enquanto a forma mais comum de se utilizar filtros é criando métodos privados e usando `before_action`, `after_action`, ou `around_action` para adicioná-los, existem duas outras formas para fazer a mesma coisa.
+
+A primeira é utilizar um bloco diretamente com método `*_action`. O bloco recebe o *controller* como um argumento. O filtro `require_login` acima pode ser reescrito para utilizar um bloco:
 
 ```ruby
 class ApplicationController < ActionController::Base
   before_action do |controller|
     unless controller.send(:logged_in?)
-      flash[:error] = "You must be logged in to access this section"
+      flash[:error] = "Você deve estar logado para acessar essa seção"
       redirect_to new_login_url
     end
   end
 end
 ```
 
-Note that the filter in this case uses `send` because the `logged_in?` method is private and the filter does not run in the scope of the controller. This is not the recommended way to implement this particular filter, but in more simple cases it might be useful.
+Note que, nesse caso, o filtro utiliza `send` porque o método `logged_in?` é privado e o filtro não é executado no escopo do *controller*. Essa não é a forma recomendada para implementar esse filtro em particular, mas em casos mais simples, ele pode ser útil.
 
-The second way is to use a class (actually, any object that responds to the right methods will do) to handle the filtering. This is useful in cases that are more complex and cannot be implemented in a readable and reusable way using the two other methods. As an example, you could rewrite the login filter again to use a class:
+Especificamente para `around_action`, o bloco também acessa a `action`:
+
+```ruby
+around_action { |_controller, action| time(&action) }
+```
+
+A segunda forma é utilizar uma classe (na verdade, qualquer objeto que responda aos métodos corretos serve) para gerenciar a filtragem. Isto é útil em casos mais complexos que não são possíveis de serem implementados de uma forma de fácil leitura e reutilizados usando as outras duas abordagens. Por exemplo, você pode reescrever o filtro de login novamente utilizando uma classe:
 
 ```ruby
 class ApplicationController < ActionController::Base
@@ -763,34 +759,34 @@ end
 class LoginFilter
   def self.before(controller)
     unless controller.send(:logged_in?)
-      controller.flash[:error] = "You must be logged in to access this section"
+      controller.flash[:error] = "Você deve estar logado para acessar essa seção"
       controller.redirect_to controller.new_login_url
     end
   end
 end
 ```
 
-Again, this is not an ideal example for this filter, because it's not run in the scope of the controller but gets the controller passed as an argument. The filter class must implement a method with the same name as the filter, so for the `before_action` filter the class must implement a `before` method, and so on. The `around` method must `yield` to execute the action.
+Novamente, esse não é um exemplo ideal para esse filtro, pois não é executado dentro do escopo do *controller* mas recebe o mesmo como um argumento. A classe de filtro deve implementar um método com o mesmo nome do filtro, então para o filtro de `before_action` a classe deve implementar um método `before`, e assim em diante. O método `around` deve efetuar `yield` para executar a ação.
 
-Request Forgery Protection
+Proteção de falsificação de requisição
 --------------------------
 
-Cross-site request forgery is a type of attack in which a site tricks a user into making requests on another site, possibly adding, modifying, or deleting data on that site without the user's knowledge or permission.
+Falsificação de requisições *cross-site* é um tipo de ataque no qual o site engana o usuário a fim de que ele faça requisições em outro site, possivelmente adicionando, alterando ou deletando informações naquela site sem o conhecimento ou a permissão do usuário.
 
-The first step to avoid this is to make sure all "destructive" actions (create, update, and destroy) can only be accessed with non-GET requests. If you're following RESTful conventions you're already doing this. However, a malicious site can still send a non-GET request to your site quite easily, and that's where the request forgery protection comes in. As the name says, it protects from forged requests.
+O primeiro passo para evitar isso é ter certeza que todas as ações "destrutivas" (criar, atualizar, e destruir) possam ser acessadas somente via requisições que não sejam *GET*. Se você está seguindo as convenções *RESTful* você já está fazendo isso. Contudo, sites maliciosos continuam podendo enviar requisições não *GET* para o seu site facilmente, e é aí que a proteção de falsificação de requisição entra. Como o nome diz, ela te protege de requisições falsas.
 
-The way this is done is to add a non-guessable token which is only known to your server to each request. This way, if a request comes in without the proper token, it will be denied access.
+A forma como isso é feito é adicionando um *token* não adivinhável que é conhecido apenas pelo seu servidor para cada requisição. Desta forma, se uma requisição chega sem um token conhecido, o seu acesso será negado.
 
-If you generate a form like this:
+Se você gera um *form* como este:
 
 ```erb
-<%= form_with model: @user, local: true do |form| %>
+<%= form_with model: @user do |form| %>
   <%= form.text_field :username %>
   <%= form.text_field :password %>
 <% end %>
 ```
 
-You will see how the token gets added as a hidden field:
+Você perceberá como o *token* é adicionado como um campo invisível.
 
 ```html
 <form accept-charset="UTF-8" action="/users/1" method="post">
@@ -801,73 +797,82 @@ You will see how the token gets added as a hidden field:
 </form>
 ```
 
-Rails adds this token to every form that's generated using the [form helpers](form_helpers.html), so most of the time you don't have to worry about it. If you're writing a form manually or need to add the token for another reason, it's available through the method `form_authenticity_token`:
+O Rails adiciona esse *token* para cada *form* que é gerado usando o [*form helpers*](form_helpers.html), então na maior parte das vezes você não precisa se preocupar com isso. Se você está escrevendo um *form* manualmente ou precisa adicionar o *token* para outra sessão, ele está disponível por meio do método `form_authenticity_token`.
 
-The `form_authenticity_token` generates a valid authentication token. That's useful in places where Rails does not add it automatically, like in custom Ajax calls.
+O `form_authenticity_token` gera um *token* de autenticação válido. Isso é útil em lugar aonde o Rails não adiciona o mesmo automaticamente, como em chamadas Ajax personalizadas.
 
-The [Security Guide](security.html) has more about this and a lot of other security-related issues that you should be aware of when developing a web application.
+O [Guia de segurança](security.html) possui mais informações sobre isso e muitos outros problemas relacionados a segurança que você deve estar ciente quando desenvolve uma aplicação *web*.
 
-The Request and Response Objects
+Os Objetos de Requisição e Resposta
 --------------------------------
 
-In every controller there are two accessor methods pointing to the request and the response objects associated with the request cycle that is currently in execution. The `request` method contains an instance of `ActionDispatch::Request` and the `response` method returns a response object representing what is going to be sent back to the client.
+Em todo *controller*, existem dois métodos de acesso apontando para os objetos de requisição e de resposta associados com o ciclo de requisição que estiver em execução no momento. O método [`request`][] contém uma instância de [`ActionDispatch::Request`][] e o método [`response`][] retorna um objeto de resposta representando o que será enviado de volta ao cliente.
 
-### The `request` Object
+[`ActionDispatch::Request`]: https://api.rubyonrails.org/classes/ActionDispatch/Request.html
+[`request`]: https://api.rubyonrails.org/classes/ActionController/Base.html#method-i-request
+[`response`]: https://api.rubyonrails.org/classes/ActionController/Base.html#method-i-response
 
-The request object contains a lot of useful information about the request coming in from the client. To get a full list of the available methods, refer to the [Rails API documentation](https://api.rubyonrails.org/classes/ActionDispatch/Request.html) and [Rack Documentation](https://www.rubydoc.info/github/rack/rack/Rack/Request). Among the properties that you can access on this object are:
+### O Objeto `request`
 
-| Property of `request`                     | Purpose                                                                          |
-| ----------------------------------------- | -------------------------------------------------------------------------------- |
-| host                                      | The hostname used for this request.                                              |
-| domain(n=2)                               | The hostname's first `n` segments, starting from the right (the TLD).            |
-| format                                    | The content type requested by the client.                                        |
-| method                                    | The HTTP method used for the request.                                            |
-| get?, post?, patch?, put?, delete?, head? | Returns true if the HTTP method is GET/POST/PATCH/PUT/DELETE/HEAD.               |
-| headers                                   | Returns a hash containing the headers associated with the request.               |
-| port                                      | The port number (integer) used for the request.                                  |
-| protocol                                  | Returns a string containing the protocol used plus "://", for example "http://". |
-| query_string                              | The query string part of the URL, i.e., everything after "?".                    |
-| remote_ip                                 | The IP address of the client.                                                    |
-| url                                       | The entire URL used for the request.                                             |
+O objeto de requisição contém muitas informações úteis sobre a requisição proveniente do cliente. Para obter uma lista completa dos métodos disponíveis verifique a [documentação da API do Rails](https://api.rubyonrails.org/classes/ActionDispatch/Request.html) e a [documentação do Rack](https://www.rubydoc.info/github/rack/rack/Rack/Request). Entre as propriedades que você pode acessar estão:
 
-#### `path_parameters`, `query_parameters`, and `request_parameters`
+| Propriedade de `request`                     | Propósito                                                                          |
+| -------------------------------------------- | --------------------------------------------------------------------------------  |
+| `host`                                       | O *hostname* utilizado para esta requisição.                                      |
+| `domain(n=2)`                                | Os primeiros `n` segmentos do *hostname*, iniciando pela direita (o domínio de primeiro nível).       |
+| `format`                                     | O tipo de conteúdo requisitado pelo cliente.                                      |
+| `method`                                     | O método HTTP utilizado para a requisição.                                        |
+| `get?`, `post?`, `patch?`, `put?`, `delete?`, `head?` | Retorna *true* se o método HTTP é GET/POST/PATCH/PUT/DELETE/HEAD.                 |
+| `headers`                                    | Retorna um *hash* contendo os *headers* associados com a requisição.              |
+| `port`                                       | O número (*integer*) da porta utilizada para a requisição.                        |
+| `protocol`                                   | Retorna uma *string* contendo o protocolo utilizado, além do trecho "://". Por exemplo: "http://". |
+| `query_string`                               | A *query string* da URL (todo o trecho após "?").                                 |
+| `remote_ip`                                  | O endereço IP do cliente.                                                         |
+| `url`                                        | A URL completa utilizada para a requisição.                                       |
 
-Rails collects all of the parameters sent along with the request in the `params` hash, whether they are sent as part of the query string or the post body. The request object has three accessors that give you access to these parameters depending on where they came from. The `query_parameters` hash contains parameters that were sent as part of the query string while the `request_parameters` hash contains parameters sent as part of the post body. The `path_parameters` hash contains parameters that were recognized by the routing as being part of the path leading to this particular controller and action.
+#### `path_parameters`, `query_parameters`, e `request_parameters`
 
-### The `response` Object
+O *Rails* armazena todos os parâmetros enviados com a requisição no *hash* `params`, não importando se eles foram enviados como parte da *query string* ou no corpo da requisição. O objeto de requisição tem três métodos de acesso que te fornecem acesso a estes parâmetros dependendo de onde eles vieram. O *hash* [`query_parameters`][] contem os parâmetros que foram enviados por meio da *query_string* enquanto o *hash* [`request_parameters`][] contém os parâmetros enviados através do corpo da requisição. O *hash* [`path_parameters`][] contém os parâmetros que foram reconhecidos pelo roteamento como parte do caminho que leva ao *controller* e *action* sendo executados.
 
-The response object is not usually used directly, but is built up during the execution of the action and rendering of the data that is being sent back to the user, but sometimes - like in an after filter - it can be useful to access the response directly. Some of these accessor methods also have setters, allowing you to change their values. To get a full list of the available methods, refer to the [Rails API documentation](https://api.rubyonrails.org/classes/ActionDispatch/Response.html) and [Rack Documentation](https://www.rubydoc.info/github/rack/rack/Rack/Response).
+[`path_parameters`]: https://api.rubyonrails.org/classes/ActionDispatch/Http/Parameters.html#method-i-path_parameters
+[`query_parameters`]: https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-query_parameters
+[`request_parameters`]: https://api.rubyonrails.org/classes/ActionDispatch/Request.html#method-i-request_parameters
 
-| Property of `response` | Purpose                                                                                             |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| body                   | This is the string of data being sent back to the client. This is most often HTML.                  |
-| status                 | The HTTP status code for the response, like 200 for a successful request or 404 for file not found. |
-| location               | The URL the client is being redirected to, if any.                                                  |
-| content_type           | The content type of the response.                                                                   |
-| charset                | The character set being used for the response. Default is "utf-8".                                  |
-| headers                | Headers used for the response.                                                                      |
+### O Objeto `response`
 
-#### Setting Custom Headers
+O objeto de resposta geralmente não é usado diretamente, mas é construído durante a execução da *action* e renderização dos dados que serão enviados de volta ao usuário, porém às vezes - como num filtro posterior - ele pode ser útil para acessar a resposta diretamente. Alguns destes métodos de acesso também possuem *setters*, lhe permitindo mudar seus valores. Para obter uma lista completa dos métodos disponíveis verifique a [documentação da API do Rails](https://api.rubyonrails.org/classes/ActionDispatch/Response.html) e a [documentação do Rack](https://www.rubydoc.info/github/rack/rack/Rack/Response);
 
-If you want to set custom headers for a response then `response.headers` is the place to do it. The headers attribute is a hash which maps header names to their values, and Rails will set some of them automatically. If you want to add or change a header, just assign it to `response.headers` this way:
+| Propriedade de `response` | Propósito                                                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------- |
+| `body`                    | Esta é a *string* de dados sendo enviada de volta ao usuário. Na maioria dos casos se trata de código HTML.    |
+| `status`                  | O código de *status* HTTP para a resposta, como um código 200 para uma requisição bem sucedida ou 404 para um arquivo não encontrado.    |
+| `location`                | A URL que o cliente estiver sendo redirecionado para, caso haja alguma.                 |
+| `content_type`            | O tipo de conteúdo da resposta.                                                         |
+| `charset`                 | O conjunto de caracteres sendo utilizado na resposta. O valor padrão é "utf-8".         |
+| `headers`                 | *Headers* utilizados para a resposta.                                                   |
+
+#### Definindo *Headers* customizados
+
+Se você quer definir *headers* customizados para uma resposta então `response.headers` é o local indicado para ajustar isto. O atributo *headers* é um *hash* que mapeia os nomes dos *headers* para seus respectivos valores, e o Rails irá definir alguns deles automaticamente. Se você quiser adicionar ou modificar um *header*, basta sinalizá-lo para `response.headers` da seguinte maneira:
 
 ```ruby
 response.headers["Content-Type"] = "application/pdf"
 ```
 
-NOTE: In the above case it would make more sense to use the `content_type` setter directly.
+NOTE: No caso acima faria mais sentido utilizar o *setter* `content_type` diretamente.
 
-HTTP Authentications
---------------------
+Autenticações HTTP
+------------------
 
-Rails comes with two built-in HTTP authentication mechanisms:
+O Rails vem com três mecanismos de autenticação HTTP embutidos:
 
-* Basic Authentication
-* Digest Authentication
+* Autenticação *Basic*
+* Autenticação *Digest*
+* Autenticação *Token*
 
-### HTTP Basic Authentication
+### Autenticação HTTP *Basic*
 
-HTTP basic authentication is an authentication scheme that is supported by the majority of browsers and other HTTP clients. As an example, consider an administration section which will only be available by entering a username and a password into the browser's HTTP basic dialog window. Using the built-in authentication is quite easy and only requires you to use one method, `http_basic_authenticate_with`.
+Autenticação HTTP *basic* é um esquema de autenticação que é suportado pela maioria dos navegadores e outros clientes HTTP. Como um exemplo, considere uma página de administração que será acessável apenas informando um nome de usuário e uma senha na janela de autenticação HTTP *basic* do navegador. Usar a autenticação embutida é bem fácil e apenas requer que você use um método, [`http_basic_authenticate_with`][].
 
 ```ruby
 class AdminsController < ApplicationController
@@ -875,11 +880,13 @@ class AdminsController < ApplicationController
 end
 ```
 
-With this in place, you can create namespaced controllers that inherit from `AdminsController`. The filter will thus be run for all actions in those controllers, protecting them with HTTP basic authentication.
+Com isso, você pode criar *controllers* com *namespaces* que herdam de `AdminsController`. O filtro vai, assim, ser executado para todas as ações nos *controllers*, protegendo-os com a autenticação HTTP *basic*.
 
-### HTTP Digest Authentication
+[`http_basic_authenticate_with`]: https://api.rubyonrails.org/classes/ActionController/HttpAuthentication/Basic/ControllerMethods/ClassMethods.html#method-i-http_basic_authenticate_with
 
-HTTP digest authentication is superior to the basic authentication as it does not require the client to send an unencrypted password over the network (though HTTP basic authentication is safe over HTTPS). Using digest authentication with Rails is quite easy and only requires using one method, `authenticate_or_request_with_http_digest`.
+### Autenticação HTTP *Digest*
+
+A autenticação HTTP *digest* é superior à autenticação *basic* porque ela não requer que o cliente envie uma senha sem criptografia pela rede (embora a autenticação HTTP *basic* seja segura via HTTPS). Usar a autenticação *digest* com Rails é bem fácil e requer apenas o uso de um método, [`authenticate_or_request_with_http_digest`][].
 
 ```ruby
 class AdminsController < ApplicationController
@@ -888,7 +895,6 @@ class AdminsController < ApplicationController
   before_action :authenticate
 
   private
-
     def authenticate
       authenticate_or_request_with_http_digest do |username|
         USERS[username]
@@ -897,20 +903,47 @@ class AdminsController < ApplicationController
 end
 ```
 
-As seen in the example above, the `authenticate_or_request_with_http_digest` block takes only one argument - the username. And the block returns the password. Returning `false` or `nil` from the `authenticate_or_request_with_http_digest` will cause authentication failure.
+Como visto no exemplo acima, o bloco `authenticate_or_request_with_http_digest` recebe apenas um argumento - o nome de usuário. E o bloco retorna a senha. Retornar `false` ou `nil` em `authenticate_or_request_with_http_digest` causará falha de autenticação.
 
-Streaming and File Downloads
+[`authenticate_or_request_with_http_digest`]: https://api.rubyonrails.org/classes/ActionController/HttpAuthentication/Digest/ControllerMethods.html#method-i-authenticate_or_request_with_http_digest
+
+### Autenticação HTTP *Token*
+
+A autenticação de *token* HTTP é um esquema para habilitar o uso de *tokens Bearer* no *header* HTTP `Authorization`. Existem muitos formatos de *token* disponíveis e sua descrição está fora do escopo desta documentação.
+
+Por exemplo, suponha que você queira usar um *token* de autenticação emitido com antecedência para realizar a autenticação e o acesso. Implementar autenticação via *token* com Rails é bastante fácil e requer apenas o uso de um método, [`authenticate_or_request_with_http_token`][].
+
+```ruby
+class PostsController < ApplicationController
+  TOKEN = "secret"
+
+  before_action :authenticate
+
+  private
+    def authenticate
+      authenticate_or_request_with_http_token do |token, options|
+        ActiveSupport::SecurityUtils.secure_compare(token, TOKEN)
+      end
+    end
+end
+```
+
+Como visto no exemplo acima, o bloco `authenticate_or_request_with_http_token` recebe dois argumentos: o *token* e um` Hash` contendo as opções que foram analisadas a partir do *header* HTTP `Authorization`. O bloco deve retornar `true` se a autenticação for bem-sucedida. Retornar `false` ou` nil` causará uma falha de autenticação.
+
+[`authenticate_or_request_with_http_token`]: https://api.rubyonrails.org/classes/ActionController/HttpAuthentication/Token/ControllerMethods.html#method-i-authenticate_or_request_with_http_token
+
+*Streaming* e *Downloads* de Arquivos
 ----------------------------
 
-Sometimes you may want to send a file to the user instead of rendering an HTML page. All controllers in Rails have the `send_data` and the `send_file` methods, which will both stream data to the client. `send_file` is a convenience method that lets you provide the name of a file on the disk and it will stream the contents of that file for you.
+Às vezes você pode querer enviar um arquivo para o usuário ao invés de uma página HTML. Todos os _controllers_ no Rails possuem os métodos [`send_data`][] e [`send_file`][], que transmitem dados ao navegador. O método `send_file` permite que você proveja o nome do arquivo no disco e seu conteúdo será transmitido.
 
-To stream data to the client, use `send_data`:
+Para transmitir dados para o navegador, use `send_data`:
 
 ```ruby
 require "prawn"
 class ClientsController < ApplicationController
-  # Generates a PDF document with information on the client and
-  # returns it. The user will get the PDF as a file download.
+  # Gera um documento PDF com informações no navegador e
+  # o retorna. O usuário receberá o documento PDF como um download.
   def download_pdf
     client = Client.find(params[:id])
     send_data generate_pdf(client),
@@ -919,7 +952,6 @@ class ClientsController < ApplicationController
   end
 
   private
-
     def generate_pdf(client)
       Prawn::Document.new do
         text client.name, align: :center
@@ -930,15 +962,18 @@ class ClientsController < ApplicationController
 end
 ```
 
-The `download_pdf` action in the example above will call a private method which actually generates the PDF document and returns it as a string. This string will then be streamed to the client as a file download and a filename will be suggested to the user. Sometimes when streaming files to the user, you may not want them to download the file. Take images, for example, which can be embedded into HTML pages. To tell the browser a file is not meant to be downloaded, you can set the `:disposition` option to "inline". The opposite and default value for this option is "attachment".
+A _action_ `download_pdf` no exemplo acima está chamando um método privado que na verdade cria o documento PDF e o retorna como uma _string_. Essa _string_ será então transmitida ao navegador como um arquivo para download e o nome do arquivo será sugerido ao usuário. Às vezes, quando arquivos são transmitidos aos usuários, você pode não querer que façam o download do arquivo. Imagens, por exemplo, podem ser embutidas em páginas HTML. Para comunicar ao navegador que não deve ser feito o download do arquivo, você pode utilizar a propriedade `inline` na opção `:disposition`. A propriedade oposta e padrão para essa opção é "_attachment_".
 
-### Sending Files
+[`send_data`]: https://api.rubyonrails.org/classes/ActionController/DataStreaming.html#method-i-send_data
+[`send_file`]: https://api.rubyonrails.org/classes/ActionController/DataStreaming.html#method-i-send_file
 
-If you want to send a file that already exists on disk, use the `send_file` method.
+### Enviando Arquivos
+
+Se você deseja enviar um arquivo que já existe no disco, utilize o método `send_file`.
 
 ```ruby
 class ClientsController < ApplicationController
-  # Stream a file that has already been generated and stored on disk.
+  # Transmite um arquivo que já foi gerado e salvo no disco.
   def download_pdf
     client = Client.find(params[:id])
     send_file("#{Rails.root}/files/clients/#{client.id}.pdf",
@@ -948,21 +983,21 @@ class ClientsController < ApplicationController
 end
 ```
 
-This will read and stream the file 4kB at the time, avoiding loading the entire file into memory at once. You can turn off streaming with the `:stream` option or adjust the block size with the `:buffer_size` option.
+Esse método irá ler e transmitir o arquivo 4 kb por vez, evitando carregar o arquivo inteiro em memória de uma vez. Você pode desativar a transmissão com a opção `:stream` ou ajustar o tamanho do bloco com a opção `:buffer_size`.
 
-If `:type` is not specified, it will be guessed from the file extension specified in `:filename`. If the content type is not registered for the extension, `application/octet-stream` will be used.
+Se a opção `:type` não for especificada, será presumido de acordo com a extensão especificada no `:filename`. Se o tipo do conteúdo (`content-type`) não estiver registrado para a extensão, será usado `application/octet-stream`.
 
-WARNING: Be careful when using data coming from the client (params, cookies, etc.) to locate the file on disk, as this is a security risk that might allow someone to gain access to files they are not meant to.
+WARNING:  Tenha cuidado ao utilizar dados vindos do navegador ( _params_, _cookies_, etc.) para localizar um arquivo no disco, pois é um risco de segurança que pode permitir a alguém ter acesso a arquivos não permitidos.
 
-TIP: It is not recommended that you stream static files through Rails if you can instead keep them in a public folder on your web server. It is much more efficient to let the user download the file directly using Apache or another web server, keeping the request from unnecessarily going through the whole Rails stack.
+TIP: Não é recomendado que você transmita arquivos estáticos através do Rails, você pode, ao invés disso, mantê-los em uma pasta pública no seu servidor _web_. É muito mais eficiente deixar os usuários baixarem os arquivos diretamente utilizando _Apache_ ou outro servidor _web_, evitando que a requisição passe, sem necessidade, por todo o fluxo do Rails.
 
-### RESTful Downloads
+### _RESTful_ _Downloads_
 
-While `send_data` works just fine, if you are creating a RESTful application having separate actions for file downloads is usually not necessary. In REST terminology, the PDF file from the example above can be considered just another representation of the client resource. Rails provides an easy and quite sleek way of doing "RESTful downloads". Here's how you can rewrite the example so that the PDF download is a part of the `show` action, without any streaming:
+Apesar de o método `send_data` funcionar tranquilamente, se você está criando uma aplicação _RESTful_, geralmente não é necessário ter _actions_ separadas para o _download_ de arquivos. Na terminologia _REST_, o arquivo PDF do exemplo acima pode ser considerado apenas uma outra representação do recurso do navegador. Rails provê um jeito fácil e prático de fazer "downloads _RESTful_". Veja como você pode re-escrever o exemplo para que o _download_ do PDF seja parte da _action_ `show`, sem qualquer transmissão:
 
 ```ruby
 class ClientsController < ApplicationController
-  # The user can request to receive this resource as HTML or PDF.
+  # O usuário pode solicitar receber este recurso como HTML ou PDF.
   def show
     @client = Client.find(params[:id])
 
@@ -974,33 +1009,34 @@ class ClientsController < ApplicationController
 end
 ```
 
-In order for this example to work, you have to add the PDF MIME type to Rails. This can be done by adding the following line to the file `config/initializers/mime_types.rb`:
+Para que este exemplo funcione, você deve adicionar o `MIME type` ao Rails. Isso pode ser feito adicionando a seguinte linha ao arquivo `config/initializers/mime_types.rb`:
 
 ```ruby
 Mime::Type.register "application/pdf", :pdf
 ```
 
-NOTE: Configuration files are not reloaded on each request, so you have to restart the server in order for their changes to take effect.
+NOTE: Arquivos de configuração não são recarregados a cada requisição, então você precisa reiniciar seu servidor para que as mudanças tenham efeito.
 
-Now the user can request to get a PDF version of a client just by adding ".pdf" to the URL:
+Agora os usuários podem requerer um arquivo em PDF só adicionando ".pdf" ao final da _URL_:
 
-```bash
+```
 GET /clients/1.pdf
 ```
 
-### Live Streaming of Arbitrary Data
+### Transmissão Ao Vivo de Dado Arbitrários
 
-Rails allows you to stream more than just files. In fact, you can stream anything
-you would like in a response object. The `ActionController::Live` module allows
-you to create a persistent connection with a browser. Using this module, you will
-be able to send arbitrary data to the browser at specific points in time.
+O Rails permite que você transmita mais do que apenas arquivos. Na verdade, você pode transmitir o que você desejar
+como um objeto de resposta. O modulo [`ActionController::Live`][] permite
+a você criar uma conexão persistente com o navegador. Utilizando esse módulo, você é capaz
+de enviar dados arbitrários ao navegador sem depender de uma requisição _HTTP_.
 
+[`ActionController::Live`]: https://api.rubyonrails.org/classes/ActionController/Live.html
 
-#### Incorporating Live Streaming
+#### Implementando Transmissão Ao Vivo ( _Live Streaming_ )
 
-Including `ActionController::Live` inside of your controller class will provide
-all actions inside of the controller the ability to stream data. You can mix in
-the module like so:
+Incluindo `ActionController::Live` dentro do seu _controller_ irá prover a todas as
+_actions_ do seu _controller_ a habilidade de transmitir dados. Você pode mesclar o modulo
+da seguinte forma:
 
 ```ruby
 class MyController < ActionController::Base
@@ -1018,25 +1054,20 @@ class MyController < ActionController::Base
 end
 ```
 
-The above code will keep a persistent connection with the browser and send 100
-messages of `"hello world\n"`, each one second apart.
+O código acima manterá uma conexão constante com o navegador e mandará 100 mensagens de `"hello world\n"`, cada uma com um segundo de diferença.
 
-There are a couple of things to notice in the above example. We need to make
-sure to close the response stream. Forgetting to close the stream will leave
-the socket open forever. We also have to set the content type to `text/event-stream`
-before we write to the response stream. This is because headers cannot be written
-after the response has been committed (when `response.committed?` returns a truthy
-value), which occurs when you `write` or `commit` the response stream.
+Existem algumas coisas a serem notadas no exemplo acima. Nós precisamos
+ter certeza de que a resposta da transmissão foi terminada. Esquecer de encerrar a transmissão deixará
+o *socket* aberto pra sempre. Nós também precisamos estabelecer o tipo de conteúdo (`content_type`) para `text/event-stream`
+antes de responder a transmissão. Isso é necessário, pois _headers_ não podem ser escritos
+depois que uma resposta foi enviada (quando `response.committed?` retorna um
+valor _truthy_), que ocorre quando você escreve ou envia (`commit`) a resposta de uma transmissão.
 
-#### Example Usage
+#### Exemplo de Uso
 
-Let's suppose that you were making a Karaoke machine and a user wants to get the
-lyrics for a particular song. Each `Song` has a particular number of lines and
-each line takes time `num_beats` to finish singing.
+Vamos supor que você estivesse criando uma máquina de Karaokê e um usuário quer achar a letra de uma música em particular. Cada música (`Song`) tem um número específico de linhas e cada linha tem um tempo (`num_beats`) para terminar de ser cantada.
 
-If we wanted to return the lyrics in Karaoke fashion (only sending the line when
-the singer has finished the previous line), then we could use `ActionController::Live`
-as follows:
+Se nós quiséssemos retornar as letras no estilo de Karaokê (mandar a linha só quando a linha anterior for terminada de cantar), então poderíamos usar `ActionController::Live` da seguinte forma:
 
 ```ruby
 class LyricsController < ActionController::Base
@@ -1056,96 +1087,99 @@ class LyricsController < ActionController::Base
 end
 ```
 
-The above code sends the next line only after the singer has completed the previous
-line.
+O código acima envia a próxima linha apenas depois que a pessoa cantando completou a linha anterior.
 
-#### Streaming Considerations
+#### Considerações da Transmissão
 
-Streaming arbitrary data is an extremely powerful tool. As shown in the previous
-examples, you can choose when and what to send across a response stream. However,
-you should also note the following things:
+Transmitir dados arbitrários é uma ferramenta extremamente poderosa. Como mostrado nos exemplos anteriores, você pode escolher quando e o que enviar na resposta da transmissão. Entretanto, você deveria se atentar aos seguintes pontos:
 
-* Each response stream creates a new thread and copies over the thread local
-  variables from the original thread. Having too many thread local variables can
-  negatively impact performance. Similarly, a large number of threads can also
-  hinder performance.
-* Failing to close the response stream will leave the corresponding socket open
-  forever. Make sure to call `close` whenever you are using a response stream.
-* WEBrick servers buffer all responses, and so including `ActionController::Live`
-  will not work. You must use a web server which does not automatically buffer
-  responses.
+* Cada transmissão cria uma nova _thread_ e copia sobre as variáveis locais da
+  _thread_, as variáveis da _thread_ original. Ter muitas variáveis locais em uma
+  _thread_ local pode impactar negativamente na performance. Da mesma forma, um
+  grande número de _threads_ pode também piorar a performance.
+* Deixar de encerrar a transmissão deixará o _socket_ correspondente aberto para
+  sempre. Certifique-se de chamar o método `close` sempre que estiver transmitindo
+  dados.
+* Os servidores WEBrick armazena todas as respostas, então apenas incluir no
+  _controller_ `ActionController::Live` não irá funcionar. Você deve usar um
+  servidor web que não armazene automaticamente as respostas.
 
-Log Filtering
+Filtragem de Log
 -------------
 
-Rails keeps a log file for each environment in the `log` folder. These are extremely useful when debugging what's actually going on in your application, but in a live application you may not want every bit of information to be stored in the log file.
+Rails mantém um arquivo de log pra cada ambiente na pasta `log`. Eles são bastante úteis quando estamos depurando o que está de fato acontecendo na sua aplicação, porém você pode não querer que sejam salvos todas as informações sejam armazenadas no arquivo de log em uma aplicação ativa.
 
-### Parameters Filtering
+### Filtrando Parâmetros
 
-You can filter out sensitive request parameters from your log files by appending them to `config.filter_parameters` in the application configuration. These parameters will be marked [FILTERED] in the log.
+Você pode evitar que parâmetros sensíveis da requisição sejam salvos no seu arquivo de log
+adicionando-os a [`config.filter_parameters`][] na configuração da aplicação.
+Esses parâmetros aparecerão como [FILTERED] no arquivo de log.
 
 ```ruby
 config.filter_parameters << :password
 ```
 
-NOTE: Provided parameters will be filtered out by partial matching regular expression. Rails adds default `:password` in the appropriate initializer (`initializers/filter_parameter_logging.rb`) and cares about typical application parameters `password` and `password_confirmation`.
+NOTE: Os parâmetros fornecidos serão filtrados correspondendo parcialmente a uma expressão
+regular. O Rails por padrão adiciona `:passw`, `:secret`, `:token` no *initializer*
+apropriado (`initializers/filter_parameter_logging.`) e se preocupa com parâmetros típicos da aplicação
+como `password`, `password_confirmation` e `my_token`.
 
-### Redirects Filtering
+[`config.filter_parameters`]: configuring.html#config-filter-parameters
 
-Sometimes it's desirable to filter out from log files some sensitive locations your application is redirecting to.
-You can do that by using the `config.filter_redirect` configuration option:
+### Filtrando Redirecionamentos
+
+Às vezes é desejável que sejam filtrados dos arquivos de log alguns locais sensíveis para os quais sua aplicação está redirecionando.
+Você pode fazer isso utilizando uma opção de configuração `config.filter_redirect`:
 
 ```ruby
 config.filter_redirect << 's3.amazonaws.com'
 ```
 
-You can set it to a String, a Regexp, or an array of both.
+Você pode utilizar uma _String_, uma expressão regular ou um array com ambos.
 
 ```ruby
 config.filter_redirect.concat ['s3.amazonaws.com', /private_path/]
 ```
 
-Matching URLs will be marked as '[FILTERED]'.
+_URLs_ correspondentes com a expressão regular serão marcadas como  '[FILTERED]'.
 
 Rescue
 ------
 
-Most likely your application is going to contain bugs or otherwise throw an exception that needs to be handled. For example, if the user follows a link to a resource that no longer exists in the database, Active Record will throw the `ActiveRecord::RecordNotFound` exception.
+Muito provavelmente sua aplicação irá conter bugs ou enviar exceções que precisam ser tratadas. Por exemplo, se o usuário acessar um link que não possui uma fonte no banco de dados, o Active Record enviará `ActiveRecord::RecordNotFound` como exceção.
 
-Rails default exception handling displays a "500 Server Error" message for all exceptions. If the request was made locally, a nice traceback and some added information gets displayed so you can figure out what went wrong and deal with it. If the request was remote Rails will just display a simple "500 Server Error" message to the user, or a "404 Not Found" if there was a routing error or a record could not be found. Sometimes you might want to customize how these errors are caught and how they're displayed to the user. There are several levels of exception handling available in a Rails application:
+A exceção padrão do Rails apresenta a mensagem "500 Server Error" para todas as exceções. Se a requisição for feita localmente, um belo *traceback* e outras informações serão mostradas assim você pode verificar o que deu errado e tratar o problema. Se a requisição for remota o Rails apenas apresentará a mensagem "500 Server Error" para o usuário, ou um "404 Not Found" se houver um erro na rota ou o registro não puder ser encontrado. As vezes você pode querer customizar como esses erros são encontrados e como são apresentados ao usuário. Há diversos níveis de tratamento de excessões disponiveis em uma aplicação Rails:
 
-### The Default 500 and 404 Templates
+### Os *Templates* 404 e 500 Padrão
 
-By default a production application will render either a 404 or a 500 error message, in the development environment all unhandled exceptions are raised. These messages are contained in static HTML files in the public folder, in `404.html` and `500.html` respectively. You can customize these files to add some extra information and style, but remember that they are static HTML; i.e. you can't use ERB, SCSS, CoffeeScript, or layouts for them.
+Por padrão no ambiente de produção a aplicação irá renderizar uma mensagem em um template de erro 404 ou 500. No ambiente de desenvolvimento todas as mensagens de erro são disparadas. Essas mensagens são armazenadas em templates estáticos de HTML na pasta *public*, em `404.html` e `500.html` respectivamente. Você pode customizar essas páginas e adicionar algumas estilizações, mas lembre-se elas são HTML estáticos; i.e. você não pode usar ERB, SCSS, CoffeeScript, ou layouts para elas.
 
 ### `rescue_from`
 
-If you want to do something a bit more elaborate when catching errors, you can use `rescue_from`, which handles exceptions of a certain type (or multiple types) in an entire controller and its subclasses.
+Se você quiser fazer algo mais elaborado quando estiver lidando com erros, você pode usar [`rescue_from`][], que trata as exceções de um certo tipo (ou de vários tipos) em um *controller* inteiro e nas subclasses.
 
-When an exception occurs which is caught by a `rescue_from` directive, the exception object is passed to the handler. The handler can be a method or a `Proc` object passed to the `:with` option. You can also use a block directly instead of an explicit `Proc` object.
+Quando uma exceção acontece e é pega por uma diretiva `rescue_from`, o objeto da exceção é passado ao *handler*. O *handler* pode ser um método ou um objeto `Proc` passado com a opção `:with`. Você também pode usar um bloco diretamente ao invés de um objeto `Proc`.
 
-Here's how you can use `rescue_from` to intercept all `ActiveRecord::RecordNotFound` errors and do something with them.
+Aqui está um exemplo de como você pode usar `rescue_from` para interceptar todos os erros `ActiveRecord::RecordNotFound` e fazer algo com eles.
 
 ```ruby
 class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
   private
-
     def record_not_found
       render plain: "404 Not Found", status: 404
     end
 end
 ```
 
-Of course, this example is anything but elaborate and doesn't improve on the default exception handling at all, but once you can catch all those exceptions you're free to do whatever you want with them. For example, you could create custom exception classes that will be thrown when a user doesn't have access to a certain section of your application:
+É claro, que este exemplo não é nada elaborado e não melhora muito a forma original de lidar com os erros, mas uma vez que você capture todas essas exceções você é livre para fazer o que quiser com elas. Por exemplo, você pode criar uma exceção personalizada para quando o usuário não tem acesso a uma parte da aplicação:
 
 ```ruby
 class ApplicationController < ActionController::Base
   rescue_from User::NotAuthorized, with: :user_not_authorized
 
   private
-
     def user_not_authorized
       flash[:error] = "You don't have access to this section."
       redirect_back(fallback_location: root_path)
@@ -1162,7 +1196,6 @@ class ClientsController < ApplicationController
   end
 
   private
-
     # If the user is not authorized, just throw the exception.
     def check_authorization
       raise User::NotAuthorized unless current_user.admin?
@@ -1170,17 +1203,21 @@ class ClientsController < ApplicationController
 end
 ```
 
-WARNING: Using `rescue_from` with `Exception` or `StandardError` would cause serious side-effects as it prevents Rails from handling exceptions properly. As such, it is not recommended to do so unless there is a strong reason.
+WARNING: Ao usar `rescue_from` com `Exception` ou `StandardError` pode causar efeitos colaterais já que previne o Rails de lidar com as exceções apropriadamente. Dessa forma, não é recomendado fazer sem uma boa razão.
 
-NOTE: When running in the production environment, all
-`ActiveRecord::RecordNotFound` errors render the 404 error page. Unless you need
-a custom behavior you don't need to handle this.
+NOTE: Quando rodando em ambiente de desenvolvimento, todos os erros
+`ActiveRecord::RecordNotFound` renderizam uma página 404. A não ser que você precise de uma forma especifica de tratar isso você não precisa tratar isso.
 
-NOTE: Certain exceptions are only rescuable from the `ApplicationController` class, as they are raised before the controller gets initialized and the action gets executed.
+NOTE: Certas exceções são tratadas apenas pela classe `ApplicationController`, já que são acionadas antes do controller ser iniciado a exceção é executada.
 
-Force HTTPS protocol
+[`rescue_from`]: https://api.rubyonrails.org/classes/ActiveSupport/Rescuable/ClassMethods.html#method-i-rescue_from
+
+Forçar o Protocolo HTTPS
 --------------------
 
-If you'd like to ensure that communication to your controller is only possible
-via HTTPS, you should do so by enabling the `ActionDispatch::SSL` middleware via
-`config.force_ssl` in your environment configuration.
+Se você quiser garantir que a comunicação com seu *controller* seja possível apenas
+via HTTPS, você deve fazer isso ativando o middleware [`ActionDispatch::SSL`][] via
+[`config.force_ssl`][] na configuração do seu ambiente.
+
+[`config.force_ssl`]: configuring.html#config-force-ssl
+[`ActionDispatch::SSL`]: https://api.rubyonrails.org/classes/ActionDispatch/SSL.html

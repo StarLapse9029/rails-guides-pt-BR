@@ -1,107 +1,114 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
 Active Support Core Extensions
 ==============================
 
-Active Support is the Ruby on Rails component responsible for providing Ruby language extensions, utilities, and other transversal stuff.
+O _Active Support_ é o componente em Ruby on Rails responsável por fornecer à linguagem Ruby extensões e utilidades.
 
-It offers a richer bottom-line at the language level, targeted both at the development of Rails applications, and at the development of Ruby on Rails itself.
+Ele oferece um riquíssimo ponto de partida no nível da linguagem, onde pode-se aproveitar tanto para o desenvolvimento de aplicações Rails, quanto no próprio desenvolvimento da tecnologia Ruby on Rails.
 
-After reading this guide, you will know:
+Depois de ler esse guia, você saberá:
 
-* What Core Extensions are.
-* How to load all extensions.
-* How to cherry-pick just the extensions you want.
-* What extensions Active Support provides.
+* O que são _Core Extensions_.
+* Como carregar todas as extensões.
+* Como escolher apenas as extensões que você precisa.
+* Quais extensões o _Active Support_ fornece.
 
 --------------------------------------------------------------------------------
 
-How to Load Core Extensions
+Como Carregar _Core Extensions_
 ---------------------------
 
-### Stand-Alone Active Support
+### _Active Support Stand-Alone_
 
-In order to have a near-zero default footprint, Active Support does not load anything by default. It is broken in small pieces so that you can load just what you need, and also has some convenience entry points to load related extensions in one shot, even everything.
+Para ter o menor espaço padrão possível, o *Active Support* carrega as dependências mínimas por padrão. Ele é quebrado em pequenos pedaços para que apenas as extensões desejadas possam ser carregadas. Ele também possui alguns pontos de entrada convenientes para carregar extensões relacionadas de uma só vez, até mesmo tudo.
 
-Thus, after a simple require like:
-
-```ruby
-require 'active_support'
-```
-
-objects do not even respond to `blank?`. Let's see how to load its definition.
-
-#### Cherry-picking a Definition
-
-The most lightweight way to get `blank?` is to cherry-pick the file that defines it.
-
-For every single method defined as a core extension this guide has a note that says where such a method is defined. In the case of `blank?` the note reads:
-
-NOTE: Defined in `active_support/core_ext/object/blank.rb`.
-
-That means that you can require it like this:
+Portanto, é possível inicializar após o uso de um simples _require_ como:
 
 ```ruby
-require 'active_support'
-require 'active_support/core_ext/object/blank'
+require "active_support"
 ```
 
-Active Support has been carefully revised so that cherry-picking a file loads only strictly needed dependencies, if any.
+apenas as extensões exigidas pela estrutura do *Active Support* são carregadas.
 
-#### Loading Grouped Core Extensions
+#### Escolhendo a Definição
 
-The next level is to simply load all extensions to `Object`. As a rule of thumb, extensions to `SomeClass` are available in one shot by loading `active_support/core_ext/some_class`.
-
-Thus, to load all extensions to `Object` (including `blank?`):
+Este exemplo mostra como carregar [`Hash#with_indifferent_access`][Hash#with_indifferent_access]. Esta extensão permite a conversão de um `Hash` em um [`ActiveSupport::HashWithIndifferentAccess`][ActiveSupport::HashWithIndifferentAccess] que permite o acesso às chaves como *strings* ou *symbols*.
 
 ```ruby
-require 'active_support'
-require 'active_support/core_ext/object'
+{a: 1}.with_indifferent_access["a"] # => 1
 ```
 
-#### Loading All Core Extensions
+Para cada método definido como _core extension_ esse guia possui uma nota que diz onde tal método é definido. No caso de `with_indifferent_access` a nota diz:
 
-You may prefer just to load all core extensions, there is a file for that:
+NOTE: Definido em `active_support/core_ext/hash/indifferent_access.rb`.
+
+Isso significa que você pode fazer _requires_ assim:
 
 ```ruby
-require 'active_support'
-require 'active_support/core_ext'
+require "active_support"
+require "active_support/core_ext/hash/indifferent_access"
 ```
 
-#### Loading All Active Support
+O _Active Support_ foi cuidadosamente projetado para que as seleções de arquivos carreguem somente as dependências extremamente necessárias, caso existam.
 
-And finally, if you want to have all Active Support available just issue:
+#### Carregando _Core Extensions_ Agrupadas
+
+O próximo passo é simplesmente carregar todas as extensões de `Hash`. Como regra geral, extensões para `SomeClass` estão disponíveis em um rápido carregamento de `active_support/core_ext/some_class`.
+
+Portanto, para carregar todas as extensões de `Hash` (incluindo `with_indifferent_access`):
 
 ```ruby
-require 'active_support/all'
+require "active_support"
+require "active_support/core_ext/hash"
 ```
 
-That does not even put the entire Active Support in memory upfront indeed, some stuff is configured via `autoload`, so it is only loaded if used.
+#### Carregando Todas _Core Extensions_
 
-### Active Support Within a Ruby on Rails Application
+Você pode escolher por carregar todas as extensões principais, há um arquivo para isso:
 
-A Ruby on Rails application loads all Active Support unless `config.active_support.bare` is true. In that case, the application will only load what the framework itself cherry-picks for its own needs, and can still cherry-pick itself at any granularity level, as explained in the previous section.
+```ruby
+require "active_support"
+require "active_support/core_ext"
+```
 
-Extensions to All Objects
+#### Carregando _Active Support_ Completamente
+
+E finalmente, se você quer ter tudo que o _Active Support_ fornece, basta apenas:
+
+```ruby
+require "active_support/all"
+```
+
+Isso não vai inserir todo o _Active Support_ na memória antes do necessário, algumas funcionalidades são configuradas via _ʻautoload`_, então só são carregadas se usadas.
+
+### _Active Support_ Em Uma Aplicação Ruby on Rails
+
+Uma aplicação Ruby on Rails carrega todo o _Active Support_ a não ser que [`config.active_support.bare`][] esteja definida como `true`. Neste caso, a aplicação vai carregar apenas o que o próprio _framework_ escolhe como suas próprias necessidades, e ainda pode selecionar a si mesmo em qualquer nível de granularidade, conforme explicado na seção anterior.
+
+[`config.active_support.bare`]: configuring.html#config-active-support-bare
+
+Extensões para todos os objetos
 -------------------------
 
-### `blank?` and `present?`
+### `blank?` e `present?`
 
-The following values are considered to be blank in a Rails application:
+Os seguintes valores são considerados _blank_ em uma aplicação Rails:
 
-* `nil` and `false`,
+* `nil` e `false`,
 
-* strings composed only of whitespace (see note below),
+* _strings_ compostas apenas por espaços em branco (veja a nota abaixo),
 
-* empty arrays and hashes, and
+* _arrays_ e _hashes_ vazios, e
 
-* any other object that responds to `empty?` and is empty.
+* qualquer outro objeto que responde a `empty?` como `true`.
 
-INFO: The predicate for strings uses the Unicode-aware character class `[:space:]`, so for example U+2029 (paragraph separator) is considered to be whitespace.
+INFO: A condicional é que as _strings_ usem a classe de caractere `[:space:]` do _Unicode-aware_, como por exemplo U+2029 (separador de parágrafo) é considerado um espaço em branco.
 
-WARNING: Note that numbers are not mentioned. In particular, 0 and 0.0 are **not** blank.
+WARNING: Note que números não são mencionados. Em particular, 0 e 0.0 **não** são _blank_.
 
-For example, this method from `ActionController::HttpAuthentication::Token::ControllerMethods` uses `blank?` for checking whether a token is present:
+Por exemplo, este método de `ActionController::HttpAuthentication::Token::ControllerMethods` usa [`blank?`][Object#blank?] pra checar se o _token_ está presente:
 
 ```ruby
 def authenticate(controller, &login_procedure)
@@ -112,30 +119,35 @@ def authenticate(controller, &login_procedure)
 end
 ```
 
-The method `present?` is equivalent to `!blank?`. This example is taken from `ActionDispatch::Http::Cache::Response`:
+O método [`present?`][Object#present?] é equivalente ao `!blank?`. Este exemplo disponível em `ActionDispatch::Http::Cache::Response`:
 
 ```ruby
 def set_conditional_cache_control!
   return if self["Cache-Control"].present?
-  ...
+  # ...
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/object/blank.rb`.
+NOTE: Definido em `active_support/core_ext/object/blank.rb`.
+
+[Object#blank?]: https://api.rubyonrails.org/classes/Object.html#method-i-blank-3F
+[Object#present?]: https://api.rubyonrails.org/classes/Object.html#method-i-present-3F
 
 ### `presence`
 
-The `presence` method returns its receiver if `present?`, and `nil` otherwise. It is useful for idioms like this:
+O método [`presence`][Object#presence] retorna seu valor se `present?` for `true`, e `nil` caso não seja. Isso é muito útil para expressões como esta:
 
 ```ruby
 host = config[:host].presence || 'localhost'
 ```
 
-NOTE: Defined in `active_support/core_ext/object/blank.rb`.
+NOTE: Definido em `active_support/core_ext/object/blank.rb`.
+
+[Object#presence]: https://api.rubyonrails.org/classes/Object.html#method-i-presence
 
 ### `duplicable?`
 
-As of Ruby 2.5, most objects can be duplicated via `dup` or `clone`:
+A partir do Ruby 2.5, a maioria dos objetos podem ser duplicados com `dup` ou `clone`:
 
 ```ruby
 "foo".dup           # => "foo"
@@ -145,7 +157,7 @@ Complex(0).dup      # => (0+0i)
 1.method(:+).dup    # => TypeError (allocator undefined for Method)
 ```
 
-Active Support provides `duplicable?` to query an object about this:
+O _Active Support_ fornece o [`duplicable?`][Object#duplicable?] para consultar se o objeto pode ser duplicado:
 
 ```ruby
 "foo".duplicable?           # => true
@@ -155,13 +167,15 @@ Complex(1).duplicable?      # => true
 1.method(:+).duplicable?    # => false
 ```
 
-WARNING: Any class can disallow duplication by removing `dup` and `clone` or raising exceptions from them. Thus only `rescue` can tell whether a given arbitrary object is duplicable. `duplicable?` depends on the hard-coded list above, but it is much faster than `rescue`. Use it only if you know the hard-coded list is enough in your use case.
+WARNING: Qualquer classe pode ter a duplicação desabilitada a partir da remoção de `dup` e `clone` ou definindo exceções. Neste caso apenas `rescue` pode informar se determinado objeto arbitrável é duplicável. `duplicable?` depende da existência de uma lista de elementos a serem analisados, como no exemplo porém é muito mais veloz que `rescue`. Use apenas se você souber que a lista é suficiente em seu caso.
 
 NOTE: Defined in `active_support/core_ext/object/duplicable.rb`.
 
+[Object#duplicable?]: https://api.rubyonrails.org/classes/Object.html#method-i-duplicable-3F
+
 ### `deep_dup`
 
-The `deep_dup` method returns a deep copy of a given object. Normally, when you `dup` an object that contains other objects, Ruby does not `dup` them, so it creates a shallow copy of the object. If you have an array with a string, for example, it will look like this:
+O método [`deep_dup`][Object#deep_dup] retorna uma cópia profunda de um objeto. Normalmente, quando você `dup` um objeto que contêm outros objetos, Ruby não executa o `dup`, então é criada uma cópia superficial do objeto. Caso você possua um _array_ com uma _string_, por exemplo, terá algo parecido com:
 
 ```ruby
 array     = ['string']
@@ -180,9 +194,9 @@ array     # => ['foo']
 duplicate # => ['foo', 'another-string']
 ```
 
-As you can see, after duplicating the `Array` instance, we got another object, therefore we can modify it and the original object will stay unchanged. This is not true for array's elements, however. Since `dup` does not make deep copy, the string inside the array is still the same object.
+Como podemos ver, depois de duplicar a instância de `Array`, possuímos agora outro objeto, portanto podemos modificá-lo sem alterar informações do objeto original. Isso não funciona para elementos de um _array_, entretanto. Desde que `dup` não faça a cópia profunda, a _string_ dentro do _array_ se manterá como o mesmo objeto.
 
-If you need a deep copy of an object, you should use `deep_dup`. Here is an example:
+Se você precisa de uma cópia profunda de um objeto, pode então usar o `deep_dup`. Confira um exemplo:
 
 ```ruby
 array     = ['string']
@@ -194,7 +208,7 @@ array     # => ['string']
 duplicate # => ['foo']
 ```
 
-If the object is not duplicable, `deep_dup` will just return it:
+Se o objeto não é duplicável, `deep_dup` apenas o retornará:
 
 ```ruby
 number = 1
@@ -202,25 +216,27 @@ duplicate = number.deep_dup
 number.object_id == duplicate.object_id   # => true
 ```
 
-NOTE: Defined in `active_support/core_ext/object/deep_dup.rb`.
+NOTE: Definido em `active_support/core_ext/object/deep_dup.rb`.
+
+[Object#deep_dup]: https://api.rubyonrails.org/classes/Object.html#method-i-deep_dup
 
 ### `try`
 
-When you want to call a method on an object only if it is not `nil`, the simplest way to achieve it is with conditional statements, adding unnecessary clutter. The alternative is to use `try`. `try` is like `Object#send` except that it returns `nil` if sent to `nil`.
+Quando você quer chamar um método em um objeto somente se ele não for `nil`, a forma mais simples de conseguir isso é através de uma estrutura condicional, adicionando uma desnecessária desordem. A alternativa é usar [`try`][Object#try]. `try` é como `Object#public_send` exceto que o retorno seja `nil` se enviado para `nil`.
 
-Here is an example:
+Eis um exemplo:
 
 ```ruby
-# without try
+# sem try
 unless @number.nil?
   @number.next
 end
 
-# with try
+# com try
 @number.try(:next)
 ```
 
-Another example is this code from `ActiveRecord::ConnectionAdapters::AbstractAdapter` where `@logger` could be `nil`. You can see that the code uses `try` and avoids an unnecessary check.
+Outro exemplo é o código em `ActiveRecord::ConnectionAdapters::AbstractAdapter` onde `@logger` não pode ser `nil`. Você pode ver que o código usa `try` e evita uma verificação desnecessária.
 
 ```ruby
 def log_info(sql, name, ms)
@@ -231,24 +247,27 @@ def log_info(sql, name, ms)
 end
 ```
 
-`try` can also be called without arguments but a block, which will only be executed if the object is not nil:
+`try` pode também ser chamada sem argumentos, porém em um bloco, no qual só será executado se o objeto não for `nil`:
 
 ```ruby
 @person.try { |p| "#{p.first_name} #{p.last_name}" }
 ```
 
-Note that `try` will swallow no-method errors, returning nil instead. If you want to protect against typos, use `try!` instead:
+Perceba que `try` não exibirá as mensagens de erro caso elas ocorram, retornando `nil` em vez disso. Se você quiser se proteger de possíveis erros de digitação, use [`try!`][Object#try!]:
 
 ```ruby
 @number.try(:nest)  # => nil
 @number.try!(:nest) # NoMethodError: undefined method `nest' for 1:Integer
 ```
 
-NOTE: Defined in `active_support/core_ext/object/try.rb`.
+NOTE: Definido em `active_support/core_ext/object/try.rb`.
+
+[Object#try]: https://api.rubyonrails.org/classes/Object.html#method-i-try
+[Object#try!]: https://api.rubyonrails.org/classes/Object.html#method-i-try-21
 
 ### `class_eval(*args, &block)`
 
-You can evaluate code in the context of any object's singleton class using `class_eval`:
+Você pode evoluir o código no contexto de um _singleton_ de qualquer objeto usando [`class_eval`][Kernel#class_eval]:
 
 ```ruby
 class Proc
@@ -265,52 +284,56 @@ class Proc
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/kernel/singleton_class.rb`.
+NOTE: Definido em `active_support/core_ext/kernel/singleton_class.rb`.
+
+[Kernel#class_eval]: https://api.rubyonrails.org/classes/Kernel.html#method-i-class_eval
 
 ### `acts_like?(duck)`
 
-The method `acts_like?` provides a way to check whether some class acts like some other class based on a simple convention: a class that provides the same interface as `String` defines
+O método [`acts_like?`][Object#acts_like?] fornece um meio para conferir se alguma classe age como alguma outra classe baseada em uma simples convenção: a classe que fornece a mesma _interface_ é definida como `String`
 
 ```ruby
 def acts_like_string?
 end
 ```
 
-which is only a marker, its body or return value are irrelevant. Then, client code can query for duck-type-safeness this way:
+que é apenas um marcador, seu corpo ou valor de retorno são irrelevantes. Então, o código do cliente pode consultar a tipagem desta forma:
 
 ```ruby
 some_klass.acts_like?(:string)
 ```
 
-Rails has classes that act like `Date` or `Time` and follow this contract.
+Rails possui classes que agem como `Date` ou `Time` e seguem essa linha.
 
-NOTE: Defined in `active_support/core_ext/object/acts_like.rb`.
+NOTE: Definido em `active_support/core_ext/object/acts_like.rb`.
+
+[Object#acts_like?]: https://api.rubyonrails.org/classes/Object.html#method-i-acts_like-3F
 
 ### `to_param`
 
-All objects in Rails respond to the method `to_param`, which is meant to return something that represents them as values in a query string, or as URL fragments.
+Todos objetos em Rails respondem ao método [`to_param`][Object#to_param], o qual é usado para retornar representações de valores em _strings_, no qual podem ser usadas em consultas, ou fragmentos de URL.
 
-By default `to_param` just calls `to_s`:
+Por padrão, `to_param` apenas chama o método `to_s`:
 
 ```ruby
 7.to_param # => "7"
 ```
 
-The return value of `to_param` should **not** be escaped:
+O retorno de valores em `to_param` **não** deve ser ignorado:
 
 ```ruby
 "Tom & Jerry".to_param # => "Tom & Jerry"
 ```
 
-Several classes in Rails overwrite this method.
+Várias classes em Rails sobrescrevem este método.
 
-For example `nil`, `true`, and `false` return themselves. `Array#to_param` calls `to_param` on the elements and joins the result with "/":
+Por exemplo `nil`, `true`, e `false` retornam a si mesmo. [`Array#to_param`][Array#to_param] chama `to_param` para cada elemento, exibindo o resultado separando os elementos com "/":
 
 ```ruby
 [0, true, String].to_param # => "0/true/String"
 ```
 
-Notably, the Rails routing system calls `to_param` on models to get a value for the `:id` placeholder. `ActiveRecord::Base#to_param` returns the `id` of a model, but you can redefine that method in your models. For example, given
+Notavelmente, as rotas de sistemas Rails chamam `to_param` em _models_ para obter o valor do campo `:id`. `ActiveRecord::Base#to_param` retorna o `id` do _model_, mas você pode redefinir esse método em seus _models_. Por exemplo, dado
 
 ```ruby
 class User
@@ -320,19 +343,22 @@ class User
 end
 ```
 
-we get:
+nós temos:
 
 ```ruby
 user_path(@user) # => "/users/357-john-smith"
 ```
 
-WARNING. Controllers need to be aware of any redefinition of `to_param` because when a request like that comes in "357-john-smith" is the value of `params[:id]`.
+WARNING. _Controllers_ precisam estar alinhados a qualquer redefinição de `to_param` porque quando uma requisição como essa chega em "357-john-smith" este é o valor de `params[:id]`.
 
-NOTE: Defined in `active_support/core_ext/object/to_param.rb`.
+NOTE: Definido em `active_support/core_ext/object/to_param.rb`.
+
+[Array#to_param]: https://api.rubyonrails.org/classes/Array.html#method-i-to_param
+[Object#to_param]: https://api.rubyonrails.org/classes/Object.html#method-i-to_param
 
 ### `to_query`
 
-Except for hashes, given an unescaped `key` this method constructs the part of a query string that would map such key to what `to_param` returns. For example, given
+O método [`to_query`][Object#to_query] controi uma *query* em *string* que associam a `key` com o retorno de `to_param`. Por exemplo, dado a seguinte definição de `to_param`:
 
 ```ruby
 class User
@@ -342,48 +368,51 @@ class User
 end
 ```
 
-we get:
+Temos:
 
 ```ruby
 current_user.to_query('user') # => "user=357-john-smith"
 ```
 
-This method escapes whatever is needed, both for the key and the value:
+Este método traz o que é necessário, tanto para chave, como para o valor:
 
 ```ruby
 account.to_query('company[name]')
 # => "company%5Bname%5D=Johnson+%26+Johnson"
 ```
 
-so its output is ready to be used in a query string.
+então esse resultado esta pronto para ser usado em uma _string_ de busca.
 
-Arrays return the result of applying `to_query` to each element with `key[]` as key, and join the result with "&":
+_Arrays_ retornam o resultado da aplicação `to_query` para cada elemento com `key[]` como chave, e junta o resultado com "&":
 
 ```ruby
 [3.4, -45.6].to_query('sample')
 # => "sample%5B%5D=3.4&sample%5B%5D=-45.6"
 ```
 
-Hashes also respond to `to_query` but with a different signature. If no argument is passed a call generates a sorted series of key/value assignments calling `to_query(key)` on its values. Then it joins the result with "&":
+_Hashes_ tambem respondem a `to_query` mas com uma diferença. Se não passar um argumento a chamada gera uma série ordenada de chaves/valores atribuídas chamando `to_query(key)` em seus valores. Em seguida, o resultado é mesclado com "&":
 
 ```ruby
 {c: 3, b: 2, a: 1}.to_query # => "a=1&b=2&c=3"
 ```
 
-The method `Hash#to_query` accepts an optional namespace for the keys:
+O método [`Hash#to_query`][Hash#to_query] aceita um espaço para nomear as chaves:
 
 ```ruby
 {id: 89, name: "John Smith"}.to_query('user')
 # => "user%5Bid%5D=89&user%5Bname%5D=John+Smith"
 ```
 
-NOTE: Defined in `active_support/core_ext/object/to_query.rb`.
+NOTE: Definido em `active_support/core_ext/object/to_query.rb`.
+
+[Hash#to_query]: https://api.rubyonrails.org/classes/Hash.html#method-i-to_query
+[Object#to_query]: https://api.rubyonrails.org/classes/Object.html#method-i-to_query
 
 ### `with_options`
 
-The method `with_options` provides a way to factor out common options in a series of method calls.
+O método [`with_options`][Object#with_options] fornece um meio de agrupar opções comuns em uma série de chamada de métodos.
 
-Given a default options hash, `with_options` yields a proxy object to a block. Within the block, methods called on the proxy are forwarded to the receiver with their options merged. For example, you get rid of the duplication in:
+Dado as opções _default_ de uma _hash_, `with_options` faz um objeto de "ponte" em um bloco. Dentro do bloco, métodos são chamados no objeto e são encaminhados ao receptor com suas opções mescladas. Por exemplo, você se livra da duplicação em:
 
 ```ruby
 class Account < ApplicationRecord
@@ -394,7 +423,7 @@ class Account < ApplicationRecord
 end
 ```
 
-this way:
+desta forma:
 
 ```ruby
 class Account < ApplicationRecord
@@ -407,7 +436,7 @@ class Account < ApplicationRecord
 end
 ```
 
-That idiom may convey _grouping_ to the reader as well. For example, say you want to send a newsletter whose language depends on the user. Somewhere in the mailer you could group locale-dependent bits like this:
+Essa expressão pode transmitir um agrupamento para o leitor também. Por exemplo, digamos que você queira enviar um boletim informativo cujo idioma depende do usuário. Em algum lugar na _mailer_ você poderá agrupar os receptores por localidade como no exemplo:
 
 ```ruby
 I18n.with_options locale: user.locale, scope: "newsletter" do |i18n|
@@ -416,24 +445,26 @@ I18n.with_options locale: user.locale, scope: "newsletter" do |i18n|
 end
 ```
 
-TIP: Since `with_options` forwards calls to its receiver they can be nested. Each nesting level will merge inherited defaults in addition to their own.
+TIP: Desde que `with_options` envie chamadas para seus receptores eles podem ser aninhados. Cada nível de aninhamento mesclará os padrões herdados com os seus próprios.
 
-NOTE: Defined in `active_support/core_ext/object/with_options.rb`.
+NOTE: Definido em `active_support/core_ext/object/with_options.rb`.
 
-### JSON support
+[Object#with_options]: https://api.rubyonrails.org/classes/Object.html#method-i-with_options
 
-Active Support provides a better implementation of `to_json` than the `json` gem ordinarily provides for Ruby objects. This is because some classes, like `Hash`, `OrderedHash` and `Process::Status` need special handling in order to provide a proper JSON representation.
+### Suporte ao JSON
 
-NOTE: Defined in `active_support/core_ext/object/json.rb`.
+_Active Support_ fornece uma melhor implementação para `to_json` do que a _gem_ `json` normalmente fornece para objetos em Ruby. Isso é porque algumas classes, como `Hash`, e `Process::Status` precisam de manipulações especiais a fim de fornecer uma representação de JSON adequada.
 
-### Instance Variables
+NOTE: Definido em `active_support/core_ext/object/json.rb`.
 
-Active Support provides several methods to ease access to instance variables.
+### Variáveis de Instância
+
+_Active Support_ fornece vários métodos para facilitar o acesso a variáveis de instância.
 
 #### `instance_values`
 
-The method `instance_values` returns a hash that maps instance variable names without "@" to their
-corresponding values. Keys are strings:
+O método [`instance_values`][Object#instance_values] retorna uma _hash_ que mapeia variáveis de instância de nomes sem "@" para seus
+valores correspondentes. As chaves são _strings_:
 
 ```ruby
 class C
@@ -445,11 +476,13 @@ end
 C.new(0, 1).instance_values # => {"x" => 0, "y" => 1}
 ```
 
-NOTE: Defined in `active_support/core_ext/object/instance_variables.rb`.
+NOTE: Definido em `active_support/core_ext/object/instance_variables.rb`.
+
+[Object#instance_values]: https://api.rubyonrails.org/classes/Object.html#method-i-instance_values
 
 #### `instance_variable_names`
 
-The method `instance_variable_names` returns an array. Each name includes the "@" sign.
+O método [`instance_variable_names`][Object#instance_variable_names] retorna um _array_. Cada nome inclui o sinal "@".
 
 ```ruby
 class C
@@ -461,17 +494,19 @@ end
 C.new(0, 1).instance_variable_names # => ["@x", "@y"]
 ```
 
-NOTE: Defined in `active_support/core_ext/object/instance_variables.rb`.
+NOTE: Definido em `active_support/core_ext/object/instance_variables.rb`.
 
-### Silencing Warnings and Exceptions
+[Object#instance_variable_names]: https://api.rubyonrails.org/classes/Object.html#method-i-instance_variable_names
 
-The methods `silence_warnings` and `enable_warnings` change the value of `$VERBOSE` accordingly for the duration of their block, and reset it afterwards:
+### Silenciando _Warnings_ e Exceções
+
+Os métodos [`silence_warnings`][Kernel#silence_warnings] e [`enable_warnings`][Kernel#enable_warnings] trocam o valor de `$VERBOSE` de acordo com a duração do seu bloco, e o reiniciam depois:
 
 ```ruby
 silence_warnings { Object.const_set "RAILS_DEFAULT_LOGGER", logger }
 ```
 
-Silencing exceptions is also possible with `suppress`. This method receives an arbitrary number of exception classes. If an exception is raised during the execution of the block and is `kind_of?` any of the arguments, `suppress` captures it and returns silently. Otherwise the exception is not captured:
+Silenciar exceções também é possível com [`suppress`][Kernel#suppress]. Este método recebe um número arbitrário de classes de exceção. Se uma exceção é acionada durante a execução de um bloco e é `kind_of?` qualquer um dos argumentos, `suppress` captura e retorna silenciosamente. Caso contrário, a exceção não é capturada:
 
 ```ruby
 # If the user is locked, the increment is lost, no big deal.
@@ -480,13 +515,17 @@ suppress(ActiveRecord::StaleObjectError) do
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/kernel/reporting.rb`.
+NOTE: Definido in `active_support/core_ext/kernel/reporting.rb`.
+
+[Kernel#enable_warnings]: https://api.rubyonrails.org/classes/Kernel.html#method-i-enable_warnings
+[Kernel#silence_warnings]: https://api.rubyonrails.org/classes/Kernel.html#method-i-silence_warnings
+[Kernel#suppress]: https://api.rubyonrails.org/classes/Kernel.html#method-i-suppress
 
 ### `in?`
 
-The predicate `in?` tests if an object is included in another object. An `ArgumentError` exception will be raised if the argument passed does not respond to `include?`.
+A expressão [`in?`][Object#in?] testa se um objeto é incluído em outro objeto. Uma exceção `ArgumentError` será acionada se o argumento passado não responder a `include?`.
 
-Examples of `in?`:
+Exemplos de `in?`:
 
 ```ruby
 1.in?([1,2])        # => true
@@ -495,52 +534,56 @@ Examples of `in?`:
 1.in?(1)            # => ArgumentError
 ```
 
-NOTE: Defined in `active_support/core_ext/object/inclusion.rb`.
+NOTE: Definido em `active_support/core_ext/object/inclusion.rb`.
 
-Extensions to `Module`
+[Object#in?]: https://api.rubyonrails.org/classes/Object.html#method-i-in-3F
+
+Extensões de `Module`
 ----------------------
 
-### Attributes
+### Atributos
 
 #### `alias_attribute`
 
-Model attributes have a reader, a writer, and a predicate. You can alias a model attribute having the corresponding three methods defined for you in one shot. As in other aliasing methods, the new name is the first argument, and the old name is the second (one mnemonic is that they go in the same order as if you did an assignment):
+Atributos de _models_ podem ser lidos, escritos e condicionados. Você pode criar um _alias_ para um atributo de _model_ correspondendo todos os três métodos definidos por você usando [`alias_attribute`][Module#alias_attribute]. Em outro métodos de _alias_, o novo nome é o primeiro argumento, e o antigo nome é o segundo (uma forma de memorizar é pensar que eles se apresentam na mesma ordem como se você fizesse uma atribuição):
 
 ```ruby
 class User < ApplicationRecord
-  # You can refer to the email column as "login".
-  # This can be meaningful for authentication code.
+  # Você pode referenciar a coluna email como "login".
+  # Isso pode ser importante para o código de autenticação.
   alias_attribute :login, :email
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/module/aliasing.rb`.
+NOTE: Definido em `active_support/core_ext/module/aliasing.rb`.
 
-#### Internal Attributes
+[Module#alias_attribute]: https://api.rubyonrails.org/classes/Module.html#method-i-alias_attribute
 
-When you are defining an attribute in a class that is meant to be subclassed, name collisions are a risk. That's remarkably important for libraries.
+#### Atributos Internos
 
-Active Support defines the macros `attr_internal_reader`, `attr_internal_writer`, and `attr_internal_accessor`. They behave like their Ruby built-in `attr_*` counterparts, except they name the underlying instance variable in a way that makes collisions less likely.
+Quando você esta definindo um atributo em uma classe que pode ser uma subclasse, os conflitos de nomes são um risco. Isso é extremamente importante para as bibliotecas.
 
-The macro `attr_internal` is a synonym for `attr_internal_accessor`:
+_Active Support_ define as macros [`attr_internal_reader`][Module#attr_internal_reader], [`attr_internal_writer`][Module#attr_internal_writer], e [`attr_internal_accessor`][Module#attr_internal_accessor]. Elas comportam-se como seu próprio Ruby `attr_*` embutido, exceto pelos nomes de variáveis de instância que faz com que os conflitos sejam menos comuns.
+
+A macro [`attr_internal`][Module#attr_internal] é um sinônimo para `attr_internal_accessor`:
 
 ```ruby
-# library
+# biblioteca
 class ThirdPartyLibrary::Crawler
   attr_internal :log_level
 end
 
-# client code
+# código do cliente
 class MyCrawler < ThirdPartyLibrary::Crawler
   attr_accessor :log_level
 end
 ```
 
-In the previous example it could be the case that `:log_level` does not belong to the public interface of the library and it is only used for development. The client code, unaware of the potential conflict, subclasses and defines its own `:log_level`. Thanks to `attr_internal` there's no collision.
+No exemplo anterior, poderia ser que no caso `:log_level` não pertença a interface pública da biblioteca e só seria usada em desenvolvimento. O código do cliente, não sabe do potencial conflito, subclasses e definições de seus próprios `:log_level`. Graças ao `attr_internal` não há conflito.
 
-By default the internal instance variable is named with a leading underscore, `@_log_level` in the example above. That's configurable via `Module.attr_internal_naming_format` though, you can pass any `sprintf`-like format string with a leading `@` and a `%s` somewhere, which is where the name will be placed. The default is `"@_%s"`.
+Por padrão, a variável de instancia interna é nomeada com uma _underscore_ na frente, `@_log_level` no exemplo acima. Isso é configurável via `Module.attr_internal_naming_format` apesar disso, você pode passar qualquer tipo de `sprintf` no formato _string_ com a inicial `@` e um `%s` em algum lugar, no qual é onde o nome será colocado. O padrão é `"@_%s"`.
 
-Rails uses internal attributes in a few spots, for examples for views:
+Rails usa atributos internos em alguns pontos, para _views_ como por exemplo:
 
 ```ruby
 module ActionView
@@ -552,38 +595,37 @@ module ActionView
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/module/attr_internal.rb`.
+NOTE: Definido em `active_support/core_ext/module/attr_internal.rb`.
 
-#### Module Attributes
+[Module#attr_internal]: https://api.rubyonrails.org/classes/Module.html#method-i-attr_internal
+[Module#attr_internal_accessor]: https://api.rubyonrails.org/classes/Module.html#method-i-attr_internal_accessor
+[Module#attr_internal_reader]: https://api.rubyonrails.org/classes/Module.html#method-i-attr_internal_reader
+[Module#attr_internal_writer]: https://api.rubyonrails.org/classes/Module.html#method-i-attr_internal_writer
 
-The macros `mattr_reader`, `mattr_writer`, and `mattr_accessor` are the same as the `cattr_*` macros defined for class. In fact, the `cattr_*` macros are just aliases for the `mattr_*` macros. Check [Class Attributes](#class-attributes).
+#### Atributos de Módulo
 
-For example, the dependencies mechanism uses them:
+As macros [`mattr_reader`][Module#mattr_reader], [`mattr_writer`][Module#mattr_writer], e [`mattr_accessor`][Module#mattr_accessor] São iguais a `cattr_*` macros definidas na classe. De fato, `cattr_*` macros são apenas _aliases_ para as `mattr_*` macros. Confira a seção [Atributos de Classe](#atributos-de-classe).
+
+
+Por exemplo, a API para o registrador do *Active Storage* é gerada com `mattr_accessor`:
 
 ```ruby
-module ActiveSupport
-  module Dependencies
-    mattr_accessor :warnings_on_first_load
-    mattr_accessor :history
-    mattr_accessor :loaded
-    mattr_accessor :mechanism
-    mattr_accessor :load_paths
-    mattr_accessor :load_once_paths
-    mattr_accessor :autoloaded_constants
-    mattr_accessor :explicitly_unloadable_constants
-    mattr_accessor :constant_watch_stack
-    mattr_accessor :constant_watch_stack_mutex
-  end
+module ActiveStorage
+  mattr_accessor :logger
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/module/attribute_accessors.rb`.
+NOTE: Definido em `active_support/core_ext/module/attribute_accessors.rb`.
 
-### Parents
+[Module#mattr_accessor]: https://api.rubyonrails.org/classes/Module.html#method-i-mattr_accessor
+[Module#mattr_reader]: https://api.rubyonrails.org/classes/Module.html#method-i-mattr_reader
+[Module#mattr_writer]: https://api.rubyonrails.org/classes/Module.html#method-i-mattr_writer
+
+### _Parents_
 
 #### `module_parent`
 
-The `module_parent` method on a nested named module returns the module that contains its corresponding constant:
+O método [`module_parent`][Module#module_parent] em um módulo nomeado aninhado que retorna o módulo que contém uma constante correspondente:
 
 ```ruby
 module X
@@ -598,15 +640,17 @@ X::Y::Z.module_parent # => X::Y
 M.module_parent       # => X::Y
 ```
 
-If the module is anonymous or belongs to the top-level, `module_parent` returns `Object`.
+Se o módulo é anônimo ou pertence a um nível superior, `module_parent` retorna `Object`.
 
-WARNING: Note that in that case `module_parent_name` returns `nil`.
+WARNING: Note que neste caso `module_parent_name` retorna `nil`.
 
-NOTE: Defined in `active_support/core_ext/module/introspection.rb`.
+NOTE: Definido em `active_support/core_ext/module/introspection.rb`.
+
+[Module#module_parent]: https://api.rubyonrails.org/classes/Module.html#method-i-module_parent
 
 #### `module_parent_name`
 
-The `module_parent_name` method on a nested named module returns the fully qualified name of the module that contains its corresponding constant:
+O método [`module_parent_name`][Module#module_parent_name] em um modulo nomeado aninhado  retorna o nome completamente qualificado do módulo que contém sua constante correspondente:
 
 ```ruby
 module X
@@ -621,15 +665,17 @@ X::Y::Z.module_parent_name # => "X::Y"
 M.module_parent_name       # => "X::Y"
 ```
 
-For top-level or anonymous modules `module_parent_name` returns `nil`.
+Para módulos de nível superior ou anônimos `module_parent_name` retorna `nil`.
 
-WARNING: Note that in that case `module_parent` returns `Object`.
+WARNING: Note que nesse caso `module_parent` retorna `Object`.
 
-NOTE: Defined in `active_support/core_ext/module/introspection.rb`.
+NOTE: Definido em `active_support/core_ext/module/introspection.rb`.
+
+[Module#module_parent_name]: https://api.rubyonrails.org/classes/Module.html#method-i-module_parent_name
 
 #### `module_parents`
 
-The method `module_parents` calls `module_parent` on the receiver and upwards until `Object` is reached. The chain is returned in an array, from bottom to top:
+O método [`module_parents`][Module#module_parents] chama `module_parent` no receptor e sobe até `Object` ser alcançado. A cadeia é retornada em uma matriz, de baixo para cima:
 
 ```ruby
 module X
@@ -644,11 +690,13 @@ X::Y::Z.module_parents # => [X::Y, X, Object]
 M.module_parents       # => [X::Y, X, Object]
 ```
 
-NOTE: Defined in `active_support/core_ext/module/introspection.rb`.
+NOTE: Definido em `active_support/core_ext/module/introspection.rb`.
 
-### Anonymous
+[Module#module_parents]: https://api.rubyonrails.org/classes/Module.html#method-i-module_parents
 
-A module may or may not have a name:
+### Anônimo
+
+Um módulo pode ou não ter um nome:
 
 ```ruby
 module M
@@ -661,7 +709,7 @@ N.name # => "N"
 Module.new.name # => nil
 ```
 
-You can check whether a module has a name with the predicate `anonymous?`:
+Você pode verificar se um módulo possui um nome com a condicional [`anonymous?`][Module#anonymous?]:
 
 ```ruby
 module M
@@ -671,7 +719,7 @@ M.anonymous? # => false
 Module.new.anonymous? # => true
 ```
 
-Note that being unreachable does not imply being anonymous:
+Observe que estar inacessível não significa ser anônimo:
 
 ```ruby
 module M
@@ -682,17 +730,19 @@ m = Object.send(:remove_const, :M)
 m.anonymous? # => false
 ```
 
-though an anonymous module is unreachable by definition.
+Embora um módulo anônimo seja inacessível por definição.
 
-NOTE: Defined in `active_support/core_ext/module/anonymous.rb`.
+NOTE: Definido em `active_support/core_ext/module/anonymous.rb`.
 
-### Method Delegation
+[Module#anonymous?]: https://api.rubyonrails.org/classes/Module.html#method-i-anonymous-3F
+
+### Delegação de Método
 
 #### `delegate`
 
-The macro `delegate` offers an easy way to forward methods.
+A macro [`delegate`][Module#delegate] oferece uma maneira fácil de encaminhar métodos.
 
-Let's imagine that users in some application have login information in the `User` model but name and other data in a separate `Profile` model:
+Vamos imaginar que os usuários de alguma aplicação possuem informações de _login_ no _model_ `User` além de nome e outro dado em um _model_ `Profile` separado:
 
 ```ruby
 class User < ApplicationRecord
@@ -700,7 +750,7 @@ class User < ApplicationRecord
 end
 ```
 
-With that configuration you get a user's name via their profile, `user.profile.name`, but it could be handy to still be able to access such attribute directly:
+Com essa configuração você consegue o nome dos usuários partir da classe perfil, `user.profile.name`, mas isso poderia ser conveniente para habilitar o acesso ao atributo diretamente:
 
 ```ruby
 class User < ApplicationRecord
@@ -712,7 +762,7 @@ class User < ApplicationRecord
 end
 ```
 
-That is what `delegate` does for you:
+Isso é o que o `delegate` faz por você:
 
 ```ruby
 class User < ApplicationRecord
@@ -722,69 +772,71 @@ class User < ApplicationRecord
 end
 ```
 
-It is shorter, and the intention more obvious.
+É mais curto e a intenção mais óbvia.
 
-The method must be public in the target.
+O método deve ser público.
 
-The `delegate` macro accepts several methods:
+A macro `delegate` aceita vários métodos:
 
 ```ruby
 delegate :name, :age, :address, :twitter, to: :profile
 ```
 
-When interpolated into a string, the `:to` option should become an expression that evaluates to the object the method is delegated to. Typically a string or symbol. Such an expression is evaluated in the context of the receiver:
+Quando interpolado em uma _string_, a opção `:to` deve se tornar uma expressão que avalia o objeto ao qual o método é delegado. Normalmente uma _string_ ou um _symbol_. Tal expressão é avaliada no contexto do receptor:
 
 ```ruby
-# delegates to the Rails constant
+# delega para as constantes Rails
 delegate :logger, to: :Rails
 
-# delegates to the receiver's class
+# delega para as classes receptoras
 delegate :table_name, to: :class
 ```
 
-WARNING: If the `:prefix` option is `true` this is less generic, see below.
+WARNING: Se a opção `:prefix` for `true` é menos genérica, veja abaixo.
 
-By default, if the delegation raises `NoMethodError` and the target is `nil` the exception is propagated. You can ask that `nil` is returned instead with the `:allow_nil` option:
+Por padrão, se a delegação resulta em `NoMethodError` e o objeto é `nil` a exceção se propaga. Você pode perguntar se `nil` é retornado ao invés com a opção `:allow_nil`:
 
 ```ruby
 delegate :name, to: :profile, allow_nil: true
 ```
 
-With `:allow_nil` the call `user.name` returns `nil` if the user has no profile.
+Com `:allow_nil` a chamada `user.name` retorna `nil` se o usuário não tiver um perfil.
 
-The option `:prefix` adds a prefix to the name of the generated method. This may be handy for example to get a better name:
+A opção `:prefix` adiciona um prefixo ao nome do método gerado. Isso pode ser útil, por exemplo, para obter um nome melhor:
 
 ```ruby
 delegate :street, to: :address, prefix: true
 ```
 
-The previous example generates `address_street` rather than `street`.
+Os exemplos prévios geram `address_street` ao invés de `street`.
 
-WARNING: Since in this case the name of the generated method is composed of the target object and target method names, the `:to` option must be a method name.
+WARNING: Já que neste caso o nome do método gerado é composto pelos nomes do objeto alvo e do método alvo, a opção `:to` deve ser um nome de método.
 
-A custom prefix may also be configured:
+Um prefixo customizado pode também ser configurado:
 
 ```ruby
 delegate :size, to: :attachment, prefix: :avatar
 ```
 
-In the previous example the macro generates `avatar_size` rather than `size`.
+Os macro exemplos prévios geram `avatar_size` ao invés de `size`.
 
-The option `:private` changes methods scope:
+A opção `:private` mudam o escopo do método:
 
 ```ruby
 delegate :date_of_birth, to: :profile, private: true
 ```
 
-The delegated methods are public by default. Pass `private: true` to change that.
+Os métodos delegados são públicos por padrão. Passe `private: true` para mudar isso.
 
-NOTE: Defined in `active_support/core_ext/module/delegation.rb`
+NOTE: Definido em `active_support/core_ext/module/delegation.rb`
+
+[Module#delegate]: https://api.rubyonrails.org/classes/Module.html#method-i-delegate
 
 #### `delegate_missing_to`
 
-Imagine you would like to delegate everything missing from the `User` object,
-to the `Profile` one. The `delegate_missing_to` macro lets you implement this
-in a breeze:
+Imagine que você gostaria de delegar tudo o que está faltando no objeto `User`,
+para um `Profile`. A macro [`delegate_missing_to`][Module#delegate_missing_to] permite que você implemente isso
+de forma facilitada:
 
 ```ruby
 class User < ApplicationRecord
@@ -794,31 +846,36 @@ class User < ApplicationRecord
 end
 ```
 
-The target can be anything callable within the object, e.g. instance variables,
-methods, constants, etc. Only the public methods of the target are delegated.
+O destino pode ser qualquer coisa que possa ser chamada dentro do objeto, por exemplo: instância de variáveis,
+métodos, constantes etc. Somente métodos públicos do alvo são delegados.
 
-NOTE: Defined in `active_support/core_ext/module/delegation.rb`.
+NOTE: Definido em `active_support/core_ext/module/delegation.rb`.
 
-### Redefining Methods
+[Module#delegate_missing_to]: https://api.rubyonrails.org/classes/Module.html#method-i-delegate_missing_to
 
-There are cases where you need to define a method with `define_method`, but don't know whether a method with that name already exists. If it does, a warning is issued if they are enabled. No big deal, but not clean either.
+### Redefinindo Métodos
 
-The method `redefine_method` prevents such a potential warning, removing the existing method before if needed.
+Existem casos onde você precisa definir um método com `define_method`, mas não sei se já existe um método com esse nome. Caso sim, um _warning_ é exibido se estiverem habilitados. Não é muito perigoso, mas não é uma boa prática.
 
-You can also use `silence_redefinition_of_method` if you need to define
-the replacement method yourself (because you're using `delegate`, for
-example).
+O método [`redefine_method`][Module#redefine_method] previne um potencial _warning_, removendo um método existente, se necessário.
 
-NOTE: Defined in `active_support/core_ext/module/redefine_method.rb`.
+Você pode também usar [`silence_redefinition_of_method`][Module#silence_redefinition_of_method] se você precisa definir
+o método de substituição (porque você está usando `delegate`, por
+exemplo).
 
-Extensions to `Class`
+NOTE: Definido em `active_support/core_ext/module/redefine_method.rb`.
+
+[Module#redefine_method]: https://api.rubyonrails.org/classes/Module.html#method-i-redefine_method
+[Module#silence_redefinition_of_method]: https://api.rubyonrails.org/classes/Module.html#method-i-silence_redefinition_of_method
+
+Extensões para `Class`
 ---------------------
 
-### Class Attributes
+### Atributos de classe
 
 #### `class_attribute`
 
-The method `class_attribute` declares one or more inheritable class attributes that can be overridden at any level down the hierarchy.
+O método [`class_attribute`][Class#class_attribute] declara um ou mais atributos de classe herdáveis que podem ser substituídos em qualquer nível abaixo da hierarquia.
 
 ```ruby
 class A
@@ -842,7 +899,7 @@ A.x # => :a
 B.x # => :b
 ```
 
-For example `ActionMailer::Base` defines:
+Por exemplo `ActionMailer::Base` define:
 
 ```ruby
 class_attribute :default_params
@@ -854,7 +911,7 @@ self.default_params = {
 }.freeze
 ```
 
-They can also be accessed and overridden at the instance level.
+Eles também podem ser acessados e substituídos no nível de instância.
 
 ```ruby
 A.x = 1
@@ -863,11 +920,11 @@ a1 = A.new
 a2 = A.new
 a2.x = 2
 
-a1.x # => 1, comes from A
-a2.x # => 2, overridden in a2
+a1.x # => 1, vem de A
+a2.x # => 2, substituído em a2
 ```
 
-The generation of the writer instance method can be prevented by setting the option `:instance_writer` to `false`.
+A criação de um método de instância de escrita pode ser prevenido configurando a opção `:instance_writer` para `false`.
 
 ```ruby
 module ActiveRecord
@@ -877,9 +934,9 @@ module ActiveRecord
 end
 ```
 
-A model may find that option useful as a way to prevent mass-assignment from setting the attribute.
+Essa opção pode ser útil para prevenir atribuições em massa ao definir o atributo.
 
-The generation of the reader instance method can be prevented by setting the option `:instance_reader` to `false`.
+A criação de um método de instância de leitura pode ser prevenido configurando a opção `:instance_reader` para `false`.
 
 ```ruby
 class A
@@ -890,35 +947,37 @@ A.new.x = 1
 A.new.x # NoMethodError
 ```
 
-For convenience `class_attribute` also defines an instance predicate which is the double negation of what the instance reader returns. In the examples above it would be called `x?`.
+Por conveniência `class_attribute` também define um predicado de instância que é uma negação dupla do que o leitor de instância retorna. No exemplo acima podemos usar `x?`.
 
-When `:instance_reader` is `false`, the instance predicate returns a `NoMethodError` just like the reader method.
+Quando `:instance_reader` é `false`, o predicado de instância retorna `NoMethodError` assim como o método de leitura.
 
-If you do not want the instance predicate, pass `instance_predicate: false` and it will not be defined.
+Se você não quiser o predicado de instância, passe `instance_predicate: false` e ele não será definido.
 
-NOTE: Defined in `active_support/core_ext/class/attribute.rb`.
+NOTE: Definido em `active_support/core_ext/class/attribute.rb`.
 
-#### `cattr_reader`, `cattr_writer`, and `cattr_accessor`
+[Class#class_attribute]: https://api.rubyonrails.org/classes/Class.html#method-i-class_attribute
 
-The macros `cattr_reader`, `cattr_writer`, and `cattr_accessor` are analogous to their `attr_*` counterparts but for classes. They initialize a class variable to `nil` unless it already exists, and generate the corresponding class methods to access it:
+#### `cattr_reader`, `cattr_writer`, e `cattr_accessor`
+
+As macros [`cattr_reader`][Module#cattr_reader], [`cattr_writer`][Module#cattr_writer], e [`cattr_accessor`][Module#cattr_accessor] são análogas às suas `attr_*` homólogas porém para classes. Eles inicializam a variável de classe com `nil` a menos que ela já exista, e gera os métodos de classe correspondentes para acessá-la:
 
 ```ruby
 class MysqlAdapter < AbstractAdapter
-  # Generates class methods to access @@emulate_booleans.
+  # Gera métodos de classe para acessar @@emulate_booleans.
   cattr_accessor :emulate_booleans
 end
 ```
 
-Also, you can pass a block to `cattr_*` to set up the attribute with a default value:
+Além disso, você pode passar um bloco para `cattr_*` para configurar o atributo com um valor padrão.
 
 ```ruby
 class MysqlAdapter < AbstractAdapter
-  # Generates class methods to access @@emulate_booleans with default value of true.
+  # Gera métodos de classe para acessar @@emulate_booleans com true como valor padrão.
   cattr_accessor :emulate_booleans, default: true
 end
 ```
 
-Instance methods are created as well for convenience, they are just proxies to the class attribute. So, instances can change the class attribute, but cannot override it as it happens with `class_attribute` (see above). For example given
+Métodos de instância são criados também por conveniência, eles são apenas uma forma de acesso ao atributo de classe. Logo, instâncias podem alterar o atributo de classe, porém não podem substituí-lo do mesmo modo que ocorre com `class_attribute` (veja acima). Por exemplo, dado
 
 ```ruby
 module ActionView
@@ -928,32 +987,36 @@ module ActionView
 end
 ```
 
-we can access `field_error_proc` in views.
+podemos acessar `field_error_proc` nas *views*.
 
-The generation of the reader instance method can be prevented by setting `:instance_reader` to `false` and the generation of the writer instance method can be prevented by setting `:instance_writer` to `false`. Generation of both methods can be prevented by setting `:instance_accessor` to `false`. In all cases, the value must be exactly `false` and not any false value.
+A geração do método de leitura de instância pode ser prevenido configurando `:instance_reader` para `false` e a geração dos métodos de escrita de instância podem ser prevenidos configurando `:instance_writer` para `false`. A geração de ambos os métodos podem ser prevenidos configurando `:instance_accessor` para `false`. Em todos os casos, o valor deve ser exatamente `false` e não qualquer outro valor falso.
 
 ```ruby
 module A
   class B
-    # No first_name instance reader is generated.
+    # Nenhuma leitura de instância first_name é gerada.
     cattr_accessor :first_name, instance_reader: false
-    # No last_name= instance writer is generated.
+    # Nenhuma escrita de instância last_name= é gerada.
     cattr_accessor :last_name, instance_writer: false
-    # No surname instance reader or surname= writer is generated.
+    # Nenhuma leitura surname ou escritor surname= de instância é gerada.
     cattr_accessor :surname, instance_accessor: false
   end
 end
 ```
 
-A model may find it useful to set `:instance_accessor` to `false` as a way to prevent mass-assignment from setting the attribute.
+Pode ser útil configurar `:instance_accessor` para `false` no *model* como uma maneira de prevenir atribuições em massa ao definir o atributo.
 
-NOTE: Defined in `active_support/core_ext/module/attribute_accessors.rb`.
+NOTE: Definido em `active_support/core_ext/module/attribute_accessors.rb`.
 
-### Subclasses & Descendants
+[Module#cattr_accessor]: https://api.rubyonrails.org/classes/Module.html#method-i-cattr_accessor
+[Module#cattr_reader]: https://api.rubyonrails.org/classes/Module.html#method-i-cattr_reader
+[Module#cattr_writer]: https://api.rubyonrails.org/classes/Module.html#method-i-cattr_writer
+
+### Subclasses e Descendentes
 
 #### `subclasses`
 
-The `subclasses` method returns the subclasses of the receiver:
+O método [`subclasses`][Class#subclasses] retorna as subclasses do recebedor:
 
 ```ruby
 class C; end
@@ -969,13 +1032,15 @@ class D < C; end
 C.subclasses # => [B, D]
 ```
 
-The order in which these classes are returned is unspecified.
+A ordem em que essas classes são retornadas não é especificada.
 
-NOTE: Defined in `active_support/core_ext/class/subclasses.rb`.
+NOTE: Definido em `active_support/core_ext/class/subclasses.rb`.
+
+[Class#subclasses]: https://api.rubyonrails.org/classes/Class.html#method-i-subclasses
 
 #### `descendants`
 
-The `descendants` method returns all classes that are `<` than its receiver:
+O método [`descendants`][Class#descendants] retorna todas as classes que são `<` pelo recebedor:
 
 ```ruby
 class C; end
@@ -991,37 +1056,39 @@ class D < C; end
 C.descendants # => [B, A, D]
 ```
 
-The order in which these classes are returned is unspecified.
+A ordem em que essas classes são retornadas não é especificada.
 
-NOTE: Defined in `active_support/core_ext/class/subclasses.rb`.
+NOTE: Definido em `active_support/core_ext/class/subclasses.rb`.
 
-Extensions to `String`
+[Class#descendants]: https://api.rubyonrails.org/classes/Class.html#method-i-descendants
+
+Extensões para `String`
 ----------------------
 
-### Output Safety
+### Segurança de saída 
 
-#### Motivation
+#### Motivação
 
-Inserting data into HTML templates needs extra care. For example, you can't just interpolate `@review.title` verbatim into an HTML page. For one thing, if the review title is "Flanagan & Matz rules!" the output won't be well-formed because an ampersand has to be escaped as "&amp;amp;". What's more, depending on the application, that may be a big security hole because users can inject malicious HTML setting a hand-crafted review title. Check out the section about cross-site scripting in the [Security guide](security.html#cross-site-scripting-xss) for further information about the risks.
+Inserir dados em _templates_ HTML, necessita de cuidados extras. Por exemplo, você não pode apenas literalmente juntar `@review.title` em uma página HTML. Por outro lado, se o título do comentário é "Flanagan & Matz rules!" o retorno não será bem formada porque um 'e comercial' precisa ser usado como "&amp;amp;". Além do mais, dependendo da aplicação, isso pode ser uma grande falha de segurança porque os usuários podem injetar uma configuração HTML maliciosa em um título de revisão feito à mão. Confira a seção sobre _cross-site scripting_ em [Guia de Segurança](security.html#cross-site-scripting-xss) para maiores informações sobre os riscos.
 
-#### Safe Strings
+#### _Strings_ Seguras
 
-Active Support has the concept of _(html) safe_ strings. A safe string is one that is marked as being insertable into HTML as is. It is trusted, no matter whether it has been escaped or not.
+_Active Support_ possui o conceito de _(html)_ _strings_ seguras. Uma _string_ segura é aquela que é marcada como sendo inserível no HTML como é definida. Ela é confiável, não importando sua origem.
 
-Strings are considered to be _unsafe_ by default:
+_Strings_ são consideradas como inseguras por padrão:
 
 ```ruby
 "".html_safe? # => false
 ```
 
-You can obtain a safe string from a given one with the `html_safe` method:
+Pode-se obter uma _string_ segura de um dado com o método [`html_safe`][String#html_safe]:
 
 ```ruby
 s = "".html_safe
 s.html_safe? # => true
 ```
 
-It is important to understand that `html_safe` performs no escaping whatsoever, it is just an assertion:
+É importante entender que `html_safe` não executa nenhuma operação, é apenas uma afirmação:
 
 ```ruby
 s = "<script>...</script>".html_safe
@@ -1029,39 +1096,39 @@ s.html_safe? # => true
 s            # => "<script>...</script>"
 ```
 
-It is your responsibility to ensure calling `html_safe` on a particular string is fine.
+É sua responsabilidade garantir a chamada `html_safe` em cada _string_ particular.
 
-If you append onto a safe string, either in-place with `concat`/`<<`, or with `+`, the result is a safe string. Unsafe arguments are escaped:
+Se você anexar em uma _string_ segura, com `concat`/`<<`, ou com `+`, o resultado é uma _string_ segura. Argumentos inseguros são ignorados:
 
 ```ruby
 "".html_safe + "<" # => "&lt;"
 ```
 
-Safe arguments are directly appended:
+Argumentos seguros são anexados diretamente:
 
 ```ruby
 "".html_safe + "<".html_safe # => "<"
 ```
 
-These methods should not be used in ordinary views. Unsafe values are automatically escaped:
+Esses métodos não devem ser usados em _views_ comuns. Valores inseguros são ignorados automaticamente:
 
 ```erb
-<%= @review.title %> <%# fine, escaped if needed %>
+<%= @review.title %> <%# correto, ignora se necessário %>
 ```
 
-To insert something verbatim use the `raw` helper rather than calling `html_safe`:
+Para inserir algo literal, use o _helper_ [`raw`][] ao invés de chamar `html_safe`:
 
 ```erb
-<%= raw @cms.current_template %> <%# inserts @cms.current_template as is %>
+<%= raw @cms.current_template %> <%# insere @cms.current_template como é %>
 ```
 
-or, equivalently, use `<%==`:
+ou, equivalentemente, use `<%==`:
 
 ```erb
-<%== @cms.current_template %> <%# inserts @cms.current_template as is %>
+<%== @cms.current_template %> <%# insere @cms.current_template como é %>
 ```
 
-The `raw` helper calls `html_safe` for you:
+O _helper_ `raw` chama `html_safe` pra você:
 
 ```ruby
 def raw(stringish)
@@ -1069,69 +1136,76 @@ def raw(stringish)
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/output_safety.rb`.
+NOTE: Definido em `active_support/core_ext/string/output_safety.rb`.
 
-#### Transformation
+[`raw`]: https://api.rubyonrails.org/classes/ActionView/Helpers/OutputSafetyHelper.html#method-i-raw
+[String#html_safe]: https://api.rubyonrails.org/classes/String.html#method-i-html_safe
 
-As a rule of thumb, except perhaps for concatenation as explained above, any method that may change a string gives you an unsafe string. These are `downcase`, `gsub`, `strip`, `chomp`, `underscore`, etc.
+#### Transformação
 
-In the case of in-place transformations like `gsub!` the receiver itself becomes unsafe.
+De modo geral, exceto talvez para concatenação conforme explicado acima, qualquer método que possa alterar uma _string_ fornece uma _string_ insegura. Estes são `downcase`, `gsub`, `strip`, `chomp`, `underscore`, etc.
 
-INFO: The safety bit is lost always, no matter whether the transformation actually changed something.
+No caso de transformações locais, como com `gsub!` o próprio receptor se torna inseguro.
 
-#### Conversion and Coercion
+INFO: O bit de segurança é perdido sempre, não importa se a transformação realmente mudou algo.
 
-Calling `to_s` on a safe string returns a safe string, but coercion with `to_str` returns an unsafe string.
+#### Conversão e Coerção
 
-#### Copying
+Chamando `to_s` em uma _string_ segura retorna uma _string_ segura, mas a coerção com `to_str` retorna uma _string_ insegura.
 
-Calling `dup` or `clone` on safe strings yields safe strings.
+#### Copiando
+
+Chamando `dup` ou `clone` em _strings_ seguras produz outras _strings_ seguras.
 
 ### `remove`
 
-The method `remove` will remove all occurrences of the pattern:
+O método [`remove`][String#remove] vai remover todas ocorrências com o padrão:
 
 ```ruby
 "Hello World".remove(/Hello /) # => "World"
 ```
 
-There's also the destructive version `String#remove!`.
+Há também a versão destrutiva `String#remove!`.
 
-NOTE: Defined in `active_support/core_ext/string/filters.rb`.
+NOTE: Definido em `active_support/core_ext/string/filters.rb`.
+
+[String#remove]: https://api.rubyonrails.org/classes/String.html#method-i-remove
 
 ### `squish`
 
-The method `squish` strips leading and trailing whitespace, and substitutes runs of whitespace with a single space each:
+O método [`squish`][String#squish] remove os espaços em branco à esquerda e à direita e substitui os espaços em branco por um único espaço cada:
 
 ```ruby
 " \n  foo\n\r \t bar \n".squish # => "foo bar"
 ```
 
-There's also the destructive version `String#squish!`.
+Há também a versão destrutiva `String#squish!`.
 
-Note that it handles both ASCII and Unicode whitespace.
+Observe que se lida com espaços em branco ASCII e Unicode.
 
-NOTE: Defined in `active_support/core_ext/string/filters.rb`.
+NOTE: Definido em `active_support/core_ext/string/filters.rb`.
+
+[String#squish]: https://api.rubyonrails.org/classes/String.html#method-i-squish
 
 ### `truncate`
 
-The method `truncate` returns a copy of its receiver truncated after a given `length`:
+O método [`truncate`][String#truncate] retorna uma cópia de seu receptor truncado após um determinado `length`:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate(20)
 # => "Oh dear! Oh dear!..."
 ```
 
-Ellipsis can be customized with the `:omission` option:
+As reticências podem ser personalizadas com a opção `:omission`:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate(20, omission: '&hellip;')
 # => "Oh dear! Oh &hellip;"
 ```
 
-Note in particular that truncation takes into account the length of the omission string.
+Observe em particular que o truncamento leva em consideração o comprimento da _string_ de omissão.
 
-Pass a `:separator` to truncate the string at a natural break:
+Passe o método `:separator` para truncar a _string_ em uma pausa natural:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate(18)
@@ -1140,76 +1214,102 @@ Pass a `:separator` to truncate the string at a natural break:
 # => "Oh dear! Oh..."
 ```
 
-The option `:separator` can be a regexp:
+A opção `:separator` pode ser uma regexp:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate(18, separator: /\s/)
 # => "Oh dear! Oh..."
 ```
 
-In above examples "dear" gets cut first, but then `:separator` prevents it.
+Nos exemplos acima "dear" é cortado primeiro, mas depois `:separator` impede isso.
 
-NOTE: Defined in `active_support/core_ext/string/filters.rb`.
+NOTE: Definido em `active_support/core_ext/string/filters.rb`.
+
+[String#truncate]: https://api.rubyonrails.org/classes/String.html#method-i-truncate
+
+### `truncate_bytes`
+
+O método [`truncate_bytes`][String#truncate_bytes] retorna uma cópia de seu receptor truncado para no máximo `bytesize` _bytes_:
+
+```ruby
+"👍👍👍👍".truncate_bytes(15)
+# => "👍👍👍…"
+```
+
+As reticências podem ser personalizadas com a opção `:omission`:
+
+```ruby
+"👍👍👍👍".truncate_bytes(15, omission: "🖖")
+# => "👍👍🖖"
+```
+
+NOTE: Definido em `active_support/core_ext/string/filters.rb`.
+
+[String#truncate_bytes]: https://api.rubyonrails.org/classes/String.html#method-i-truncate_bytes
 
 ### `truncate_words`
 
-The method `truncate_words` returns a copy of its receiver truncated after a given number of words:
+O método [`truncate_words`][String#truncate_words] retorna uma cópia da frase original truncada depois de receber um determinado número de palavras:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate_words(4)
 # => "Oh dear! Oh dear!..."
 ```
 
-Ellipsis can be customized with the `:omission` option:
+Reticências podem ser customizadas com a opção `:omission`:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate_words(4, omission: '&hellip;')
 # => "Oh dear! Oh dear!&hellip;"
 ```
 
-Pass a `:separator` to truncate the string at a natural break:
+Chame `:separator` para truncar a _string_ na pausa natural:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate_words(3, separator: '!')
 # => "Oh dear! Oh dear! I shall be late..."
 ```
 
-The option `:separator` can be a regexp:
+A opção `:separator` pode ser uma regexp:
 
 ```ruby
 "Oh dear! Oh dear! I shall be late!".truncate_words(4, separator: /\s/)
 # => "Oh dear! Oh dear!..."
 ```
 
-NOTE: Defined in `active_support/core_ext/string/filters.rb`.
+NOTE: Definido em `active_support/core_ext/string/filters.rb`.
+
+[String#truncate_words]: https://api.rubyonrails.org/classes/String.html#method-i-truncate_words
 
 ### `inquiry`
 
-The `inquiry` method converts a string into a `StringInquirer` object making equality checks prettier.
+O método [`inquiry`][String#inquiry] converte uma _string_ em um objeto `StringInquirer` fazendo verificações de igualdade mais elegantes.
 
 ```ruby
 "production".inquiry.production? # => true
 "active".inquiry.inactive?       # => false
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inquiry.rb`.
+NOTE: Definido em `active_support/core_ext/string/inquiry.rb`.
 
-### `starts_with?` and `ends_with?`
+[String#inquiry]: https://api.rubyonrails.org/classes/String.html#method-i-inquiry
 
-Active Support defines 3rd person aliases of `String#start_with?` and `String#end_with?`:
+### `starts_with?` e `ends_with?`
+
+_Active Support_ define conjugação verbal para 3ª pessoa em `String#start_with?` e `String#end_with?`:
 
 ```ruby
 "foo".starts_with?("f") # => true
 "foo".ends_with?("o")   # => true
 ```
 
-NOTE: Defined in `active_support/core_ext/string/starts_ends_with.rb`.
+NOTE: Definido em `active_support/core_ext/string/starts_ends_with.rb`.
 
 ### `strip_heredoc`
 
-The method `strip_heredoc` strips indentation in heredocs.
+O método [`strip_heredoc`][String#strip_heredoc] tira o recuo em _heredocs_.
 
-For example in
+Por exemplo em
 
 ```ruby
 if options[:usage]
@@ -1223,16 +1323,18 @@ if options[:usage]
 end
 ```
 
-the user would see the usage message aligned against the left margin.
+o usuário veria a mensagem de uso alinhada à margem esquerda.
 
-Technically, it looks for the least indented line in the whole string, and removes
-that amount of leading whitespace.
+Tecnicamente, se procura a linha menos indentada em toda a _string_ e remove
+essa quantidade de espaço em branco à esquerda.
 
 NOTE: Defined in `active_support/core_ext/string/strip.rb`.
 
+[String#strip_heredoc]: https://api.rubyonrails.org/classes/String.html#method-i-strip_heredoc
+
 ### `indent`
 
-Indents the lines in the receiver:
+O método [`indent`][String#indent] indenta as linhas no receptor:
 
 ```ruby
 <<EOS.indent(2)
@@ -1246,7 +1348,7 @@ EOS
   end
 ```
 
-The second argument, `indent_string`, specifies which indent string to use. The default is `nil`, which tells the method to make an educated guess peeking at the first indented line, and fallback to a space if there is none.
+O segundo argumento, `indent_string`, especifica qual _string_ de indentação usar. O padrão é `nil`, que diz ao método para fazer uma suposição conferindo a primeira linha indentada, e recuando para um espaço se não houver nenhuma.
 
 ```ruby
 "  foo".indent(2)        # => "    foo"
@@ -1254,24 +1356,27 @@ The second argument, `indent_string`, specifies which indent string to use. The 
 "foo".indent(2, "\t")    # => "\t\tfoo"
 ```
 
-While `indent_string` is typically one space or tab, it may be any string.
+Enquanto `indent_string` é normalmente um espaço ou tabulação, essa pode ser qualquer _string_.
 
-The third argument, `indent_empty_lines`, is a flag that says whether empty lines should be indented. Default is false.
+O terceiro argumento, `indent_empty_lines`, é uma sinalização que diz se as linhas vazias devem ser indentadas. O padrão é _false_.
 
 ```ruby
 "foo\n\nbar".indent(2)            # => "  foo\n\n  bar"
 "foo\n\nbar".indent(2, nil, true) # => "  foo\n  \n  bar"
 ```
 
-The `indent!` method performs indentation in-place.
+O método [`indent!`][String#indent!] realiza recuo no local.
 
-NOTE: Defined in `active_support/core_ext/string/indent.rb`.
+NOTE: Definido em `active_support/core_ext/string/indent.rb`.
 
-### Access
+[String#indent!]: https://api.rubyonrails.org/classes/String.html#method-i-indent-21
+[String#indent]: https://api.rubyonrails.org/classes/String.html#method-i-indent
+
+### Acesso
 
 #### `at(position)`
 
-Returns the character of the string at position `position`:
+O método [`at`][String#at] retorna o caractere da _string_ na posição `position`:
 
 ```ruby
 "hello".at(0)  # => "h"
@@ -1280,11 +1385,13 @@ Returns the character of the string at position `position`:
 "hello".at(10) # => nil
 ```
 
-NOTE: Defined in `active_support/core_ext/string/access.rb`.
+NOTE: Definido em `active_support/core_ext/string/access.rb`.
+
+[String#at]: https://api.rubyonrails.org/classes/String.html#method-i-at
 
 #### `from(position)`
 
-Returns the substring of the string starting at position `position`:
+O método [`from`][String#from] retorna a _substring_ da _string_ iniciada na posição `position`:
 
 ```ruby
 "hello".from(0)  # => "hello"
@@ -1293,11 +1400,13 @@ Returns the substring of the string starting at position `position`:
 "hello".from(10) # => nil
 ```
 
-NOTE: Defined in `active_support/core_ext/string/access.rb`.
+NOTE: Definido em `active_support/core_ext/string/access.rb`.
+
+[String#from]: https://api.rubyonrails.org/classes/String.html#method-i-from
 
 #### `to(position)`
 
-Returns the substring of the string up to position `position`:
+O método [`to`][String#to] retorna a _substring_ da _string_ até a posição `position`:
 
 ```ruby
 "hello".to(0)  # => "h"
@@ -1306,25 +1415,35 @@ Returns the substring of the string up to position `position`:
 "hello".to(10) # => "hello"
 ```
 
-NOTE: Defined in `active_support/core_ext/string/access.rb`.
+NOTE: Definido em `active_support/core_ext/string/access.rb`.
+
+[String#to]: https://api.rubyonrails.org/classes/String.html#method-i-to
 
 #### `first(limit = 1)`
 
-The call `str.first(n)` is equivalent to `str.to(n-1)` if `n` > 0, and returns an empty string for `n` == 0.
+O método [`first`][String#first] retorna a _substring_ contendo os primeiros `limit` caracteres da _string_.
 
-NOTE: Defined in `active_support/core_ext/string/access.rb`.
+A chamada `str.first(n)` é equivalente a `str.to(n-1)` se `n` > 0, e retorna uma _string_ vazia para `n` == 0.
+
+NOTE: Definido em `active_support/core_ext/string/access.rb`.
+
+[String#first]: https://api.rubyonrails.org/classes/String.html#method-i-first
 
 #### `last(limit = 1)`
 
-The call `str.last(n)` is equivalent to `str.from(-n)` if `n` > 0, and returns an empty string for `n` == 0.
+O método [`last`][String#last] retorna a _substring_ contendo os últimos `limit` caracteres da _string_.
 
-NOTE: Defined in `active_support/core_ext/string/access.rb`.
+A chamada `str.last(n)` é equivalente a `str.from(-n)` se `n` > 0, e retorna uma _string_ vazia para `n` == 0.
 
-### Inflections
+NOTE: Definido em `active_support/core_ext/string/access.rb`.
+
+[String#last]: https://api.rubyonrails.org/classes/String.html#method-i-last
+
+### Inflexões
 
 #### `pluralize`
 
-The method `pluralize` returns the plural of its receiver:
+O método [`pluralize`][String#pluralize] retorna o plural do receptor:
 
 ```ruby
 "table".pluralize     # => "tables"
@@ -1332,9 +1451,9 @@ The method `pluralize` returns the plural of its receiver:
 "equipment".pluralize # => "equipment"
 ```
 
-As the previous example shows, Active Support knows some irregular plurals and uncountable nouns. Built-in rules can be extended in `config/initializers/inflections.rb`. This file is generated by default, by the `rails new` command and has instructions in comments.
+Como mostra o exemplo anterior, _Active Support_ conhece alguns plurais irregulares e substantivos incontáveis. As regras integradas podem ser estendidas em `config/initializers/inflections.rb`. Este arquivo é gerado por padrão, pelo comando `rails new` e tem instruções nos comentários.
 
-`pluralize` can also take an optional `count` parameter. If `count == 1` the singular form will be returned. For any other value of `count` the plural form will be returned:
+`pluralize` também pode fazer um parâmetro `count` opcional. Se `count == 1` a forma singular será retornada. Para qualquer outro valor de `count` a forma plural será retornada:
 
 ```ruby
 "dude".pluralize(0) # => "dudes"
@@ -1342,21 +1461,23 @@ As the previous example shows, Active Support knows some irregular plurals and u
 "dude".pluralize(2) # => "dudes"
 ```
 
-Active Record uses this method to compute the default table name that corresponds to a model:
+_Active Record_ usa esse método pra computar a o nome da tabela padrão correspondente ao _model_:
 
 ```ruby
 # active_record/model_schema.rb
-def undecorated_table_name(class_name = base_class.name)
-  table_name = class_name.to_s.demodulize.underscore
+def undecorated_table_name(model_name)
+  table_name = model_name.to_s.demodulize.underscore
   pluralize_table_names ? table_name.pluralize : table_name
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido `active_support/core_ext/string/inflections.rb`.
+
+[String#pluralize]: https://api.rubyonrails.org/classes/String.html#method-i-pluralize
 
 #### `singularize`
 
-The inverse of `pluralize`:
+O método [`singularize`][String#singularize] é o inverso do `pluralize`:
 
 ```ruby
 "tables".singularize    # => "table"
@@ -1364,7 +1485,7 @@ The inverse of `pluralize`:
 "equipment".singularize # => "equipment"
 ```
 
-Associations compute the name of the corresponding default associated class using this method:
+As associações calculam o nome padrão da classe associada correspondente usando este método:
 
 ```ruby
 # active_record/reflection.rb
@@ -1375,24 +1496,26 @@ def derive_class_name
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#singularize]: https://api.rubyonrails.org/classes/String.html#method-i-singularize
 
 #### `camelize`
 
-The method `camelize` returns its receiver in camel case:
+O método [`camelize`][String#camelize] retorna o receptor em _camel case_:
 
 ```ruby
 "product".camelize    # => "Product"
 "admin_user".camelize # => "AdminUser"
 ```
 
-As a rule of thumb you can think of this method as the one that transforms paths into Ruby class or module names, where slashes separate namespaces:
+Como regra geral, você pode pensar neste método como aquele que transforma pastas em nomes de classes ou módulos _Ruby_, em que barras separam os subarquivos:
 
 ```ruby
 "backoffice/session".camelize # => "Backoffice::Session"
 ```
 
-For example, Action Pack uses this method to load the class that provides a certain session store:
+Por exemplo, o _Action Pack_ usa este método para carregar a classe que fornece um determinado armazenamento de sessão:
 
 ```ruby
 # action_controller/metal/session_management.rb
@@ -1403,15 +1526,15 @@ def session_store=(store)
 end
 ```
 
-`camelize` accepts an optional argument, it can be `:upper` (default), or `:lower`. With the latter the first letter becomes lowercase:
+`camelize` aceita um argumento opcional, que pode ser `:upper` (padrão), ou `:lower`. Com o último, a primeira letra torna-se minúscula:
 
 ```ruby
 "visual_effect".camelize(:lower) # => "visualEffect"
 ```
 
-That may be handy to compute method names in a language that follows that convention, for example JavaScript.
+Isso pode ser útil para calcular nomes de métodos em uma linguagem que segue essa convenção, por exemplo, _JavaScript_.
 
-INFO: As a rule of thumb you can think of `camelize` as the inverse of `underscore`, though there are cases where that does not hold: `"SSLError".underscore.camelize` gives back `"SslError"`. To support cases such as this, Active Support allows you to specify acronyms in `config/initializers/inflections.rb`:
+INFO: Como regra geral, você pode pensar em `camelize` como o inverso do `underscore`, embora haja casos em que isso não se aplica: `"SSLError".underscore.camelize` devolve `"SslError"`. Para apoiar casos como este, o _Active Support_ permite que você especifique acrônimos em `config/initializers/inflections.rb`:
 
 ```ruby
 ActiveSupport::Inflector.inflections do |inflect|
@@ -1421,72 +1544,79 @@ end
 "SSLError".underscore.camelize # => "SSLError"
 ```
 
-`camelize` is aliased to `camelcase`.
+`camelize` é o mesmo que usar [`camelcase`][String#camelcase].
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#camelcase]: https://api.rubyonrails.org/classes/String.html#method-i-camelcase
+[String#camelize]: https://api.rubyonrails.org/classes/String.html#method-i-camelize
 
 #### `underscore`
 
-The method `underscore` goes the other way around, from camel case to paths:
+O método [`underscore`][String#underscore] vai ao contrário, de _camel case_ para pastas:
 
 ```ruby
 "Product".underscore   # => "product"
 "AdminUser".underscore # => "admin_user"
 ```
 
-Also converts "::" back to "/":
+Também converte "::" back para "/":
 
 ```ruby
 "Backoffice::Session".underscore # => "backoffice/session"
 ```
 
-and understands strings that start with lowercase:
+e entende _strings_ que começam com start letra minúscula:
 
 ```ruby
 "visualEffect".underscore # => "visual_effect"
 ```
 
-`underscore` accepts no argument though.
+`underscore` não aceita nenhum argumento.
 
-Rails class and module autoloading uses `underscore` to infer the relative path without extension of a file that would define a given missing constant:
+O Rails usa de `underscore` para inferir o nome de um controller ou class:
 
 ```ruby
-# active_support/dependencies.rb
-def load_missing_constant(from_mod, const_name)
-  ...
-  qualified_name = qualified_name_for from_mod, const_name
-  path_suffix = qualified_name.underscore
-  ...
+# actionpack/lib/abstract_controller/base.rb
+def controller_path
+  @controller_path ||= name.delete_suffix("Controller").underscore
 end
 ```
 
-INFO: As a rule of thumb you can think of `underscore` as the inverse of `camelize`, though there are cases where that does not hold. For example, `"SSLError".underscore.camelize` gives back `"SslError"`.
+Por exemplo, esse valor é aquele que você obtém em `params[:controller]`.
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+INFO: Como regra geral, pode-se pensar em `underscore` como o inverso de `camelize`, embora haja casos em que isso não se aplica. Por exemplo, `"SSLError".underscore.camelize` devolve `"SslError"`.
+
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#underscore]: https://api.rubyonrails.org/classes/String.html#method-i-underscore
 
 #### `titleize`
 
-The method `titleize` capitalizes the words in the receiver:
+O método [`titleize`][String#titleize] coloca cada palavra com letra maiúscula:
 
 ```ruby
 "alice in wonderland".titleize # => "Alice In Wonderland"
 "fermat's enigma".titleize     # => "Fermat's Enigma"
 ```
 
-`titleize` is aliased to `titlecase`.
+`titleize` é o mesmo que usar [`titlecase`][String#titlecase].
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#titlecase]: https://api.rubyonrails.org/classes/String.html#method-i-titlecase
+[String#titleize]: https://api.rubyonrails.org/classes/String.html#method-i-titleize
 
 #### `dasherize`
 
-The method `dasherize` replaces the underscores in the receiver with dashes:
+O método [`dasherize`][String#dasherize] troca _underscores_ no receptor por traços:
 
 ```ruby
 "name".dasherize         # => "name"
 "contact_data".dasherize # => "contact-data"
 ```
 
-The XML serializer of models uses this method to dasherize node names:
+O _serializer_ XML de _models_ usa este método para colocar traços nos nomes de seus nós:
 
 ```ruby
 # active_model/serializers/xml.rb
@@ -1496,11 +1626,13 @@ def reformat_name(name)
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#dasherize]: https://api.rubyonrails.org/classes/String.html#method-i-dasherize
 
 #### `demodulize`
 
-Given a string with a qualified constant name, `demodulize` returns the very constant name, that is, the rightmost part of it:
+Dado uma _string_ com um nome de constante em módulo, [`demodulize`][String#demodulize] retorna o real nome da constante, ou seja, a parte mais à direita dela:
 
 ```ruby
 "Product".demodulize                        # => "Product"
@@ -1508,10 +1640,9 @@ Given a string with a qualified constant name, `demodulize` returns the very con
 "Admin::Hotel::ReservationUtils".demodulize # => "ReservationUtils"
 "::Inflections".demodulize                  # => "Inflections"
 "".demodulize                               # => ""
-
 ```
 
-Active Record for example uses this method to compute the name of a counter cache column:
+_Active Record_ por exemplo, usa este método para calcular o nome de uma coluna de cache do contador:
 
 ```ruby
 # active_record/reflection.rb
@@ -1524,11 +1655,13 @@ def counter_cache_column
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#demodulize]: https://api.rubyonrails.org/classes/String.html#method-i-demodulize
 
 #### `deconstantize`
 
-Given a string with a qualified constant reference expression, `deconstantize` removes the rightmost segment, generally leaving the name of the constant's container:
+Dada uma _string_ com uma expressão de referência a uma constante, [`deconstantize`][String#deconstantize] remove o segmento mais à direita, geralmente deixando o nome do contêiner da constante:
 
 ```ruby
 "Product".deconstantize                        # => ""
@@ -1536,38 +1669,40 @@ Given a string with a qualified constant reference expression, `deconstantize` r
 "Admin::Hotel::ReservationUtils".deconstantize # => "Admin::Hotel"
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#deconstantize]: https://api.rubyonrails.org/classes/String.html#method-i-deconstantize
 
 #### `parameterize`
 
-The method `parameterize` normalizes its receiver in a way that can be used in pretty URLs.
+O método [`parameterize`][String#parameterize] normaliza seu receptor de uma forma que pode ser usada em URLs de forma mais elegante.
 
 ```ruby
 "John Smith".parameterize # => "john-smith"
 "Kurt Gödel".parameterize # => "kurt-godel"
 ```
 
-To preserve the case of the string, set the `preserve_case` argument to true. By default, `preserve_case` is set to false.
+Para preservar a caixa da _string_, defina o argumento `preserve_case` para _true_. Por padrão, `preserve_case` será configurado como `false`.
 
 ```ruby
 "John Smith".parameterize(preserve_case: true) # => "John-Smith"
 "Kurt Gödel".parameterize(preserve_case: true) # => "Kurt-Godel"
 ```
 
-To use a custom separator, override the `separator` argument.
+Para usar um separador customizado, sobrescreva o argumento `separator`.
 
 ```ruby
-"John Smith".parameterize(separator: "_") # => "john\_smith"
-"Kurt Gödel".parameterize(separator: "_") # => "kurt\_godel"
+"John Smith".parameterize(separator: "_") # => "john_smith"
+"Kurt Gödel".parameterize(separator: "_") # => "kurt_godel"
 ```
 
-In fact, the result string is wrapped in an instance of `ActiveSupport::Multibyte::Chars`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+[String#parameterize]: https://api.rubyonrails.org/classes/String.html#method-i-parameterize
 
 #### `tableize`
 
-The method `tableize` is `underscore` followed by `pluralize`.
+O método [`tableize`][String#tableize] é `underscore` seguido por `pluralize`.
 
 ```ruby
 "Person".tableize      # => "people"
@@ -1575,13 +1710,15 @@ The method `tableize` is `underscore` followed by `pluralize`.
 "InvoiceLine".tableize # => "invoice_lines"
 ```
 
-As a rule of thumb, `tableize` returns the table name that corresponds to a given model for simple cases. The actual implementation in Active Record is not straight `tableize` indeed, because it also demodulizes the class name and checks a few options that may affect the returned string.
+Como um princípio básico, `tableize` retorna o nome da tabela que corresponde a um determinado modelo para casos simples. A implementação real de `tableize` no _Active Record_ na verdade não é direta, porque também desmodulariza o nome da classe e verifica algumas opções que podem afetar a _string_ retornada.
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#tableize]: https://api.rubyonrails.org/classes/String.html#method-i-tableize
 
 #### `classify`
 
-The method `classify` is the inverse of `tableize`. It gives you the class name corresponding to a table name:
+O método [`classify`][String#classify] é o inverso de `tableize`. Ele da o nome da classe correspondente ao nome da tabela:
 
 ```ruby
 "people".classify        # => "Person"
@@ -1589,19 +1726,21 @@ The method `classify` is the inverse of `tableize`. It gives you the class name 
 "invoice_lines".classify # => "InvoiceLine"
 ```
 
-The method understands qualified table names:
+O método compreende nomes de tabela associadas:
 
 ```ruby
 "highrise_production.companies".classify # => "Company"
 ```
 
-Note that `classify` returns a class name as a string. You can get the actual class object invoking `constantize` on it, explained next.
+Note que `classify` retorna um nome de classe como uma _string_. Você pode obter o objeto de classe real invocando `constantize` sobre isso, será explicado a seguir.
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#classify]: https://api.rubyonrails.org/classes/String.html#method-i-classify
 
 #### `constantize`
 
-The method `constantize` resolves the constant reference expression in its receiver:
+O método [`constantize`][String#constantize] resolve a expressão de referência constante em seu receptor:
 
 ```ruby
 "Integer".constantize # => Integer
@@ -1612,9 +1751,9 @@ end
 "M::X".constantize # => 1
 ```
 
-If the string evaluates to no known constant, or its content is not even a valid constant name, `constantize` raises `NameError`.
+Se a _string_ não for avaliada como uma constante conhecida ou seu conteúdo nem mesmo for um nome de constante válido, `constantize` executa `NameError`.
 
-Constant name resolution by `constantize` starts always at the top-level `Object` even if there is no leading "::".
+Resolução de nome constante por `constantize` inicia sempre no nível superior de `Object` mesmo se não começar com "::".
 
 ```ruby
 X = :in_Object
@@ -1634,29 +1773,31 @@ Mailer test cases obtain the mailer being tested from the name of the test class
 ```ruby
 # action_mailer/test_case.rb
 def determine_default_mailer(name)
-  name.sub(/Test$/, '').constantize
+  name.delete_suffix("Test").constantize
 rescue NameError => e
   raise NonInferrableMailerError.new(name)
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#constantize]: https://api.rubyonrails.org/classes/String.html#method-i-constantize
 
 #### `humanize`
 
-The method `humanize` tweaks an attribute name for display to end users.
+O método [`humanize`][String#humanize] ajusta um nome de atributo para exibir aos usuários.
 
-Specifically performs these transformations:
+Especificamente, ele realiza estas transformações:
 
-  * Applies human inflection rules to the argument.
-  * Deletes leading underscores, if any.
-  * Removes a "_id" suffix if present.
-  * Replaces underscores with spaces, if any.
-  * Downcases all words except acronyms.
-  * Capitalizes the first word.
+  * Aplica regras de inflexão humana ao argumento.
+  * Exclui os _underlines_ iniciais, se houver.
+  * Remove um sufixo "_id", se houver.
+  * Substitui _underlines_ por espaços, se houver.
+  * Reduz todas as palavras, exceto siglas.
+  * Coloca em maiúscula a primeira palavra.
 
-The capitalization of the first word can be turned off by setting the
-`:capitalize` option to false (default is true).
+A capitalização da primeira palavra pode ser desativada configurando o
+`:capitalize` opção para `false` (o padrão é `true`).
 
 ```ruby
 "name".humanize                         # => "Name"
@@ -1666,14 +1807,14 @@ The capitalization of the first word can be turned off by setting the
 "_id".humanize                          # => "Id"
 ```
 
-If "SSL" was defined to be an acronym:
+Se "SSL" for definido como uma sigla:
 
 ```ruby
 'ssl_error'.humanize # => "SSL error"
 ```
 
-The helper method `full_messages` uses `humanize` as a fallback to include
-attribute names:
+O método _helper_ `full_messages` usa `humanize` como alternativa para incluir
+nomes de atributos:
 
 ```ruby
 def full_messages
@@ -1681,18 +1822,20 @@ def full_messages
 end
 
 def full_message
-  ...
+  # ...
   attr_name = attribute.to_s.tr('.', '_').humanize
   attr_name = @base.class.human_attribute_name(attribute, default: attr_name)
-  ...
+  # ...
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
+
+[String#humanize]: https://api.rubyonrails.org/classes/String.html#method-i-humanize
 
 #### `foreign_key`
 
-The method `foreign_key` gives a foreign key column name from a class name. To do so it demodulizes, underscores, and adds "_id":
+O método [`foreign_key`][String#foreign_key] fornece um nome de coluna de chave estrangeira a partir de um nome de classe. Para fazer isso, ele desmoduliza, separa com _underline_ e adiciona "_id":
 
 ```ruby
 "User".foreign_key           # => "user_id"
@@ -1700,26 +1843,28 @@ The method `foreign_key` gives a foreign key column name from a class name. To d
 "Admin::Session".foreign_key # => "session_id"
 ```
 
-Pass a false argument if you do not want the underscore in "_id":
+Passe `false` como argumento se você não quiser o _underline_ em "_id":
 
 ```ruby
 "User".foreign_key(false) # => "userid"
 ```
 
-Associations use this method to infer foreign keys, for example `has_one` and `has_many` do this:
+As associações usam este método para inferir chaves estrangeiras, por exemplo `has_one` e `has_many` fazem isto:
 
 ```ruby
 # active_record/associations.rb
 foreign_key = options[:foreign_key] || reflection.active_record.name.foreign_key
 ```
 
-NOTE: Defined in `active_support/core_ext/string/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/string/inflections.rb`.
 
-### Conversions
+[String#foreign_key]: https://api.rubyonrails.org/classes/String.html#method-i-foreign_key
+
+### Conversões
 
 #### `to_date`, `to_time`, `to_datetime`
 
-The methods `to_date`, `to_time`, and `to_datetime` are basically convenience wrappers around `Date._parse`:
+Os métodos [`to_date`][String#to_date], [`to_time`][String#to_time], e [`to_datetime`][String#to_datetime] são basicamente  variações convenientes de `Date._parse`:
 
 ```ruby
 "2010-07-27".to_date              # => Tue, 27 Jul 2010
@@ -1727,39 +1872,55 @@ The methods `to_date`, `to_time`, and `to_datetime` are basically convenience wr
 "2010-07-27 23:37:00".to_datetime # => Tue, 27 Jul 2010 23:37:00 +0000
 ```
 
-`to_time` receives an optional argument `:utc` or `:local`, to indicate which time zone you want the time in:
+`to_time` recebe an um argumento opcional `:utc` ou `:local`, para indicar qual fuso horário you quer se basear:
 
 ```ruby
 "2010-07-27 23:42:00".to_time(:utc)   # => 2010-07-27 23:42:00 UTC
 "2010-07-27 23:42:00".to_time(:local) # => 2010-07-27 23:42:00 +0200
 ```
 
-Default is `:local`.
+O padrão é `:local`.
 
-Please refer to the documentation of `Date._parse` for further details.
+Por favor, consulte a documentação de `Date._parse` para mais detalhes.
 
-INFO: The three of them return `nil` for blank receivers.
+INFO: Os três exemplos retornam `nil` caso não recebam argumentos.
 
-NOTE: Defined in `active_support/core_ext/string/conversions.rb`.
+NOTE: Definido em `active_support/core_ext/string/conversions.rb`.
 
-Extensions to `Numeric`
+[String#to_date]: https://api.rubyonrails.org/classes/String.html#method-i-to_date
+[String#to_datetime]: https://api.rubyonrails.org/classes/String.html#method-i-to_datetime
+[String#to_time]: https://api.rubyonrails.org/classes/String.html#method-i-to_time
+
+Extensões para `Symbol`
+----------------------
+
+### `starts_with?` e `ends_with?`
+
+O Active Support define _aliases_ (nomes simbólicos) de terceira pessoa de `Symbol#start_with?` e `Symbol#end_with?`:
+
+```ruby
+:foo.starts_with?("f") # => true
+:foo.ends_with?("o")   # => true
+```
+
+NOTE: Definido em `active_support/core_ext/symbol/starts_ends_with.rb`.
+
+Extensões para `Numeric`
 -----------------------
 
 ### Bytes
 
-All numbers respond to these methods:
+Todos os números respondem a estes métodos:
 
-```ruby
-bytes
-kilobytes
-megabytes
-gigabytes
-terabytes
-petabytes
-exabytes
-```
+* [`bytes`][Numeric#bytes]
+* [`kilobytes`][Numeric#kilobytes]
+* [`megabytes`][Numeric#megabytes]
+* [`gigabytes`][Numeric#gigabytes]
+* [`terabytes`][Numeric#terabytes]
+* [`petabytes`][Numeric#petabytes]
+* [`exabytes`][Numeric#exabytes]
 
-They return the corresponding amount of bytes, using a conversion factor of 1024:
+Eles retornam a quantidade correspondente de bytes, usando um fator de conversão de 1024:
 
 ```ruby
 2.kilobytes   # => 2048
@@ -1768,142 +1929,169 @@ They return the corresponding amount of bytes, using a conversion factor of 1024
 -4.exabytes   # => -4611686018427387904
 ```
 
-Singular forms are aliased so you are able to say:
+As formas singulares têm um _alias_ para que você possa dizer:
 
 ```ruby
 1.megabyte # => 1048576
 ```
 
-NOTE: Defined in `active_support/core_ext/numeric/bytes.rb`.
+NOTE: Definido em `active_support/core_ext/numeric/bytes.rb`.
+
+[Numeric#bytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-bytes
+[Numeric#exabytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-exabytes
+[Numeric#gigabytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-gigabytes
+[Numeric#kilobytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-kilobytes
+[Numeric#megabytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-megabytes
+[Numeric#petabytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-petabytes
+[Numeric#terabytes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-terabytes
 
 ### Time
 
-Enables the use of time calculations and declarations, like `45.minutes + 2.hours + 4.weeks`.
+Os seguintes métodos:
 
-These methods use Time#advance for precise date calculations when using from_now, ago, etc.
-as well as adding or subtracting their results from a Time object. For example:
+* [`seconds`][Numeric#seconds]
+* [`minutes`][Numeric#minutes]
+* [`hours`][Numeric#hours]
+* [`days`][Numeric#days]
+* [`weeks`][Numeric#weeks]
+* [`fortnights`][Numeric#fortnights]
+
+habilitar declarações e cálculos de tempo, como `45.minutes + 2.hours + 4.weeks`. Seus valores de retorno também podem ser adicionados ou subtraídos dos objetos Time.
+
+Esses métodos podem ser combinados com [`from_now`][Duration#from_now], [`ago`][Duration#ago], etc, para cálculos de datas precisos. Por exemplo:
 
 ```ruby
-# equivalent to Time.current.advance(months: 1)
-1.month.from_now
+# equivalent to Time.current.advance(days: 1)
+1.day.from_now
 
 # equivalent to Time.current.advance(weeks: 2)
 2.weeks.from_now
 
-# equivalent to Time.current.advance(months: 4, weeks: 5)
-(4.months + 5.weeks).from_now
+# equivalent to Time.current.advance(days: 4, weeks: 5)
+(4.days + 5.weeks).from_now
 ```
 
-WARNING. For other durations please refer to the time extensions to `Integer`.
+WARNING. Para outras durações, consulte as extensões de tempo para `Integer`.
 
-NOTE: Defined in `active_support/core_ext/numeric/time.rb`.
+NOTE: Definido em `active_support/core_ext/numeric/time.rb`.
 
-### Formatting
+[Duration#ago]: https://api.rubyonrails.org/classes/ActiveSupport/Duration.html#method-i-ago
+[Duration#from_now]: https://api.rubyonrails.org/classes/ActiveSupport/Duration.html#method-i-from_now
+[Numeric#days]: https://api.rubyonrails.org/classes/Numeric.html#method-i-days
+[Numeric#fortnights]: https://api.rubyonrails.org/classes/Numeric.html#method-i-fortnights
+[Numeric#hours]: https://api.rubyonrails.org/classes/Numeric.html#method-i-hours
+[Numeric#minutes]: https://api.rubyonrails.org/classes/Numeric.html#method-i-minutes
+[Numeric#seconds]: https://api.rubyonrails.org/classes/Numeric.html#method-i-seconds
+[Numeric#weeks]: https://api.rubyonrails.org/classes/Numeric.html#method-i-weeks
 
-Enables the formatting of numbers in a variety of ways.
+### Formatação
 
-Produce a string representation of a number as a telephone number:
+Permite a formatação de números de várias maneiras.
+
+Produz uma representação de _string_ de um número como um número de telefone:
 
 ```ruby
-5551234.to_s(:phone)
+5551234.to_fs(:phone)
 # => 555-1234
-1235551234.to_s(:phone)
+1235551234.to_fs(:phone)
 # => 123-555-1234
-1235551234.to_s(:phone, area_code: true)
+1235551234.to_fs(:phone, area_code: true)
 # => (123) 555-1234
-1235551234.to_s(:phone, delimiter: " ")
+1235551234.to_fs(:phone, delimiter: " ")
 # => 123 555 1234
-1235551234.to_s(:phone, area_code: true, extension: 555)
+1235551234.to_fs(:phone, area_code: true, extension: 555)
 # => (123) 555-1234 x 555
-1235551234.to_s(:phone, country_code: 1)
+1235551234.to_fs(:phone, country_code: 1)
 # => +1-123-555-1234
 ```
 
-Produce a string representation of a number as currency:
+Produz uma representação de _string_ de um número como moeda:
 
 ```ruby
-1234567890.50.to_s(:currency)                 # => $1,234,567,890.50
-1234567890.506.to_s(:currency)                # => $1,234,567,890.51
-1234567890.506.to_s(:currency, precision: 3)  # => $1,234,567,890.506
+1234567890.50.to_fs(:currency)                 # => $1,234,567,890.50
+1234567890.506.to_fs(:currency)                # => $1,234,567,890.51
+1234567890.506.to_fs(:currency, precision: 3)  # => $1,234,567,890.506
 ```
 
-Produce a string representation of a number as a percentage:
+Produz uma representação de _string_ de um número como uma porcentagem:
 
 ```ruby
-100.to_s(:percentage)
+100.to_fs(:percentage)
 # => 100.000%
-100.to_s(:percentage, precision: 0)
+100.to_fs(:percentage, precision: 0)
 # => 100%
-1000.to_s(:percentage, delimiter: '.', separator: ',')
+1000.to_fs(:percentage, delimiter: '.', separator: ',')
 # => 1.000,000%
-302.24398923423.to_s(:percentage, precision: 5)
+302.24398923423.to_fs(:percentage, precision: 5)
 # => 302.24399%
 ```
 
-Produce a string representation of a number in delimited form:
+Produz uma representação de _string_ de um número na forma delimitada:
 
 ```ruby
-12345678.to_s(:delimited)                     # => 12,345,678
-12345678.05.to_s(:delimited)                  # => 12,345,678.05
-12345678.to_s(:delimited, delimiter: ".")     # => 12.345.678
-12345678.to_s(:delimited, delimiter: ",")     # => 12,345,678
-12345678.05.to_s(:delimited, separator: " ")  # => 12,345,678 05
+12345678.to_fs(:delimited)                     # => 12,345,678
+12345678.05.to_fs(:delimited)                  # => 12,345,678.05
+12345678.to_fs(:delimited, delimiter: ".")     # => 12.345.678
+12345678.to_fs(:delimited, delimiter: ",")     # => 12,345,678
+12345678.05.to_fs(:delimited, separator: " ")  # => 12,345,678 05
 ```
 
-Produce a string representation of a number rounded to a precision:
+Produz uma representação de _string_ de um número arredondado para uma precisão:
 
 ```ruby
-111.2345.to_s(:rounded)                     # => 111.235
-111.2345.to_s(:rounded, precision: 2)       # => 111.23
-13.to_s(:rounded, precision: 5)             # => 13.00000
-389.32314.to_s(:rounded, precision: 0)      # => 389
-111.2345.to_s(:rounded, significant: true)  # => 111
+111.2345.to_fs(:rounded)                     # => 111.235
+111.2345.to_fs(:rounded, precision: 2)       # => 111.23
+13.to_fs(:rounded, precision: 5)             # => 13.00000
+389.32314.to_fs(:rounded, precision: 0)      # => 389
+111.2345.to_fs(:rounded, significant: true)  # => 111
 ```
 
-Produce a string representation of a number as a human-readable number of bytes:
+Produz uma representação de _string_ de um número como um número de bytes legível para humanos:
 
 ```ruby
-123.to_s(:human_size)                  # => 123 Bytes
-1234.to_s(:human_size)                 # => 1.21 KB
-12345.to_s(:human_size)                # => 12.1 KB
-1234567.to_s(:human_size)              # => 1.18 MB
-1234567890.to_s(:human_size)           # => 1.15 GB
-1234567890123.to_s(:human_size)        # => 1.12 TB
-1234567890123456.to_s(:human_size)     # => 1.1 PB
-1234567890123456789.to_s(:human_size)  # => 1.07 EB
+123.to_fs(:human_size)                  # => 123 Bytes
+1234.to_fs(:human_size)                 # => 1.21 KB
+12345.to_fs(:human_size)                # => 12.1 KB
+1234567.to_fs(:human_size)              # => 1.18 MB
+1234567890.to_fs(:human_size)           # => 1.15 GB
+1234567890123.to_fs(:human_size)        # => 1.12 TB
+1234567890123456.to_fs(:human_size)     # => 1.1 PB
+1234567890123456789.to_fs(:human_size)  # => 1.07 EB
 ```
 
-Produce a string representation of a number in human-readable words:
+Produz uma representação de _string_ de um número em palavras legíveis para humanos:
 
 ```ruby
-123.to_s(:human)               # => "123"
-1234.to_s(:human)              # => "1.23 Thousand"
-12345.to_s(:human)             # => "12.3 Thousand"
-1234567.to_s(:human)           # => "1.23 Million"
-1234567890.to_s(:human)        # => "1.23 Billion"
-1234567890123.to_s(:human)     # => "1.23 Trillion"
-1234567890123456.to_s(:human)  # => "1.23 Quadrillion"
+123.to_fs(:human)               # => "123"
+1234.to_fs(:human)              # => "1.23 Thousand"
+12345.to_fs(:human)             # => "12.3 Thousand"
+1234567.to_fs(:human)           # => "1.23 Million"
+1234567890.to_fs(:human)        # => "1.23 Billion"
+1234567890123.to_fs(:human)     # => "1.23 Trillion"
+1234567890123456.to_fs(:human)  # => "1.23 Quadrillion"
 ```
 
-NOTE: Defined in `active_support/core_ext/numeric/conversions.rb`.
+NOTE: Definido em `active_support/core_ext/numeric/conversions.rb`.
 
-Extensions to `Integer`
+Extensões para `Integer`
 -----------------------
 
 ### `multiple_of?`
 
-The method `multiple_of?` tests whether an integer is multiple of the argument:
+O método [`multiple_of?`][Integer#multiple_of?] testa se um inteiro é múltiplo do argumento:
 
 ```ruby
 2.multiple_of?(1) # => true
 1.multiple_of?(2) # => false
 ```
 
-NOTE: Defined in `active_support/core_ext/integer/multiple.rb`.
+NOTE: Definido em `active_support/core_ext/integer/multiple.rb`.
+
+[Integer#multiple_of?]: https://api.rubyonrails.org/classes/Integer.html#method-i-multiple_of-3F
 
 ### `ordinal`
 
-The method `ordinal` returns the ordinal suffix string corresponding to the receiver integer:
+O método [`ordinal`][Integer#ordinal] retorna a *string* de sufixo ordinal correspondente ao inteiro receptor:
 
 ```ruby
 1.ordinal    # => "st"
@@ -1914,11 +2102,13 @@ The method `ordinal` returns the ordinal suffix string corresponding to the rece
 -134.ordinal # => "th"
 ```
 
-NOTE: Defined in `active_support/core_ext/integer/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/integer/inflections.rb`.
+
+[Integer#ordinal]: https://api.rubyonrails.org/classes/Integer.html#method-i-ordinal
 
 ### `ordinalize`
 
-The method `ordinalize` returns the ordinal string corresponding to the receiver integer. In comparison, note that the `ordinal` method returns **only** the suffix string.
+O método [`ordinalize`][Integer#ordinalize] retorna a *string* ordinal correspondente ao inteiro receptor. Em comparação, observe que o método `ordinal` retorna **apenas** a string de sufixo.
 
 ```ruby
 1.ordinalize    # => "1st"
@@ -1929,65 +2119,75 @@ The method `ordinalize` returns the ordinal string corresponding to the receiver
 -134.ordinalize # => "-134th"
 ```
 
-NOTE: Defined in `active_support/core_ext/integer/inflections.rb`.
+NOTE: Definido em `active_support/core_ext/integer/inflections.rb`.
+
+[Integer#ordinalize]: https://api.rubyonrails.org/classes/Integer.html#method-i-ordinalize
 
 ### Time
 
-Enables the use of time calculations and declarations, like `4.months + 5.years`.
+Os seguintes métodos:
 
-These methods use Time#advance for precise date calculations when using from_now, ago, etc.
-as well as adding or subtracting their results from a Time object. For example:
+* [`months`][Integer#months]
+* [`years`][Integer#years]
+
+habilitar declarações de tempo e cálculos, como `4.months + 5.years`. Seus valores de retorno também podem ser adicionados ou subtraídos dos objetos Time.
+
+Esses métodos podem ser combinados com [`from_now`][Duration#from_now], [`ago`][Duration#ago], etc, para cálculos de data precisos. Por exemplo:
 
 ```ruby
-# equivalent to Time.current.advance(months: 1)
+# equivalente ao Time.current.advance(months: 1)
 1.month.from_now
 
-# equivalent to Time.current.advance(years: 2)
+# eequivalente ao Time.current.advance(years: 2)
 2.years.from_now
 
-# equivalent to Time.current.advance(months: 4, years: 5)
+# equivalente ao Time.current.advance(months: 4, years: 5)
 (4.months + 5.years).from_now
 ```
 
-WARNING. For other durations please refer to the time extensions to `Numeric`.
+WARNING. Para outras durações, consulte as extensões de tempo para `Numeric`.
 
-NOTE: Defined in `active_support/core_ext/integer/time.rb`.
+NOTE: Definido em `active_support/core_ext/integer/time.rb`.
 
-Extensions to `BigDecimal`
+[Integer#months]: https://api.rubyonrails.org/classes/Integer.html#method-i-months
+[Integer#years]: https://api.rubyonrails.org/classes/Integer.html#method-i-years
+
+Extensões para `BigDecimal`
 --------------------------
+
 ### `to_s`
 
-The method `to_s` provides a default specifier of "F". This means that a simple call to `to_s` will result in floating point representation instead of engineering notation:
+O método `to_s` fornece um especificador padrão de "F". Isso significa que uma simples chamada para `to_s` resultará em representação de ponto flutuante em vez de notação de engenharia:
 
 ```ruby
 BigDecimal(5.00, 6).to_s       # => "5.0"
 ```
 
-and that symbol specifiers are also supported:
+e que especificadores  usando *symbols* também são suportados:
 
 ```ruby
 BigDecimal(5.00, 6).to_s(:db)  # => "5.0"
 ```
 
-Engineering notation is still supported:
+A notação de engenharia ainda é suportada:
 
 ```ruby
 BigDecimal(5.00, 6).to_s("e")  # => "0.5E1"
 ```
 
-Extensions to `Enumerable`
+Extensões para `Enumerable`
 --------------------------
 
 ### `sum`
 
-The method `sum` adds the elements of an enumerable:
+O método [`sum`][Enumerable#sum] adiciona os elementos de um *enumerable*:
 
 ```ruby
 [1, 2, 3].sum # => 6
 (1..100).sum  # => 5050
 ```
 
-Addition only assumes the elements respond to `+`:
+A adição apenas assume que os elementos respondem a `+`:
 
 ```ruby
 [[1, 2], [2, 3], [3, 4]].sum    # => [1, 2, 2, 3, 3, 4]
@@ -1995,61 +2195,68 @@ Addition only assumes the elements respond to `+`:
 {a: 1, b: 2, c: 3}.sum          # => [:a, 1, :b, 2, :c, 3]
 ```
 
-The sum of an empty collection is zero by default, but this is customizable:
+A soma de uma coleção vazia é zero por padrão, mas isto é customizável:
 
 ```ruby
 [].sum    # => 0
 [].sum(1) # => 1
 ```
 
-If a block is given, `sum` becomes an iterator that yields the elements of the collection and sums the returned values:
+Se um bloco for fornecido, `sum` se torna um iterador que fornece os elementos da coleção e soma os valores retornados:
 
 ```ruby
 (1..5).sum {|n| n * 2 } # => 30
 [2, 4, 6, 8, 10].sum    # => 30
 ```
 
-The sum of an empty receiver can be customized in this form as well:
+A soma de um recipiente vazio pode ser customizado nessa forma também:
 
 ```ruby
 [].sum(1) {|n| n**3} # => 1
 ```
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#sum]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-sum
 
 ### `index_by`
 
-The method `index_by` generates a hash with the elements of an enumerable indexed by some key.
+O método [`index_by`][Enumerable#index_by] gera um  *hash* com os elementos de um *enumerable* indexados por alguma chave.
 
-It iterates through the collection and passes each element to a block. The element will be keyed by the value returned by the block:
+Ele itera pela coleção e passa cada elemento para um bloco. O elemento será chaveado pelo valor retornado pelo bloco:
 
 ```ruby
 invoices.index_by(&:number)
 # => {'2009-032' => <Invoice ...>, '2009-008' => <Invoice ...>, ...}
 ```
 
-WARNING. Keys should normally be unique. If the block returns the same value for different elements no collection is built for that key. The last item will win.
+WARNING. As chaves normalmente devem ser exclusivas. Se o bloco retornar o mesmo valor para elementos diferentes, nenhuma coleção será construida para essa chave. O último item irá ganhar.
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#index_by]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-index_by
 
 ### `index_with`
 
-The method `index_with` generates a hash with the elements of an enumerable as keys. The value
-is either a passed default or returned in a block.
+O método [`index_with`][Enumerable#index_with] gera um *hash* com os elementos de um `enumerable` como chaves. O valor será o que foi passado como padrão ou o retornado em um bloco.
 
 ```ruby
-%i( title body created_at ).index_with { |attr_name| post.public_send(attr_name) }
-# => { title: "hey", body: "what's up?", … }
+post = Post.new(title: "hey there", body: "what's up?")
+
+%i( title body ).index_with { |attr_name| post.public_send(attr_name) }
+# => { title: "hey there", body: "what's up?" }
 
 WEEKDAYS.index_with(Interval.all_day)
 # => { monday: [ 0, 1440 ], … }
 ```
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#index_with]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-index_with
 
 ### `many?`
 
-The method `many?` is shorthand for `collection.size > 1`:
+O método [`many?`][Enumerable#many?] é um atalho para `collection.size > 1`:
 
 ```erb
 <% if pages.many? %>
@@ -2057,58 +2264,95 @@ The method `many?` is shorthand for `collection.size > 1`:
 <% end %>
 ```
 
-If an optional block is given, `many?` only takes into account those elements that return true:
+Se for fornecido um bloco opcional, `many?` leva em consideração apenas aqueles elementos que retornam *true*:
 
 ```ruby
 @see_more = videos.many? {|video| video.category == params[:category]}
 ```
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#many?]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-many-3F
 
 ### `exclude?`
 
-The predicate `exclude?` tests whether a given object does **not** belong to the collection. It is the negation of the built-in `include?`:
+O predicado [`exclude?`][Enumerable#exclude?] testa se um dado objeto **não** pertence à coleção. É a negação do método embutido `include?`:
 
 ```ruby
 to_visit << node if visited.exclude?(node)
 ```
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
 
-### `without`
+[Enumerable#exclude?]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-exclude-3F
 
-The method `without` returns a copy of an enumerable with the specified elements
-removed:
+### `including`
+
+O método [`including`][Enumerable#including] retorna um novo `enumerable` que inclui os elementos passados:
 
 ```ruby
-["David", "Rafael", "Aaron", "Todd"].without("Aaron", "Todd") # => ["David", "Rafael"]
+[ 1, 2, 3 ].including(4, 5)                    # => [ 1, 2, 3, 4, 5 ]
+["David", "Rafael"].including %w[ Aaron Todd ] # => ["David", "Rafael", "Aaron", "Todd"]
 ```
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#including]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-including
+
+### `excluding`
+
+O método [`excluding`][Enumerable#excluding] retorna uma cópia de um `enumerable` com os elementos especificados removidos:
+
+```ruby
+["David", "Rafael", "Aaron", "Todd"].excluding("Aaron", "Todd") # => ["David", "Rafael"]
+```
+
+`excluding` é um *alias* para [`without`][Enumerable#without].
+
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#excluding]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-excluding
+[Enumerable#without]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-without
 
 ### `pluck`
 
-The method `pluck` returns an array based on the given key:
+O método [`pluck`][Enumerable#pluck] extrai a chave fornecida de cada elemento:
 
 ```ruby
 [{ name: "David" }, { name: "Rafael" }, { name: "Aaron" }].pluck(:name) # => ["David", "Rafael", "Aaron"]
+[{ id: 1, name: "David" }, { id: 2, name: "Rafael" }].pluck(:id, :name) # => [[1, "David"], [2, "Rafael"]]
 ```
 
-NOTE: Defined in `active_support/core_ext/enumerable.rb`.
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
 
-Extensions to `Array`
+[Enumerable#pluck]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-pluck
+
+### `pick`
+
+O método [`pick`][Enumerable#pick] extrai a chave fornecida do primeiro elemento:
+
+```ruby
+[{ name: "David" }, { name: "Rafael" }, { name: "Aaron" }].pick(:name) # => "David"
+[{ id: 1, name: "David" }, { id: 2, name: "Rafael" }].pick(:id, :name) # => [1, "David"]
+```
+
+NOTE: Definido em `active_support/core_ext/enumerable.rb`.
+
+[Enumerable#pick]: https://api.rubyonrails.org/classes/Enumerable.html#method-i-pick
+
+Extensões para `Array`
 ---------------------
 
-### Accessing
+### Acessando
 
-Active Support augments the API of arrays to ease certain ways of accessing them. For example, `to` returns the subarray of elements up to the one at the passed index:
+O *Active Support* aumenta a API de *arrays* para facilitar certas maneiras de acessá-los. Por exemplo, [`to`][Array#to] retorna o *subarray* de elementos até aquele no índice passado:
 
 ```ruby
 %w(a b c d).to(2) # => ["a", "b", "c"]
 [].to(7)          # => []
 ```
 
-Similarly, `from` returns the tail from the element at the passed index to the end. If the index is greater than the length of the array, it returns an empty array.
+Da mesma forma, [`from`][Array#from] retorna os elementos a partir do elemento no índice passado até o final. Se o índice for maior que o comprimento do *array*, será retornado um *array* vazio.
 
 ```ruby
 %w(a b c d).from(2)  # => ["c", "d"]
@@ -2116,19 +2360,47 @@ Similarly, `from` returns the tail from the element at the passed index to the e
 [].from(0)           # => []
 ```
 
-The methods `second`, `third`, `fourth`, and `fifth` return the corresponding element, as do `second_to_last` and `third_to_last` (`first` and `last` are built-in). Thanks to social wisdom and positive constructiveness all around, `forty_two` is also available.
+O método [`including`][Array#including] retorna um novo *array* que inclui os elementos passados:
+
+```ruby
+[ 1, 2, 3 ].including(4, 5)          # => [ 1, 2, 3, 4, 5 ]
+[ [ 0, 1 ] ].including([ [ 1, 0 ] ]) # => [ [ 0, 1 ], [ 1, 0 ] ]
+```
+
+O método [`excluding`][Array#excluding] retorna uma cópia do *array* excluindo os elementos especificados.
+Esta é uma otimização de `Enumerable#excluding` que usa `Array#-`
+ao invés de `Array#reject` por questão de desempenho.
+
+```ruby
+["David", "Rafael", "Aaron", "Todd"].excluding("Aaron", "Todd") # => ["David", "Rafael"]
+[ [ 0, 1 ], [ 1, 0 ] ].excluding([ [ 1, 0 ] ])                  # => [ [ 0, 1 ] ]
+```
+
+Os métodos [`second`][Array#second], [`third`][Array#third], [`fourth`][Array#fourth], e [`fifth`][Array#fifth] retornam o elemento correspondente, assim como [`second_to_last`][Array#second_to_last] e [`third_to_last`][Array#third_to_last] (`first` e `last` são embutidos). Graças à sabedoria social e construtividade positiva ao redor, [`forty_two`][Array#forty_two] também está disponível.
 
 ```ruby
 %w(a b c d).third # => "c"
 %w(a b c d).fifth # => nil
 ```
 
-NOTE: Defined in `active_support/core_ext/array/access.rb`.
+NOTE: Definido em `active_support/core_ext/array/access.rb`.
 
-### Extracting
+[Array#excluding]: https://api.rubyonrails.org/classes/Array.html#method-i-excluding
+[Array#fifth]: https://api.rubyonrails.org/classes/Array.html#method-i-fifth
+[Array#forty_two]: https://api.rubyonrails.org/classes/Array.html#method-i-forty_two
+[Array#fourth]: https://api.rubyonrails.org/classes/Array.html#method-i-fourth
+[Array#from]: https://api.rubyonrails.org/classes/Array.html#method-i-from
+[Array#including]: https://api.rubyonrails.org/classes/Array.html#method-i-including
+[Array#second]: https://api.rubyonrails.org/classes/Array.html#method-i-second
+[Array#second_to_last]: https://api.rubyonrails.org/classes/Array.html#method-i-second_to_last
+[Array#third]: https://api.rubyonrails.org/classes/Array.html#method-i-third
+[Array#third_to_last]: https://api.rubyonrails.org/classes/Array.html#method-i-third_to_last
+[Array#to]: https://api.rubyonrails.org/classes/Array.html#method-i-to
 
-The method `extract!` removes and returns the elements for which the block returns a true value.
-If no block is given, an Enumerator is returned instead.
+### Extraindo
+
+O método [`extract!`][Array#extract!] remove e retorna os elementos para os quais o bloco retorna um valor *true*.
+Se nenhum bloco for fornecido, um *Enumerator* será retornado.
 
 ```ruby
 numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -2136,41 +2408,45 @@ odd_numbers = numbers.extract! { |number| number.odd? } # => [1, 3, 5, 7, 9]
 numbers # => [0, 2, 4, 6, 8]
 ```
 
-NOTE: Defined in `active_support/core_ext/array/extract.rb`.
+NOTE: Definido em `active_support/core_ext/array/extract.rb`.
 
-### Options Extraction
+[Array#extract!]: https://api.rubyonrails.org/classes/Array.html#method-i-extract-21
 
-When the last argument in a method call is a hash, except perhaps for a `&block` argument, Ruby allows you to omit the brackets:
+### Extração de opções
+
+Quando o último argumento em uma chamada de método é um *hash*, exceto talvez por um argumento do tipo `&block`, o Ruby permite que você omita os colchetes:
 
 ```ruby
 User.exists?(email: params[:email])
 ```
 
-That syntactic sugar is used a lot in Rails to avoid positional arguments where there would be too many, offering instead interfaces that emulate named parameters. In particular it is very idiomatic to use a trailing hash for options.
+Esse *syntactic sugar* é muito usado no Rails para evitar argumentos posicionais onde haveria muitos, oferecendo interfaces que emulam os parâmetros nomeados. Em particular, é muito idiomático usar um *hash* no final para opções.
 
-If a method expects a variable number of arguments and uses `*` in its declaration, however, such an options hash ends up being an item of the array of arguments, where it loses its role.
+Se um método espera um número variável de argumentos e usa `*` em sua declaração, entretanto, tal *hash* de opções acaba sendo um item do *array* de argumentos, onde perde seu papel.
 
-In those cases, you may give an options hash a distinguished treatment with `extract_options!`. This method checks the type of the last item of an array. If it is a hash it pops it and returns it, otherwise it returns an empty hash.
+Nesses casos, você pode dar um tratamento diferenciado ao *hash* de opções com [`extract_options!`][Array#extract_options!]. Este método verifica o tipo do último item de um *array*. Se for um *hash*, ele o exibe e o retorna, caso contrário, retorna um *hash* vazio.
 
-Let's see for example the definition of the `caches_action` controller macro:
+Vejamos, por exemplo, a definição da macro do controlador `caches_action`:
 
 ```ruby
 def caches_action(*actions)
   return unless cache_configured?
   options = actions.extract_options!
-  ...
+  # ...
 end
 ```
 
-This method receives an arbitrary number of action names, and an optional hash of options as last argument. With the call to `extract_options!` you obtain the options hash and remove it from `actions` in a simple and explicit way.
+Este método recebe um número arbitrário de nomes de ações e um *hash* opcional de opções como último argumento. Com a chamada a `extract_options!` você obtém o *hash* de opções e o remove de `actions` de forma simples e explícita.
 
-NOTE: Defined in `active_support/core_ext/array/extract_options.rb`.
+NOTE: Definido em `active_support/core_ext/array/extract_options.rb`.
 
-### Conversions
+[Array#extract_options!]: https://api.rubyonrails.org/classes/Array.html#method-i-extract_options-21
+
+### Conversões
 
 #### `to_sentence`
 
-The method `to_sentence` turns an array into a string containing a sentence that enumerates its items:
+O método [`to_sentence`][Array#to_sentence] transforma um *array* em uma *string* contendo uma frase que enumera seus itens:
 
 ```ruby
 %w().to_sentence                # => ""
@@ -2179,43 +2455,46 @@ The method `to_sentence` turns an array into a string containing a sentence that
 %w(Earth Wind Fire).to_sentence # => "Earth, Wind, and Fire"
 ```
 
-This method accepts three options:
+Este método aceita três opções:
 
-* `:two_words_connector`: What is used for arrays of length 2. Default is " and ".
-* `:words_connector`: What is used to join the elements of arrays with 3 or more elements, except for the last two. Default is ", ".
-* `:last_word_connector`: What is used to join the last items of an array with 3 or more elements. Default is ", and ".
+* `:two_words_connector`: O que é usado para *arrays* de comprimento 2. O padrão é " e ".
+* `:words_connector`: O que é usado para unir os elementos de *arrays* com 3 ou mais elementos, exceto os dois últimos. O padrão é ", ".
+* `:last_word_connector`: O que é usado para unir os últimos itens de um *array* com 3 ou mais elementos. O padrão é ", e ".
 
-The defaults for these options can be localized, their keys are:
+Os padrões para essas opções podem ser localizados, suas chaves são:
 
-| Option                 | I18n key                            |
+| Opção                  | Chave I18n                          |
 | ---------------------- | ----------------------------------- |
 | `:two_words_connector` | `support.array.two_words_connector` |
 | `:words_connector`     | `support.array.words_connector`     |
 | `:last_word_connector` | `support.array.last_word_connector` |
 
-NOTE: Defined in `active_support/core_ext/array/conversions.rb`.
+NOTE: Definido em `active_support/core_ext/array/conversions.rb`.
 
-#### `to_formatted_s`
+[Array#to_sentence]: https://api.rubyonrails.org/classes/Array.html#method-i-to_sentence
 
-The method `to_formatted_s` acts like `to_s` by default.
+#### `to_fs`
 
-If the array contains items that respond to `id`, however, the symbol
-`:db` may be passed as argument. That's typically used with
-collections of Active Record objects. Returned strings are:
+O método [`to_fs`][Array#to_formatted_s] age como `to_s` por padrão.
+
+No entanto, se o *array* contém itens que respondem a `id`, o símbolo 
+`:db` pode ser passado como argumento. Isso é normalmente usado em coleções de objetos do *Active Record*. As *strings* retornadas são:
 
 ```ruby
-[].to_formatted_s(:db)            # => "null"
-[user].to_formatted_s(:db)        # => "8456"
-invoice.lines.to_formatted_s(:db) # => "23,567,556,12"
+[].to_fs(:db)            # => "null"
+[user].to_fs(:db)        # => "8456"
+invoice.lines.to_fs(:db) # => "23,567,556,12"
 ```
 
-Integers in the example above are supposed to come from the respective calls to `id`.
+Os inteiros no exemplo acima devem vir das respectivas chamadas para `id`.
 
-NOTE: Defined in `active_support/core_ext/array/conversions.rb`.
+NOTE: Definido em `active_support/core_ext/array/conversions.rb`.
+
+[Array#to_fs]: https://api.rubyonrails.org/classes/Array.html#method-i-to_fs
 
 #### `to_xml`
 
-The method `to_xml` returns a string containing an XML representation of its receiver:
+O método [`to_xml`][Array#to_xml] retorna uma string contendo uma representação em XML do seu recipiente:
 
 ```ruby
 Contributor.limit(2).order(:rank).to_xml
@@ -2237,11 +2516,11 @@ Contributor.limit(2).order(:rank).to_xml
 # </contributors>
 ```
 
-To do so it sends `to_xml` to every item in turn, and collects the results under a root node. All items must respond to `to_xml`, an exception is raised otherwise.
+Para fazer isso, ele envia `to_xml` para cada item e coleta os resultados em um nó raiz. Todos os itens devem responder a `to_xml`, caso contrário, uma exceção é provocada.
 
-By default, the name of the root element is the underscored and dasherized plural of the name of the class of the first item, provided the rest of elements belong to that type (checked with `is_a?`) and they are not hashes. In the example above that's "contributors".
+Por padrão, o nome do elemento raiz é o plural sublinhado e tracejado do nome da classe do primeiro item, desde que os demais elementos pertençam a esse tipo (verificado com `is_a?`) e não sejam *hashes*. No exemplo acima são "*contributors*".
 
-If there's any element that does not belong to the type of the first one the root node becomes "objects":
+Se houver algum elemento que não pertença ao tipo do primeiro, o nó raiz se torna "*objects*":
 
 ```ruby
 [Contributor.first, Commit.first].to_xml
@@ -2269,7 +2548,7 @@ If there's any element that does not belong to the type of the first one the roo
 # </objects>
 ```
 
-If the receiver is an array of hashes the root element is by default also "objects":
+Se o recipiente é um *array* de *hashes*, o elemento raiz também é, por padrão, "*objects*":
 
 ```ruby
 [{a: 1, b: 2}, {c: 3}].to_xml
@@ -2286,11 +2565,11 @@ If the receiver is an array of hashes the root element is by default also "objec
 # </objects>
 ```
 
-WARNING. If the collection is empty the root element is by default "nil-classes". That's a gotcha, for example the root element of the list of contributors above would not be "contributors" if the collection was empty, but "nil-classes". You may use the `:root` option to ensure a consistent root element.
+WARNING. Se a coleção estiver vazia, o elemento raiz é, por padrão, "*nil-classes*". If the collection is empty the root element is by default "nil-classes". Isso é uma pegadinha, por exemplo, o elemento raiz da lista de *contributors* acima não seria "*contributors*" se a coleção estivesse vazia, e sim "*nil-classes*". Você pode usar a opção `:root` para garantir um elemento raiz consistente.
 
-The name of children nodes is by default the name of the root node singularized. In the examples above we've seen "contributor" and "object". The option `:children` allows you to set these node names.
+O nome dos nós filhos é, por padrão, o nome do nó raiz singularizado. Nos exemplos acima vimos "*contributor*" e "*object*". A opção `:children` permite que você defina esses nomes de nós.
 
-The default XML builder is a fresh instance of `Builder::XmlMarkup`. You can configure your own builder via the `:builder` option. The method also accepts options like `:dasherize` and friends, they are forwarded to the builder:
+O construtor XML padrão é uma nova instância de `Builder::XmlMarkup`. Você pode configurar seu próprio construtor através da opção `:builder`. O método também aceita opções como `:dasherize` e afins, elas são encaminhadas para o construtor:
 
 ```ruby
 Contributor.limit(2).order(:rank).to_xml(skip_types: true)
@@ -2312,17 +2591,19 @@ Contributor.limit(2).order(:rank).to_xml(skip_types: true)
 # </contributors>
 ```
 
-NOTE: Defined in `active_support/core_ext/array/conversions.rb`.
+NOTE: Definido em `active_support/core_ext/array/conversions.rb`.
 
-### Wrapping
+[Array#to_xml]: https://api.rubyonrails.org/classes/Array.html#method-i-to_xml
 
-The method `Array.wrap` wraps its argument in an array unless it is already an array (or array-like).
+### Invólucro
 
-Specifically:
+O método [`Array.wrap`][Array.wrap] envolve seu argumento em um *array*, a menos que já seja um *array* (ou semelhante a um *array*).
 
-* If the argument is `nil` an empty array is returned.
-* Otherwise, if the argument responds to `to_ary` it is invoked, and if the value of `to_ary` is not `nil`, it is returned.
-* Otherwise, an array with the argument as its single element is returned.
+Especificamente:
+
+* Se o argumento for `nil` um *array* vazio é retornado.
+* Caso contrário, se o argumento responde a `to_ary` ele será invocado, e se o valor de `to_ary` não for `nil`, ele será retornado.
+* Caso contrário, um *array* com o argumento como seu único elemento é retornado.
 
 ```ruby
 Array.wrap(nil)       # => []
@@ -2330,31 +2611,33 @@ Array.wrap([1, 2, 3]) # => [1, 2, 3]
 Array.wrap(0)         # => [0]
 ```
 
-This method is similar in purpose to `Kernel#Array`, but there are some differences:
+Este método é semelhante em propósito ao `Kernel#Array`, mas há algumas diferenças:
 
-* If the argument responds to `to_ary` the method is invoked. `Kernel#Array` moves on to try `to_a` if the returned value is `nil`, but `Array.wrap` returns an array with the argument as its single element right away.
-* If the returned value from `to_ary` is neither `nil` nor an `Array` object, `Kernel#Array` raises an exception, while `Array.wrap` does not, it just returns the value.
-* It does not call `to_a` on the argument, if the argument does not respond to `to_ary` it returns an array with the argument as its single element.
+* Se o argumento responde a `to_ary` o método é invocado. `Kernel#Array` segue em frente para tentar chamar `to_a` se o valor retornado for `nil`, mas `Array.wrap` retorna um *array* com o argumento como seu único elemento imediatamente.
+* Se o valor retornado de `to_ary` não for `nil` nem um objeto `Array`, `Kernel#Array` gera uma exceção, enquanto `Array.wrap` não, apenas retorna o valor.
+* Ele não chama `to_a` no argumento, se o argumento não responde a `to_ary` ele retorna um *array* com o argumento como seu único elemento.
 
-The last point is particularly worth comparing for some enumerables:
+O último ponto é particularmente digno de comparação para alguns *enumerables*:
 
 ```ruby
 Array.wrap(foo: :bar) # => [{:foo=>:bar}]
 Array(foo: :bar)      # => [[:foo, :bar]]
 ```
 
-There's also a related idiom that uses the splat operator:
+Há também um idioma relacionado que usa o operador *splat*:
 
 ```ruby
 [*object]
 ```
 
-NOTE: Defined in `active_support/core_ext/array/wrap.rb`.
+NOTE: Definido em `active_support/core_ext/array/wrap.rb`.
 
-### Duplicating
+[Array.wrap]: https://api.rubyonrails.org/classes/Array.html#method-c-wrap
 
-The method `Array#deep_dup` duplicates itself and all objects inside
-recursively with Active Support method `Object#deep_dup`. It works like `Array#map` with sending `deep_dup` method to each object inside.
+### Duplicando
+
+O método [`Array#deep_dup`][Array#deep_dup] duplica a si mesmo e todos os objetos dentro
+recursivamente com o método do Active Support `Object#deep_dup`. Funciona como um `Array#map`, enviando o método `deep_dup` para cada objeto dentro.
 
 ```ruby
 array = [1, [2, 3]]
@@ -2363,19 +2646,21 @@ dup[1][2] = 4
 array[1][2] == nil   # => true
 ```
 
-NOTE: Defined in `active_support/core_ext/object/deep_dup.rb`.
+NOTE: Definido em `active_support/core_ext/object/deep_dup.rb`.
 
-### Grouping
+[Array#deep_dup]: https://api.rubyonrails.org/classes/Array.html#method-i-deep_dup
+
+### Agrupamento
 
 #### `in_groups_of(number, fill_with = nil)`
 
-The method `in_groups_of` splits an array into consecutive groups of a certain size. It returns an array with the groups:
+O método [`in_groups_of`][Array#in_groups_of] divide um *array* em grupos consecutivos de um determinado tamanho. Ele retorna um *array* com os grupos:
 
 ```ruby
 [1, 2, 3].in_groups_of(2) # => [[1, 2], [3, nil]]
 ```
 
-or yields them in turn if a block is passed:
+ou os fornece por sua vez se um bloco for passado:
 
 ```html+erb
 <% sample.in_groups_of(3) do |a, b, c| %>
@@ -2387,32 +2672,34 @@ or yields them in turn if a block is passed:
 <% end %>
 ```
 
-The first example shows `in_groups_of` fills the last group with as many `nil` elements as needed to have the requested size. You can change this padding value using the second optional argument:
+O primeiro elemento mostra como `in_groups_of` preenche o último grupo com quantos elementos `nil` forem necessários para ter o tamanho solicitado. Você pode alterar esse valor de preenchimento usando o segundo argumento opcional:
 
 ```ruby
 [1, 2, 3].in_groups_of(2, 0) # => [[1, 2], [3, 0]]
 ```
 
-And you can tell the method not to fill the last group passing `false`:
+E você pode dizer ao método para não preencher o último grupo passando `false`:
 
 ```ruby
 [1, 2, 3].in_groups_of(2, false) # => [[1, 2], [3]]
 ```
 
-As a consequence `false` can't be a used as a padding value.
+Como consequência, `false` não pode ser usado como valor de preenchimento.
 
-NOTE: Defined in `active_support/core_ext/array/grouping.rb`.
+NOTE: Definido em `active_support/core_ext/array/grouping.rb`.
+
+[Array#in_groups_of]: https://api.rubyonrails.org/classes/Array.html#method-i-in_groups_of
 
 #### `in_groups(number, fill_with = nil)`
 
-The method `in_groups` splits an array into a certain number of groups. The method returns an array with the groups:
+O método [`in_groups`][Array#in_groups] divide um *array* em um certo número de grupos. O método retorna um *array* com os grupos:
 
 ```ruby
 %w(1 2 3 4 5 6 7).in_groups(3)
 # => [["1", "2", "3"], ["4", "5", nil], ["6", "7", nil]]
 ```
 
-or yields them in turn if a block is passed:
+ou os fornece por sua vez se um bloco for passado:
 
 ```ruby
 %w(1 2 3 4 5 6 7).in_groups(3) {|group| p group}
@@ -2421,47 +2708,51 @@ or yields them in turn if a block is passed:
 ["6", "7", nil]
 ```
 
-The examples above show that `in_groups` fills some groups with a trailing `nil` element as needed. A group can get at most one of these extra elements, the rightmost one if any. And the groups that have them are always the last ones.
+Os exemplos acima mostram que `in_groups` preenche alguns grupos com um elemento `nil` à direita conforme necessário. Um grupo pode obter no máximo um desses elementos extras, o mais à direita, se houver. E os grupos que os possuem são sempre os últimos.
 
-You can change this padding value using the second optional argument:
+Você pode alterar esse valor de preenchimento usando o segundo argumento opcional:
 
 ```ruby
 %w(1 2 3 4 5 6 7).in_groups(3, "0")
 # => [["1", "2", "3"], ["4", "5", "0"], ["6", "7", "0"]]
 ```
 
-And you can tell the method not to fill the smaller groups passing `false`:
+E você pode dizer ao método para não preencher os grupos menores passando `false`:
 
 ```ruby
 %w(1 2 3 4 5 6 7).in_groups(3, false)
 # => [["1", "2", "3"], ["4", "5"], ["6", "7"]]
 ```
 
-As a consequence `false` can't be a used as a padding value.
+Como consequência, `false` não pode ser usado como valor de preenchimento.
 
-NOTE: Defined in `active_support/core_ext/array/grouping.rb`.
+NOTE: Definido em `active_support/core_ext/array/grouping.rb`.
+
+[Array#in_groups]: https://api.rubyonrails.org/classes/Array.html#method-i-in_groups
 
 #### `split(value = nil)`
 
-The method `split` divides an array by a separator and returns the resulting chunks.
+O método [`split`][Array#split] divide um *array* por um separador e retorna os pedaços resultantes.
 
-If a block is passed the separators are those elements of the array for which the block returns true:
+Se um bloco é passado, os separadores são os elementos do *array* para os quais o bloco retorna *true*:
 
 ```ruby
 (-5..5).to_a.split { |i| i.multiple_of?(4) }
 # => [[-5], [-3, -2, -1], [1, 2, 3], [5]]
 ```
 
-Otherwise, the value received as argument, which defaults to `nil`, is the separator:
+Caso contrário, o valor recebido como argumento, cujo padrão é `nil`, é o separador:
 
 ```ruby
 [0, 1, -5, 1, 1, "foo", "bar"].split(1)
 # => [[0], [-5], [], ["foo", "bar"]]
 ```
 
-TIP: Observe in the previous example that consecutive separators result in empty arrays.
+TIP: Observe no exemplo anterior que separadores consecutivos resultam em *arrays* vazios.
 
-NOTE: Defined in `active_support/core_ext/array/grouping.rb`.
+NOTE: Definido em `active_support/core_ext/array/grouping.rb`.
+
+[Array#split]: https://api.rubyonrails.org/classes/Array.html#method-i-split
 
 Extensions to `Hash`
 --------------------
@@ -2470,7 +2761,7 @@ Extensions to `Hash`
 
 #### `to_xml`
 
-The method `to_xml` returns a string containing an XML representation of its receiver:
+The method [`to_xml`][Hash#to_xml] returns a string containing an XML representation of its receiver:
 
 ```ruby
 {"foo" => 1, "bar" => 2}.to_xml
@@ -2514,6 +2805,8 @@ The default XML builder is a fresh instance of `Builder::XmlMarkup`. You can con
 
 NOTE: Defined in `active_support/core_ext/hash/conversions.rb`.
 
+[Hash#to_xml]: https://api.rubyonrails.org/classes/Hash.html#method-i-to_xml
+
 ### Merging
 
 Ruby has a built-in method `Hash#merge` that merges two hashes:
@@ -2533,13 +2826,13 @@ In case of collision the key in the hash of the argument wins in `merge`. You ca
 options = {length: 30, omission: "..."}.merge(options)
 ```
 
-Active Support defines `reverse_merge` in case you prefer this alternative notation:
+Active Support defines [`reverse_merge`][Hash#reverse_merge] in case you prefer this alternative notation:
 
 ```ruby
 options = options.reverse_merge(length: 30, omission: "...")
 ```
 
-And a bang version `reverse_merge!` that performs the merge in place:
+And a bang version [`reverse_merge!`][Hash#reverse_merge!] that performs the merge in place:
 
 ```ruby
 options.reverse_merge!(length: 30, omission: "...")
@@ -2549,32 +2842,40 @@ WARNING. Take into account that `reverse_merge!` may change the hash in the call
 
 NOTE: Defined in `active_support/core_ext/hash/reverse_merge.rb`.
 
+[Hash#reverse_merge!]: https://api.rubyonrails.org/classes/Hash.html#method-i-reverse_merge-21
+[Hash#reverse_merge]: https://api.rubyonrails.org/classes/Hash.html#method-i-reverse_merge
+
 #### `reverse_update`
 
-The method `reverse_update` is an alias for `reverse_merge!`, explained above.
+The method [`reverse_update`][Hash#reverse_update] is an alias for `reverse_merge!`, explained above.
 
 WARNING. Note that `reverse_update` has no bang.
 
 NOTE: Defined in `active_support/core_ext/hash/reverse_merge.rb`.
 
+[Hash#reverse_update]: https://api.rubyonrails.org/classes/Hash.html#method-i-reverse_update
+
 #### `deep_merge` and `deep_merge!`
 
 As you can see in the previous example if a key is found in both hashes the value in the one in the argument wins.
 
-Active Support defines `Hash#deep_merge`. In a deep merge, if a key is found in both hashes and their values are hashes in turn, then their _merge_ becomes the value in the resulting hash:
+Active Support defines [`Hash#deep_merge`][Hash#deep_merge]. In a deep merge, if a key is found in both hashes and their values are hashes in turn, then their _merge_ becomes the value in the resulting hash:
 
 ```ruby
 {a: {b: 1}}.deep_merge(a: {c: 2})
 # => {:a=>{:b=>1, :c=>2}}
 ```
 
-The method `deep_merge!` performs a deep merge in place.
+The method [`deep_merge!`][Hash#deep_merge!] performs a deep merge in place.
 
 NOTE: Defined in `active_support/core_ext/hash/deep_merge.rb`.
 
-### Deep duplicating
+[Hash#deep_merge!]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_merge-21
+[Hash#deep_merge]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_merge
 
-The method `Hash#deep_dup` duplicates itself and all keys and values
+### Deep Duplicating
+
+The method [`Hash#deep_dup`][Hash#deep_dup] duplicates itself and all keys and values
 inside recursively with Active Support method `Object#deep_dup`. It works like `Enumerator#each_with_object` with sending `deep_dup` method to each pair inside.
 
 ```ruby
@@ -2590,11 +2891,13 @@ hash[:b][:d] == [3, 4]   # => true
 
 NOTE: Defined in `active_support/core_ext/object/deep_dup.rb`.
 
+[Hash#deep_dup]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_dup
+
 ### Working with Keys
 
 #### `except` and `except!`
 
-The method `except` returns a hash with the keys in the argument list removed, if present:
+The method [`except`][Hash#except] returns a hash with the keys in the argument list removed, if present:
 
 ```ruby
 {a: 1, b: 2}.except(:a) # => {:b=>2}
@@ -2607,13 +2910,16 @@ If the receiver responds to `convert_key`, the method is called on each of the a
 {a: 1}.with_indifferent_access.except("a") # => {}
 ```
 
-There's also the bang variant `except!` that removes keys in the very receiver.
+There's also the bang variant [`except!`][Hash#except!] that removes keys in place.
 
 NOTE: Defined in `active_support/core_ext/hash/except.rb`.
 
+[Hash#except!]: https://api.rubyonrails.org/classes/Hash.html#method-i-except-21
+[Hash#except]: https://api.rubyonrails.org/classes/Hash.html#method-i-except
+
 #### `stringify_keys` and `stringify_keys!`
 
-The method `stringify_keys` returns a hash that has a stringified version of the keys in the receiver. It does so by sending `to_s` to them:
+The method [`stringify_keys`][Hash#stringify_keys] returns a hash that has a stringified version of the keys in the receiver. It does so by sending `to_s` to them:
 
 ```ruby
 {nil => nil, 1 => 1, a: :a}.stringify_keys
@@ -2634,15 +2940,15 @@ This method may be useful for example to easily accept both symbols and strings 
 def to_check_box_tag(options = {}, checked_value = "1", unchecked_value = "0")
   options = options.stringify_keys
   options["type"] = "checkbox"
-  ...
+  # ...
 end
 ```
 
 The second line can safely access the "type" key, and let the user to pass either `:type` or "type".
 
-There's also the bang variant `stringify_keys!` that stringifies keys in the very receiver.
+There's also the bang variant [`stringify_keys!`][Hash#stringify_keys!] that stringifies keys in place.
 
-Besides that, one can use `deep_stringify_keys` and `deep_stringify_keys!` to stringify all the keys in the given hash and all the hashes nested into it. An example of the result is:
+Besides that, one can use [`deep_stringify_keys`][Hash#deep_stringify_keys] and [`deep_stringify_keys!`][Hash#deep_stringify_keys!] to stringify all the keys in the given hash and all the hashes nested in it. An example of the result is:
 
 ```ruby
 {nil => nil, 1 => 1, nested: {a: 3, 5 => 5}}.deep_stringify_keys
@@ -2651,9 +2957,14 @@ Besides that, one can use `deep_stringify_keys` and `deep_stringify_keys!` to st
 
 NOTE: Defined in `active_support/core_ext/hash/keys.rb`.
 
+[Hash#deep_stringify_keys!]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_stringify_keys-21
+[Hash#deep_stringify_keys]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_stringify_keys
+[Hash#stringify_keys!]: https://api.rubyonrails.org/classes/Hash.html#method-i-stringify_keys-21
+[Hash#stringify_keys]: https://api.rubyonrails.org/classes/Hash.html#method-i-stringify_keys
+
 #### `symbolize_keys` and `symbolize_keys!`
 
-The method `symbolize_keys` returns a hash that has a symbolized version of the keys in the receiver, where possible. It does so by sending `to_sym` to them:
+The method [`symbolize_keys`][Hash#symbolize_keys] returns a hash that has a symbolized version of the keys in the receiver, where possible. It does so by sending `to_sym` to them:
 
 ```ruby
 {nil => nil, 1 => 1, "a" => "a"}.symbolize_keys
@@ -2666,25 +2977,25 @@ In case of key collision, the value will be the one most recently inserted into 
 
 ```ruby
 {"a" => 1, a: 2}.symbolize_keys
-# The result will be
 # => {:a=>2}
 ```
 
-This method may be useful for example to easily accept both symbols and strings as options. For instance `ActionController::UrlRewriter` defines
+This method may be useful for example to easily accept both symbols and strings as options. For instance `ActionText::TagHelper` defines
 
 ```ruby
-def rewrite_path(options)
+def rich_text_area_tag(name, value = nil, options = {})
   options = options.symbolize_keys
-  options.update(options[:params].symbolize_keys) if options[:params]
-  ...
+
+  options[:input] ||= "trix_input_#{ActionText::TagHelper.id += 1}"
+  # ...
 end
 ```
 
-The second line can safely access the `:params` key, and let the user to pass either `:params` or "params".
+The third line can safely access the `:input` key, and let the user to pass either `:input` or "input".
 
-There's also the bang variant `symbolize_keys!` that symbolizes keys in the very receiver.
+There's also the bang variant [`symbolize_keys!`][Hash#symbolize_keys!] that symbolizes keys in place.
 
-Besides that, one can use `deep_symbolize_keys` and `deep_symbolize_keys!` to symbolize all the keys in the given hash and all the hashes nested into it. An example of the result is:
+Besides that, one can use [`deep_symbolize_keys`][Hash#deep_symbolize_keys] and [`deep_symbolize_keys!`][Hash#deep_symbolize_keys!] to symbolize all the keys in the given hash and all the hashes nested in it. An example of the result is:
 
 ```ruby
 {nil => nil, 1 => 1, "nested" => {"a" => 3, 5 => 5}}.deep_symbolize_keys
@@ -2693,15 +3004,23 @@ Besides that, one can use `deep_symbolize_keys` and `deep_symbolize_keys!` to sy
 
 NOTE: Defined in `active_support/core_ext/hash/keys.rb`.
 
+[Hash#deep_symbolize_keys!]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_symbolize_keys-21
+[Hash#deep_symbolize_keys]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_symbolize_keys
+[Hash#symbolize_keys!]: https://api.rubyonrails.org/classes/Hash.html#method-i-symbolize_keys-21
+[Hash#symbolize_keys]: https://api.rubyonrails.org/classes/Hash.html#method-i-symbolize_keys
+
 #### `to_options` and `to_options!`
 
-The methods `to_options` and `to_options!` are respectively aliases of `symbolize_keys` and `symbolize_keys!`.
+The methods [`to_options`][Hash#to_options] and [`to_options!`][Hash#to_options!] are aliases of `symbolize_keys` and `symbolize_keys!`, respectively.
 
 NOTE: Defined in `active_support/core_ext/hash/keys.rb`.
 
+[Hash#to_options!]: https://api.rubyonrails.org/classes/Hash.html#method-i-to_options-21
+[Hash#to_options]: https://api.rubyonrails.org/classes/Hash.html#method-i-to_options
+
 #### `assert_valid_keys`
 
-The method `assert_valid_keys` receives an arbitrary number of arguments, and checks whether the receiver has any key outside that white list. If it does `ArgumentError` is raised.
+The method [`assert_valid_keys`][Hash#assert_valid_keys] receives an arbitrary number of arguments, and checks whether the receiver has any key outside that list. If it does `ArgumentError` is raised.
 
 ```ruby
 {a: 1}.assert_valid_keys(:a)  # passes
@@ -2712,9 +3031,31 @@ Active Record does not accept unknown options when building associations, for ex
 
 NOTE: Defined in `active_support/core_ext/hash/keys.rb`.
 
+[Hash#assert_valid_keys]: https://api.rubyonrails.org/classes/Hash.html#method-i-assert_valid_keys
+
+### Working with Values
+
+#### `deep_transform_values` and `deep_transform_values!`
+
+The method [`deep_transform_values`][Hash#deep_transform_values] returns a new hash with all values converted by the block operation. This includes the values from the root hash and from all nested hashes and arrays.
+
+```ruby
+hash = { person: { name: 'Rob', age: '28' } }
+
+hash.deep_transform_values{ |value| value.to_s.upcase }
+# => {person: {name: "ROB", age: "28"}}
+```
+
+There's also the bang variant [`deep_transform_values!`][Hash#deep_transform_values!] that destructively converts all values by using the block operation.
+
+NOTE: Defined in `active_support/core_ext/hash/deep_transform_values.rb`.
+
+[Hash#deep_transform_values!]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_transform_values-21
+[Hash#deep_transform_values]: https://api.rubyonrails.org/classes/Hash.html#method-i-deep_transform_values
+
 ### Slicing
 
-The method `slice!` replaces the hash with only the given keys and returns a hash containing the removed key/value pairs.
+The method [`slice!`][Hash#slice!] replaces the hash with only the given keys and returns a hash containing the removed key/value pairs.
 
 ```ruby
 hash = {a: 1, b: 2}
@@ -2724,9 +3065,11 @@ hash                   # => {:a=>1}
 
 NOTE: Defined in `active_support/core_ext/hash/slice.rb`.
 
+[Hash#slice!]: https://api.rubyonrails.org/classes/Hash.html#method-i-slice-21
+
 ### Extracting
 
-The method `extract!` removes and returns the key/value pairs matching the given keys.
+The method [`extract!`][Hash#extract!] removes and returns the key/value pairs matching the given keys.
 
 ```ruby
 hash = {a: 1, b: 2}
@@ -2734,7 +3077,7 @@ rest = hash.extract!(:a) # => {:a=>1}
 hash                     # => {:b=>2}
 ```
 
-The method `extract!` returns the same subclass of Hash, that the receiver is.
+The method `extract!` returns the same subclass of Hash that the receiver is.
 
 ```ruby
 hash = {a: 1, b: 2}.with_indifferent_access
@@ -2744,9 +3087,11 @@ rest = hash.extract!(:a).class
 
 NOTE: Defined in `active_support/core_ext/hash/slice.rb`.
 
+[Hash#extract!]: https://api.rubyonrails.org/classes/Hash.html#method-i-extract-21
+
 ### Indifferent Access
 
-The method `with_indifferent_access` returns an `ActiveSupport::HashWithIndifferentAccess` out of its receiver:
+The method [`with_indifferent_access`][Hash#with_indifferent_access] returns an [`ActiveSupport::HashWithIndifferentAccess`][ActiveSupport::HashWithIndifferentAccess] out of its receiver:
 
 ```ruby
 {a: 1}.with_indifferent_access["a"] # => 1
@@ -2754,12 +3099,15 @@ The method `with_indifferent_access` returns an `ActiveSupport::HashWithIndiffer
 
 NOTE: Defined in `active_support/core_ext/hash/indifferent_access.rb`.
 
-Extensions to `Regexp`
+[ActiveSupport::HashWithIndifferentAccess]: https://api.rubyonrails.org/classes/ActiveSupport/HashWithIndifferentAccess.html
+[Hash#with_indifferent_access]: https://api.rubyonrails.org/classes/Hash.html#method-i-with_indifferent_access
+
+Extensões para `Regexp`
 ----------------------
 
 ### `multiline?`
 
-The method `multiline?` says whether a regexp has the `/m` flag set, that is, whether the dot matches newlines.
+O método [`multiline?`][Regexp#multiline?] diz se uma *regexp* tem o sinalizador `/m` definido, ou seja, se o ponto corresponde a novas linhas.
 
 ```ruby
 %r{.}.multiline?  # => false
@@ -2769,19 +3117,21 @@ Regexp.new('.').multiline?                    # => false
 Regexp.new('.', Regexp::MULTILINE).multiline? # => true
 ```
 
-Rails uses this method in a single place, also in the routing code. Multiline regexps are disallowed for route requirements and this flag eases enforcing that constraint.
+O Rails usa esse método em um único lugar, também no código de roteamento. *Regexps* de várias linhas não são permitidas para requisitos de rota e esse sinalizador facilita a aplicação dessa restrição.
 
 ```ruby
 def verify_regexp_requirements(requirements)
-  ...
+  # ...
   if requirement.multiline?
     raise ArgumentError, "Regexp multiline option is not allowed in routing requirements: #{requirement.inspect}"
   end
-  ...
+  # ...
 end
 ```
 
-NOTE: Defined in `active_support/core_ext/regexp.rb`.
+NOTE: Definido em `active_support/core_ext/regexp.rb`.
+
+[Regexp#multiline?]: https://api.rubyonrails.org/classes/Regexp.html#method-i-multiline-3F
 
 Extensions to `Range`
 ---------------------
@@ -2802,9 +3152,9 @@ As the example depicts, the `:db` format generates a `BETWEEN` SQL clause. That 
 
 NOTE: Defined in `active_support/core_ext/range/conversions.rb`.
 
-### `===`, `include?`, and `cover?`
+### `===` and `include?`
 
-The methods `Range#===`, `Range#include?`, and `Range#cover?` say whether some value falls between the ends of a given instance:
+The methods `Range#===` and `Range#include?` say whether some value falls between the ends of a given instance:
 
 ```ruby
 (2..3).include?(Math::E) # => true
@@ -2822,18 +3172,13 @@ Active Support extends these methods so that the argument may be another range i
 (1..10).include?(0..7)  # => false
 (1..10).include?(3..11) # => false
 (1...9).include?(3..9)  # => false
-
-(1..10).cover?(3..7)  # => true
-(1..10).cover?(0..7)  # => false
-(1..10).cover?(3..11) # => false
-(1...9).cover?(3..9)  # => false
 ```
 
 NOTE: Defined in `active_support/core_ext/range/compare_range.rb`.
 
 ### `overlaps?`
 
-The method `Range#overlaps?` says whether any two given ranges have non-void intersection:
+The method [`Range#overlaps?`][Range#overlaps?] says whether any two given ranges have non-void intersection:
 
 ```ruby
 (1..10).overlaps?(7..11)  # => true
@@ -2842,6 +3187,8 @@ The method `Range#overlaps?` says whether any two given ranges have non-void int
 ```
 
 NOTE: Defined in `active_support/core_ext/range/overlaps.rb`.
+
+[Range#overlaps?]: https://api.rubyonrails.org/classes/Range.html#method-i-overlaps-3F
 
 Extensions to `Date`
 --------------------
@@ -2852,20 +3199,28 @@ INFO: The following calculation methods have edge cases in October 1582, since d
 
 #### `Date.current`
 
-Active Support defines `Date.current` to be today in the current time zone. That's like `Date.today`, except that it honors the user time zone, if defined. It also defines `Date.yesterday` and `Date.tomorrow`, and the instance predicates `past?`, `today?`, `future?`, `on_weekday?` and `on_weekend?`, all of them relative to `Date.current`.
+Active Support defines [`Date.current`][Date.current] to be today in the current time zone. That's like `Date.today`, except that it honors the user time zone, if defined. It also defines [`Date.yesterday`][Date.yesterday] and [`Date.tomorrow`][Date.tomorrow], and the instance predicates [`past?`][DateAndTime::Calculations#past?], [`today?`][DateAndTime::Calculations#today?], [`tomorrow?`][DateAndTime::Calculations#tomorrow?], [`next_day?`][DateAndTime::Calculations#next_day?], [`yesterday?`][DateAndTime::Calculations#yesterday?], [`prev_day?`][DateAndTime::Calculations#prev_day?], [`future?`][DateAndTime::Calculations#future?], [`on_weekday?`][DateAndTime::Calculations#on_weekday?] and [`on_weekend?`][DateAndTime::Calculations#on_weekend?], all of them relative to `Date.current`.
 
 When making Date comparisons using methods which honor the user time zone, make sure to use `Date.current` and not `Date.today`. There are cases where the user time zone might be in the future compared to the system time zone, which `Date.today` uses by default. This means `Date.today` may equal `Date.yesterday`.
 
 NOTE: Defined in `active_support/core_ext/date/calculations.rb`.
 
-#### Named dates
+[Date.current]: https://api.rubyonrails.org/classes/Date.html#method-c-current
+[Date.tomorrow]: https://api.rubyonrails.org/classes/Date.html#method-c-tomorrow
+[Date.yesterday]: https://api.rubyonrails.org/classes/Date.html#method-c-yesterday
+[DateAndTime::Calculations#future?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-future-3F
+[DateAndTime::Calculations#on_weekday?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-on_weekday-3F
+[DateAndTime::Calculations#on_weekend?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-on_weekend-3F
+[DateAndTime::Calculations#past?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-past-3F
+
+#### Named Dates
 
 ##### `beginning_of_week`, `end_of_week`
 
-The methods `beginning_of_week` and `end_of_week` return the dates for the
+The methods [`beginning_of_week`][DateAndTime::Calculations#beginning_of_week] and [`end_of_week`][DateAndTime::Calculations#end_of_week] return the dates for the
 beginning and end of the week, respectively. Weeks are assumed to start on
 Monday, but that can be changed passing an argument, setting thread local
-`Date.beginning_of_week` or `config.beginning_of_week`.
+`Date.beginning_of_week` or [`config.beginning_of_week`][].
 
 ```ruby
 d = Date.new(2010, 5, 8)     # => Sat, 08 May 2010
@@ -2875,13 +3230,19 @@ d.end_of_week                # => Sun, 09 May 2010
 d.end_of_week(:sunday)       # => Sat, 08 May 2010
 ```
 
-`beginning_of_week` is aliased to `at_beginning_of_week` and `end_of_week` is aliased to `at_end_of_week`.
+`beginning_of_week` is aliased to [`at_beginning_of_week`][DateAndTime::Calculations#at_beginning_of_week] and `end_of_week` is aliased to [`at_end_of_week`][DateAndTime::Calculations#at_end_of_week].
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[`config.beginning_of_week`]: configuring.html#config-beginning-of-week
+[DateAndTime::Calculations#at_beginning_of_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_beginning_of_week
+[DateAndTime::Calculations#at_end_of_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_end_of_week
+[DateAndTime::Calculations#beginning_of_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-beginning_of_week
+[DateAndTime::Calculations#end_of_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-end_of_week
+
 ##### `monday`, `sunday`
 
-The methods `monday` and `sunday` return the dates for the previous Monday and
+The methods [`monday`][DateAndTime::Calculations#monday] and [`sunday`][DateAndTime::Calculations#sunday] return the dates for the previous Monday and
 next Sunday, respectively.
 
 ```ruby
@@ -2898,9 +3259,12 @@ d.sunday                     # => Sun, 16 Sep 2012
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#monday]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-monday
+[DateAndTime::Calculations#sunday]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-sunday
+
 ##### `prev_week`, `next_week`
 
-The method `next_week` receives a symbol with a day name in English (default is the thread local `Date.beginning_of_week`, or `config.beginning_of_week`, or `:monday`) and it returns the date corresponding to that day.
+The method [`next_week`][DateAndTime::Calculations#next_week] receives a symbol with a day name in English (default is the thread local [`Date.beginning_of_week`][Date.beginning_of_week], or [`config.beginning_of_week`][], or `:monday`) and it returns the date corresponding to that day.
 
 ```ruby
 d = Date.new(2010, 5, 9) # => Sun, 09 May 2010
@@ -2908,7 +3272,7 @@ d.next_week              # => Mon, 10 May 2010
 d.next_week(:saturday)   # => Sat, 15 May 2010
 ```
 
-The method `prev_week` is analogous:
+The method [`prev_week`][DateAndTime::Calculations#prev_week] is analogous:
 
 ```ruby
 d.prev_week              # => Mon, 26 Apr 2010
@@ -2916,15 +3280,20 @@ d.prev_week(:saturday)   # => Sat, 01 May 2010
 d.prev_week(:friday)     # => Fri, 30 Apr 2010
 ```
 
-`prev_week` is aliased to `last_week`.
+`prev_week` is aliased to [`last_week`][DateAndTime::Calculations#last_week].
 
 Both `next_week` and `prev_week` work as expected when `Date.beginning_of_week` or `config.beginning_of_week` are set.
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[Date.beginning_of_week]: https://api.rubyonrails.org/classes/Date.html#method-c-beginning_of_week
+[DateAndTime::Calculations#last_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-last_week
+[DateAndTime::Calculations#next_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-next_week
+[DateAndTime::Calculations#prev_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-prev_week
+
 ##### `beginning_of_month`, `end_of_month`
 
-The methods `beginning_of_month` and `end_of_month` return the dates for the beginning and end of the month:
+The methods [`beginning_of_month`][DateAndTime::Calculations#beginning_of_month] and [`end_of_month`][DateAndTime::Calculations#end_of_month] return the dates for the beginning and end of the month:
 
 ```ruby
 d = Date.new(2010, 5, 9) # => Sun, 09 May 2010
@@ -2932,13 +3301,18 @@ d.beginning_of_month     # => Sat, 01 May 2010
 d.end_of_month           # => Mon, 31 May 2010
 ```
 
-`beginning_of_month` is aliased to `at_beginning_of_month`, and `end_of_month` is aliased to `at_end_of_month`.
+`beginning_of_month` is aliased to [`at_beginning_of_month`][DateAndTime::Calculations#at_beginning_of_month], and `end_of_month` is aliased to [`at_end_of_month`][DateAndTime::Calculations#at_end_of_month].
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#at_beginning_of_month]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_beginning_of_month
+[DateAndTime::Calculations#at_end_of_month]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_end_of_month
+[DateAndTime::Calculations#beginning_of_month]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-beginning_of_month
+[DateAndTime::Calculations#end_of_month]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-end_of_month
+
 ##### `beginning_of_quarter`, `end_of_quarter`
 
-The methods `beginning_of_quarter` and `end_of_quarter` return the dates for the beginning and end of the quarter of the receiver's calendar year:
+The methods [`beginning_of_quarter`][DateAndTime::Calculations#beginning_of_quarter] and [`end_of_quarter`][DateAndTime::Calculations#end_of_quarter] return the dates for the beginning and end of the quarter of the receiver's calendar year:
 
 ```ruby
 d = Date.new(2010, 5, 9) # => Sun, 09 May 2010
@@ -2946,13 +3320,18 @@ d.beginning_of_quarter   # => Thu, 01 Apr 2010
 d.end_of_quarter         # => Wed, 30 Jun 2010
 ```
 
-`beginning_of_quarter` is aliased to `at_beginning_of_quarter`, and `end_of_quarter` is aliased to `at_end_of_quarter`.
+`beginning_of_quarter` is aliased to [`at_beginning_of_quarter`][DateAndTime::Calculations#at_beginning_of_quarter], and `end_of_quarter` is aliased to [`at_end_of_quarter`][DateAndTime::Calculations#at_end_of_quarter].
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#at_beginning_of_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_beginning_of_quarter
+[DateAndTime::Calculations#at_end_of_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_end_of_quarter
+[DateAndTime::Calculations#beginning_of_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-beginning_of_quarter
+[DateAndTime::Calculations#end_of_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-end_of_quarter
+
 ##### `beginning_of_year`, `end_of_year`
 
-The methods `beginning_of_year` and `end_of_year` return the dates for the beginning and end of the year:
+The methods [`beginning_of_year`][DateAndTime::Calculations#beginning_of_year] and [`end_of_year`][DateAndTime::Calculations#end_of_year] return the dates for the beginning and end of the year:
 
 ```ruby
 d = Date.new(2010, 5, 9) # => Sun, 09 May 2010
@@ -2960,22 +3339,27 @@ d.beginning_of_year      # => Fri, 01 Jan 2010
 d.end_of_year            # => Fri, 31 Dec 2010
 ```
 
-`beginning_of_year` is aliased to `at_beginning_of_year`, and `end_of_year` is aliased to `at_end_of_year`.
+`beginning_of_year` is aliased to [`at_beginning_of_year`][DateAndTime::Calculations#at_beginning_of_year], and `end_of_year` is aliased to [`at_end_of_year`][DateAndTime::Calculations#at_end_of_year].
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
+
+[DateAndTime::Calculations#at_beginning_of_year]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_beginning_of_year
+[DateAndTime::Calculations#at_end_of_year]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-at_end_of_year
+[DateAndTime::Calculations#beginning_of_year]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-beginning_of_year
+[DateAndTime::Calculations#end_of_year]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-end_of_year
 
 #### Other Date Computations
 
 ##### `years_ago`, `years_since`
 
-The method `years_ago` receives a number of years and returns the same date those many years ago:
+The method [`years_ago`][DateAndTime::Calculations#years_ago] receives a number of years and returns the same date those many years ago:
 
 ```ruby
 date = Date.new(2010, 6, 7)
 date.years_ago(10) # => Wed, 07 Jun 2000
 ```
 
-`years_since` moves forward in time:
+[`years_since`][DateAndTime::Calculations#years_since] moves forward in time:
 
 ```ruby
 date = Date.new(2010, 6, 7)
@@ -2989,13 +3373,17 @@ Date.new(2012, 2, 29).years_ago(3)     # => Sat, 28 Feb 2009
 Date.new(2012, 2, 29).years_since(3)   # => Sat, 28 Feb 2015
 ```
 
-`last_year` is short-hand for `#years_ago(1)`.
+[`last_year`][DateAndTime::Calculations#last_year] is short-hand for `#years_ago(1)`.
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#last_year]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-last_year
+[DateAndTime::Calculations#years_ago]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-years_ago
+[DateAndTime::Calculations#years_since]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-years_since
+
 ##### `months_ago`, `months_since`
 
-The methods `months_ago` and `months_since` work analogously for months:
+The methods [`months_ago`][DateAndTime::Calculations#months_ago] and [`months_since`][DateAndTime::Calculations#months_since] work analogously for months:
 
 ```ruby
 Date.new(2010, 4, 30).months_ago(2)   # => Sun, 28 Feb 2010
@@ -3009,13 +3397,17 @@ Date.new(2010, 4, 30).months_ago(2)    # => Sun, 28 Feb 2010
 Date.new(2009, 12, 31).months_since(2) # => Sun, 28 Feb 2010
 ```
 
-`last_month` is short-hand for `#months_ago(1)`.
+[`last_month`][DateAndTime::Calculations#last_month] is short-hand for `#months_ago(1)`.
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#last_month]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-last_month
+[DateAndTime::Calculations#months_ago]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-months_ago
+[DateAndTime::Calculations#months_since]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-months_since
+
 ##### `weeks_ago`
 
-The method `weeks_ago` works analogously for weeks:
+The method [`weeks_ago`][DateAndTime::Calculations#weeks_ago] works analogously for weeks:
 
 ```ruby
 Date.new(2010, 5, 24).weeks_ago(1)    # => Mon, 17 May 2010
@@ -3024,9 +3416,11 @@ Date.new(2010, 5, 24).weeks_ago(2)    # => Mon, 10 May 2010
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#weeks_ago]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-weeks_ago
+
 ##### `advance`
 
-The most generic way to jump to other days is `advance`. This method receives a hash with keys `:years`, `:months`, `:weeks`, `:days`, and returns a date advanced as much as the present keys indicate:
+The most generic way to jump to other days is [`advance`][Date#advance]. This method receives a hash with keys `:years`, `:months`, `:weeks`, `:days`, and returns a date advanced as much as the present keys indicate:
 
 ```ruby
 date = Date.new(2010, 6, 6)
@@ -3036,27 +3430,13 @@ date.advance(months: 2, days: -2) # => Wed, 04 Aug 2010
 
 Note in the previous example that increments may be negative.
 
-To perform the computation the method first increments years, then months, then weeks, and finally days. This order is important towards the end of months. Say for example we are at the end of February of 2010, and we want to move one month and one day forward.
-
-The method `advance` advances first one month, and then one day, the result is:
-
-```ruby
-Date.new(2010, 2, 28).advance(months: 1, days: 1)
-# => Sun, 29 Mar 2010
-```
-
-While if it did it the other way around the result would be different:
-
-```ruby
-Date.new(2010, 2, 28).advance(days: 1).advance(months: 1)
-# => Thu, 01 Apr 2010
-```
-
 NOTE: Defined in `active_support/core_ext/date/calculations.rb`.
+
+[Date#advance]: https://api.rubyonrails.org/classes/Date.html#method-i-advance
 
 #### Changing Components
 
-The method `change` allows you to get a new date which is the same as the receiver except for the given year, month, or day:
+The method [`change`][Date#change] allows you to get a new date which is the same as the receiver except for the given year, month, or day:
 
 ```ruby
 Date.new(2010, 12, 23).change(year: 2011, month: 11)
@@ -3072,9 +3452,11 @@ Date.new(2010, 1, 31).change(month: 2)
 
 NOTE: Defined in `active_support/core_ext/date/calculations.rb`.
 
+[Date#change]: https://api.rubyonrails.org/classes/Date.html#method-i-change
+
 #### Durations
 
-Durations can be added to and subtracted from dates:
+[`Duration`][ActiveSupport::Duration] objects can be added to and subtracted from dates:
 
 ```ruby
 d = Date.current
@@ -3092,82 +3474,94 @@ Date.new(1582, 10, 4) + 1.day
 # => Fri, 15 Oct 1582
 ```
 
+[ActiveSupport::Duration]: https://api.rubyonrails.org/classes/ActiveSupport/Duration.html
+
 #### Timestamps
 
 INFO: The following methods return a `Time` object if possible, otherwise a `DateTime`. If set, they honor the user time zone.
 
 ##### `beginning_of_day`, `end_of_day`
 
-The method `beginning_of_day` returns a timestamp at the beginning of the day (00:00:00):
+The method [`beginning_of_day`][Date#beginning_of_day] returns a timestamp at the beginning of the day (00:00:00):
 
 ```ruby
 date = Date.new(2010, 6, 7)
 date.beginning_of_day # => Mon Jun 07 00:00:00 +0200 2010
 ```
 
-The method `end_of_day` returns a timestamp at the end of the day (23:59:59):
+The method [`end_of_day`][Date#end_of_day] returns a timestamp at the end of the day (23:59:59):
 
 ```ruby
 date = Date.new(2010, 6, 7)
 date.end_of_day # => Mon Jun 07 23:59:59 +0200 2010
 ```
 
-`beginning_of_day` is aliased to `at_beginning_of_day`, `midnight`, `at_midnight`.
+`beginning_of_day` is aliased to [`at_beginning_of_day`][Date#at_beginning_of_day], [`midnight`][Date#midnight], [`at_midnight`][Date#at_midnight].
 
 NOTE: Defined in `active_support/core_ext/date/calculations.rb`.
 
+[Date#at_beginning_of_day]: https://api.rubyonrails.org/classes/Date.html#method-i-at_beginning_of_day
+[Date#at_midnight]: https://api.rubyonrails.org/classes/Date.html#method-i-at_midnight
+[Date#beginning_of_day]: https://api.rubyonrails.org/classes/Date.html#method-i-beginning_of_day
+[Date#end_of_day]: https://api.rubyonrails.org/classes/Date.html#method-i-end_of_day
+[Date#midnight]: https://api.rubyonrails.org/classes/Date.html#method-i-midnight
+
 ##### `beginning_of_hour`, `end_of_hour`
 
-The method `beginning_of_hour` returns a timestamp at the beginning of the hour (hh:00:00):
+The method [`beginning_of_hour`][DateTime#beginning_of_hour] returns a timestamp at the beginning of the hour (hh:00:00):
 
 ```ruby
 date = DateTime.new(2010, 6, 7, 19, 55, 25)
 date.beginning_of_hour # => Mon Jun 07 19:00:00 +0200 2010
 ```
 
-The method `end_of_hour` returns a timestamp at the end of the hour (hh:59:59):
+The method [`end_of_hour`][DateTime#end_of_hour] returns a timestamp at the end of the hour (hh:59:59):
 
 ```ruby
 date = DateTime.new(2010, 6, 7, 19, 55, 25)
 date.end_of_hour # => Mon Jun 07 19:59:59 +0200 2010
 ```
 
-`beginning_of_hour` is aliased to `at_beginning_of_hour`.
+`beginning_of_hour` is aliased to [`at_beginning_of_hour`][DateTime#at_beginning_of_hour].
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
 ##### `beginning_of_minute`, `end_of_minute`
 
-The method `beginning_of_minute` returns a timestamp at the beginning of the minute (hh:mm:00):
+The method [`beginning_of_minute`][DateTime#beginning_of_minute] returns a timestamp at the beginning of the minute (hh:mm:00):
 
 ```ruby
 date = DateTime.new(2010, 6, 7, 19, 55, 25)
 date.beginning_of_minute # => Mon Jun 07 19:55:00 +0200 2010
 ```
 
-The method `end_of_minute` returns a timestamp at the end of the minute (hh:mm:59):
+The method [`end_of_minute`][DateTime#end_of_minute] returns a timestamp at the end of the minute (hh:mm:59):
 
 ```ruby
 date = DateTime.new(2010, 6, 7, 19, 55, 25)
 date.end_of_minute # => Mon Jun 07 19:55:59 +0200 2010
 ```
 
-`beginning_of_minute` is aliased to `at_beginning_of_minute`.
+`beginning_of_minute` is aliased to [`at_beginning_of_minute`][DateTime#at_beginning_of_minute].
 
-INFO: `beginning_of_hour`, `end_of_hour`, `beginning_of_minute` and `end_of_minute` are implemented for `Time` and `DateTime` but **not** `Date` as it does not make sense to request the beginning or end of an hour or minute on a `Date` instance.
+INFO: `beginning_of_hour`, `end_of_hour`, `beginning_of_minute`, and `end_of_minute` are implemented for `Time` and `DateTime` but **not** `Date` as it does not make sense to request the beginning or end of an hour or minute on a `Date` instance.
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
+[DateTime#at_beginning_of_minute]: https://api.rubyonrails.org/classes/DateTime.html#method-i-at_beginning_of_minute
+[DateTime#beginning_of_minute]: https://api.rubyonrails.org/classes/DateTime.html#method-i-beginning_of_minute
+[DateTime#end_of_minute]: https://api.rubyonrails.org/classes/DateTime.html#method-i-end_of_minute
+
 ##### `ago`, `since`
 
-The method `ago` receives a number of seconds as argument and returns a timestamp those many seconds ago from midnight:
+The method [`ago`][Date#ago] receives a number of seconds as argument and returns a timestamp those many seconds ago from midnight:
 
 ```ruby
 date = Date.current # => Fri, 11 Jun 2010
 date.ago(1)         # => Thu, 10 Jun 2010 23:59:59 EDT -04:00
 ```
 
-Similarly, `since` moves forward:
+Similarly, [`since`][Date#since] moves forward:
 
 ```ruby
 date = Date.current # => Fri, 11 Jun 2010
@@ -3176,14 +3570,13 @@ date.since(1)       # => Fri, 11 Jun 2010 00:00:01 EDT -04:00
 
 NOTE: Defined in `active_support/core_ext/date/calculations.rb`.
 
-#### Other Time Computations
-
-### Conversions
+[Date#ago]: https://api.rubyonrails.org/classes/Date.html#method-i-ago
+[Date#since]: https://api.rubyonrails.org/classes/Date.html#method-i-since
 
 Extensions to `DateTime`
 ------------------------
 
-WARNING: `DateTime` is not aware of DST rules and so some of these methods have edge cases when a DST change is going on. For example `seconds_since_midnight` might not return the real amount in such a day.
+WARNING: `DateTime` is not aware of DST rules and so some of these methods have edge cases when a DST change is going on. For example [`seconds_since_midnight`][DateTime#seconds_since_midnight] might not return the real amount in such a day.
 
 ### Calculations
 
@@ -3191,35 +3584,44 @@ The class `DateTime` is a subclass of `Date` so by loading `active_support/core_
 
 The following methods are reimplemented so you do **not** need to load `active_support/core_ext/date/calculations.rb` for these ones:
 
-```ruby
-beginning_of_day (midnight, at_midnight, at_beginning_of_day)
-end_of_day
-ago
-since (in)
-```
+* [`beginning_of_day`][DateTime#beginning_of_day] / [`midnight`][DateTime#midnight] / [`at_midnight`][DateTime#at_midnight] / [`at_beginning_of_day`][DateTime#at_beginning_of_day]
+* [`end_of_day`][DateTime#end_of_day]
+* [`ago`][DateTime#ago]
+* [`since`][DateTime#since] / [`in`][DateTime#in]
 
-On the other hand, `advance` and `change` are also defined and support more options, they are documented below.
+On the other hand, [`advance`][DateTime#advance] and [`change`][DateTime#change] are also defined and support more options, they are documented below.
 
 The following methods are only implemented in `active_support/core_ext/date_time/calculations.rb` as they only make sense when used with a `DateTime` instance:
 
-```ruby
-beginning_of_hour (at_beginning_of_hour)
-end_of_hour
-```
+* [`beginning_of_hour`][DateTime#beginning_of_hour] / [`at_beginning_of_hour`][DateTime#at_beginning_of_hour]
+* [`end_of_hour`][DateTime#end_of_hour]
+
+[DateTime#ago]: https://api.rubyonrails.org/classes/DateTime.html#method-i-ago
+[DateTime#at_beginning_of_day]: https://api.rubyonrails.org/classes/DateTime.html#method-i-at_beginning_of_day
+[DateTime#at_beginning_of_hour]: https://api.rubyonrails.org/classes/DateTime.html#method-i-at_beginning_of_hour
+[DateTime#at_midnight]: https://api.rubyonrails.org/classes/DateTime.html#method-i-at_midnight
+[DateTime#beginning_of_day]: https://api.rubyonrails.org/classes/DateTime.html#method-i-beginning_of_day
+[DateTime#beginning_of_hour]: https://api.rubyonrails.org/classes/DateTime.html#method-i-beginning_of_hour
+[DateTime#end_of_day]: https://api.rubyonrails.org/classes/DateTime.html#method-i-end_of_day
+[DateTime#end_of_hour]: https://api.rubyonrails.org/classes/DateTime.html#method-i-end_of_hour
+[DateTime#in]: https://api.rubyonrails.org/classes/DateTime.html#method-i-in
+[DateTime#midnight]: https://api.rubyonrails.org/classes/DateTime.html#method-i-midnight
 
 #### Named Datetimes
 
 ##### `DateTime.current`
 
-Active Support defines `DateTime.current` to be like `Time.now.to_datetime`, except that it honors the user time zone, if defined. It also defines `DateTime.yesterday` and `DateTime.tomorrow`, and the instance predicates `past?`, and `future?` relative to `DateTime.current`.
+Active Support defines [`DateTime.current`][DateTime.current] to be like `Time.now.to_datetime`, except that it honors the user time zone, if defined. The instance predicates [`past?`][DateAndTime::Calculations#past?] and [`future?`][DateAndTime::Calculations#future?] are defined relative to `DateTime.current`.
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
+
+[DateTime.current]: https://api.rubyonrails.org/classes/DateTime.html#method-c-current
 
 #### Other Extensions
 
 ##### `seconds_since_midnight`
 
-The method `seconds_since_midnight` returns the number of seconds since midnight:
+The method [`seconds_since_midnight`][DateTime#seconds_since_midnight] returns the number of seconds since midnight:
 
 ```ruby
 now = DateTime.current     # => Mon, 07 Jun 2010 20:26:36 +0000
@@ -3228,22 +3630,27 @@ now.seconds_since_midnight # => 73596
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
+[DateTime#seconds_since_midnight]: https://api.rubyonrails.org/classes/DateTime.html#method-i-seconds_since_midnight
+
 ##### `utc`
 
-The method `utc` gives you the same datetime in the receiver expressed in UTC.
+The method [`utc`][DateTime#utc] gives you the same datetime in the receiver expressed in UTC.
 
 ```ruby
 now = DateTime.current # => Mon, 07 Jun 2010 19:27:52 -0400
 now.utc                # => Mon, 07 Jun 2010 23:27:52 +0000
 ```
 
-This method is also aliased as `getutc`.
+This method is also aliased as [`getutc`][DateTime#getutc].
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
+[DateTime#getutc]: https://api.rubyonrails.org/classes/DateTime.html#method-i-getutc
+[DateTime#utc]: https://api.rubyonrails.org/classes/DateTime.html#method-i-utc
+
 ##### `utc?`
 
-The predicate `utc?` says whether the receiver has UTC as its time zone:
+The predicate [`utc?`][DateTime#utc?] says whether the receiver has UTC as its time zone:
 
 ```ruby
 now = DateTime.now # => Mon, 07 Jun 2010 19:30:47 -0400
@@ -3253,9 +3660,11 @@ now.utc.utc?       # => true
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
+[DateTime#utc?]: https://api.rubyonrails.org/classes/DateTime.html#method-i-utc-3F
+
 ##### `advance`
 
-The most generic way to jump to another datetime is `advance`. This method receives a hash with keys `:years`, `:months`, `:weeks`, `:days`, `:hours`, `:minutes`, and `:seconds`, and returns a datetime advanced as much as the present keys indicate.
+The most generic way to jump to another datetime is [`advance`][DateTime#advance]. This method receives a hash with keys `:years`, `:months`, `:weeks`, `:days`, `:hours`, `:minutes`, and `:seconds`, and returns a datetime advanced as much as the present keys indicate.
 
 ```ruby
 d = DateTime.current
@@ -3264,7 +3673,7 @@ d.advance(years: 1, months: 1, days: 1, hours: 1, minutes: 1, seconds: 1)
 # => Tue, 06 Sep 2011 12:34:32 +0000
 ```
 
-This method first computes the destination date passing `:years`, `:months`, `:weeks`, and `:days` to `Date#advance` documented above. After that, it adjusts the time calling `since` with the number of seconds to advance. This order is relevant, a different ordering would give different datetimes in some edge-cases. The example in `Date#advance` applies, and we can extend it to show order relevance related to the time bits.
+This method first computes the destination date passing `:years`, `:months`, `:weeks`, and `:days` to `Date#advance` documented above. After that, it adjusts the time calling [`since`][DateTime#since] with the number of seconds to advance. This order is relevant, a different ordering would give different datetimes in some edge-cases. The example in `Date#advance` applies, and we can extend it to show order relevance related to the time bits.
 
 If we first move the date bits (that have also a relative order of processing, as documented before), and then the time bits we get for example the following computation:
 
@@ -3286,9 +3695,12 @@ WARNING: Since `DateTime` is not DST-aware you can end up in a non-existing poin
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
+[DateTime#advance]: https://api.rubyonrails.org/classes/DateTime.html#method-i-advance
+[DateTime#since]: https://api.rubyonrails.org/classes/DateTime.html#method-i-since
+
 #### Changing Components
 
-The method `change` allows you to get a new datetime which is the same as the receiver except for the given options, which may include `:year`, `:month`, `:day`, `:hour`, `:min`, `:sec`, `:offset`, `:start`:
+The method [`change`][DateTime#change] allows you to get a new datetime which is the same as the receiver except for the given options, which may include `:year`, `:month`, `:day`, `:hour`, `:min`, `:sec`, `:offset`, `:start`:
 
 ```ruby
 now = DateTime.current
@@ -3320,9 +3732,11 @@ DateTime.current.change(month: 2, day: 30)
 
 NOTE: Defined in `active_support/core_ext/date_time/calculations.rb`.
 
+[DateTime#change]: https://api.rubyonrails.org/classes/DateTime.html#method-i-change
+
 #### Durations
 
-Durations can be added to and subtracted from datetimes:
+[`Duration`][ActiveSupport::Duration] objects can be added to and subtracted from datetimes:
 
 ```ruby
 now = DateTime.current
@@ -3347,7 +3761,7 @@ Extensions to `Time`
 
 They are analogous. Please refer to their documentation above and take into account the following differences:
 
-* `change` accepts an additional `:usec` option.
+* [`change`][Time#change] accepts an additional `:usec` option.
 * `Time` understands DST, so you get correct DST calculations as in
 
 ```ruby
@@ -3361,19 +3775,29 @@ t.advance(seconds: 1)
 # => Sun Mar 28 03:00:00 +0200 2010
 ```
 
-* If `since` or `ago` jump to a time that can't be expressed with `Time` a `DateTime` object is returned instead.
+* If [`since`][Time#since] or [`ago`][Time#ago] jumps to a time that can't be expressed with `Time` a `DateTime` object is returned instead.
+
+[Time#ago]: https://api.rubyonrails.org/classes/Time.html#method-i-ago
+[Time#change]: https://api.rubyonrails.org/classes/Time.html#method-i-change
+[Time#since]: https://api.rubyonrails.org/classes/Time.html#method-i-since
 
 #### `Time.current`
 
-Active Support defines `Time.current` to be today in the current time zone. That's like `Time.now`, except that it honors the user time zone, if defined. It also defines the instance predicates `past?`, `today?`, and `future?`, all of them relative to `Time.current`.
+Active Support defines [`Time.current`][Time.current] to be today in the current time zone. That's like `Time.now`, except that it honors the user time zone, if defined. It also defines the instance predicates [`past?`][DateAndTime::Calculations#past?], [`today?`][DateAndTime::Calculations#today?], [`tomorrow?`][DateAndTime::Calculations#tomorrow?], [`next_day?`][DateAndTime::Calculations#next_day?], [`yesterday?`][DateAndTime::Calculations#yesterday?], [`prev_day?`][DateAndTime::Calculations#prev_day?] and [`future?`][DateAndTime::Calculations#future?], all of them relative to `Time.current`.
 
 When making Time comparisons using methods which honor the user time zone, make sure to use `Time.current` instead of `Time.now`. There are cases where the user time zone might be in the future compared to the system time zone, which `Time.now` uses by default. This means `Time.now.to_date` may equal `Date.yesterday`.
 
 NOTE: Defined in `active_support/core_ext/time/calculations.rb`.
 
-#### `all_day`, `all_week`, `all_month`, `all_quarter` and `all_year`
+[DateAndTime::Calculations#next_day?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-next_day-3F
+[DateAndTime::Calculations#prev_day?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-prev_day-3F
+[DateAndTime::Calculations#today?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-today-3F
+[DateAndTime::Calculations#tomorrow?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-tomorrow-3F
+[DateAndTime::Calculations#yesterday?]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-yesterday-3F
 
-The method `all_day` returns a range representing the whole day of the current time.
+#### `all_day`, `all_week`, `all_month`, `all_quarter`, and `all_year`
+
+The method [`all_day`][DateAndTime::Calculations#all_day] returns a range representing the whole day of the current time.
 
 ```ruby
 now = Time.current
@@ -3382,7 +3806,7 @@ now.all_day
 # => Mon, 09 Aug 2010 00:00:00 UTC +00:00..Mon, 09 Aug 2010 23:59:59 UTC +00:00
 ```
 
-Analogously, `all_week`, `all_month`, `all_quarter` and `all_year` all serve the purpose of generating time ranges.
+Analogously, [`all_week`][DateAndTime::Calculations#all_week], [`all_month`][DateAndTime::Calculations#all_month], [`all_quarter`][DateAndTime::Calculations#all_quarter] and [`all_year`][DateAndTime::Calculations#all_year] all serve the purpose of generating time ranges.
 
 ```ruby
 now = Time.current
@@ -3401,9 +3825,16 @@ now.all_year
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#all_day]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-all_day
+[DateAndTime::Calculations#all_month]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-all_month
+[DateAndTime::Calculations#all_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-all_quarter
+[DateAndTime::Calculations#all_week]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-all_week
+[DateAndTime::Calculations#all_year]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-all_year
+[Time.current]: https://api.rubyonrails.org/classes/Time.html#method-c-current
+
 #### `prev_day`, `next_day`
 
-`prev_day` and `next_day` return the time in the last or next day:
+[`prev_day`][Time#prev_day] and [`next_day`][Time#next_day] return the time in the last or next day:
 
 ```ruby
 t = Time.new(2010, 5, 8) # => 2010-05-08 00:00:00 +0900
@@ -3413,9 +3844,12 @@ t.next_day               # => 2010-05-09 00:00:00 +0900
 
 NOTE: Defined in `active_support/core_ext/time/calculations.rb`.
 
+[Time#next_day]: https://api.rubyonrails.org/classes/Time.html#method-i-next_day
+[Time#prev_day]: https://api.rubyonrails.org/classes/Time.html#method-i-prev_day
+
 #### `prev_month`, `next_month`
 
-`prev_month` and `next_month` return the time with the same day in the last or next month:
+[`prev_month`][Time#prev_month] and [`next_month`][Time#next_month] return the time with the same day in the last or next month:
 
 ```ruby
 t = Time.new(2010, 5, 8) # => 2010-05-08 00:00:00 +0900
@@ -3434,9 +3868,12 @@ Time.new(2000, 1, 31).next_month # => 2000-02-29 00:00:00 +0900
 
 NOTE: Defined in `active_support/core_ext/time/calculations.rb`.
 
+[Time#next_month]: https://api.rubyonrails.org/classes/Time.html#method-i-next_month
+[Time#prev_month]: https://api.rubyonrails.org/classes/Time.html#method-i-prev_month
+
 #### `prev_year`, `next_year`
 
-`prev_year` and `next_year` return a time with the same day/month in the last or next year:
+[`prev_year`][Time#prev_year] and [`next_year`][Time#next_year] return a time with the same day/month in the last or next year:
 
 ```ruby
 t = Time.new(2010, 5, 8) # => 2010-05-08 00:00:00 +0900
@@ -3454,9 +3891,12 @@ t.next_year               # => 2001-02-28 00:00:00 +0900
 
 NOTE: Defined in `active_support/core_ext/time/calculations.rb`.
 
+[Time#next_year]: https://api.rubyonrails.org/classes/Time.html#method-i-next_year
+[Time#prev_year]: https://api.rubyonrails.org/classes/Time.html#method-i-prev_year
+
 #### `prev_quarter`, `next_quarter`
 
-`prev_quarter` and `next_quarter` return the date with the same day in the previous or next quarter:
+[`prev_quarter`][DateAndTime::Calculations#prev_quarter] and [`next_quarter`][DateAndTime::Calculations#next_quarter] return the date with the same day in the previous or next quarter:
 
 ```ruby
 t = Time.local(2010, 5, 8) # => 2010-05-08 00:00:00 +0300
@@ -3473,13 +3913,17 @@ Time.local(2000, 10, 31).prev_quarter # => 2000-07-31 00:00:00 +0300
 Time.local(2000, 11, 31).next_quarter # => 2001-03-01 00:00:00 +0200
 ```
 
-`prev_quarter` is aliased to `last_quarter`.
+`prev_quarter` is aliased to [`last_quarter`][DateAndTime::Calculations#last_quarter].
 
 NOTE: Defined in `active_support/core_ext/date_and_time/calculations.rb`.
 
+[DateAndTime::Calculations#last_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-last_quarter
+[DateAndTime::Calculations#next_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-next_quarter
+[DateAndTime::Calculations#prev_quarter]: https://api.rubyonrails.org/classes/DateAndTime/Calculations.html#method-i-prev_quarter
+
 ### Time Constructors
 
-Active Support defines `Time.current` to be `Time.zone.now` if there's a user time zone defined, with fallback to `Time.now`:
+Active Support defines [`Time.current`][Time.current] to be `Time.zone.now` if there's a user time zone defined, with fallback to `Time.now`:
 
 ```ruby
 Time.zone_default
@@ -3488,13 +3932,13 @@ Time.current
 # => Fri, 06 Aug 2010 17:11:58 CEST +02:00
 ```
 
-Analogously to `DateTime`, the predicates `past?`, and `future?` are relative to `Time.current`.
+Analogously to `DateTime`, the predicates [`past?`][DateAndTime::Calculations#past?], and [`future?`][DateAndTime::Calculations#future?] are relative to `Time.current`.
 
 If the time to be constructed lies beyond the range supported by `Time` in the runtime platform, usecs are discarded and a `DateTime` object is returned instead.
 
 #### Durations
 
-Durations can be added to and subtracted from time objects:
+[`Duration`][ActiveSupport::Duration] objects can be added to and subtracted from time objects:
 
 ```ruby
 now = Time.current
@@ -3517,7 +3961,7 @@ Extensions to `File`
 
 ### `atomic_write`
 
-With the class method `File.atomic_write` you can write to a file in a way that will prevent any reader from seeing half-written content.
+With the class method [`File.atomic_write`][File.atomic_write] you can write to a file in a way that will prevent any reader from seeing half-written content.
 
 The name of the file is passed as an argument, and the method yields a file handle opened for writing. Once the block is done `atomic_write` closes the file handle and completes its job.
 
@@ -3539,29 +3983,12 @@ The auxiliary file is written in a standard directory for temporary files, but y
 
 NOTE: Defined in `active_support/core_ext/file/atomic.rb`.
 
-Extensions to `Marshal`
------------------------
-
-### `load`
-
-Active Support adds constant autoloading support to `load`.
-
-For example, the file cache store deserializes this way:
-
-```ruby
-File.open(file_name) { |f| Marshal.load(f) }
-```
-
-If the cached data refers to a constant that is unknown at that point, the autoloading mechanism is triggered and if it succeeds the deserialization is retried transparently.
-
-WARNING. If the argument is an `IO` it needs to respond to `rewind` to be able to retry. Regular files respond to `rewind`.
-
-NOTE: Defined in `active_support/core_ext/marshal.rb`.
+[File.atomic_write]: https://api.rubyonrails.org/classes/File.html#method-c-atomic_write
 
 Extensions to `NameError`
 -------------------------
 
-Active Support adds `missing_name?` to `NameError`, which tests whether the exception was raised because of the name passed as argument.
+Active Support adds [`missing_name?`][NameError#missing_name?] to `NameError`, which tests whether the exception was raised because of the name passed as argument.
 
 The name may be given as a symbol or string. A symbol is tested against the bare constant name, a string is against the fully qualified constant name.
 
@@ -3571,7 +3998,7 @@ For example, when an action of `ArticlesController` is called Rails tries optimi
 
 ```ruby
 def default_helper_module!
-  module_name = name.sub(/Controller$/, '')
+  module_name = name.delete_suffix("Controller")
   module_path = module_name.underscore
   helper module_path
 rescue LoadError => e
@@ -3583,10 +4010,12 @@ end
 
 NOTE: Defined in `active_support/core_ext/name_error.rb`.
 
+[NameError#missing_name?]: https://api.rubyonrails.org/classes/NameError.html#method-i-missing_name-3F
+
 Extensions to `LoadError`
 -------------------------
 
-Active Support adds `is_missing?` to `LoadError`.
+Active Support adds [`is_missing?`][LoadError#is_missing?] to `LoadError`.
 
 Given a path name `is_missing?` tests whether the exception was raised due to that particular file (except perhaps for the ".rb" extension).
 
@@ -3594,7 +4023,7 @@ For example, when an action of `ArticlesController` is called Rails tries to loa
 
 ```ruby
 def default_helper_module!
-  module_name = name.sub(/Controller$/, '')
+  module_name = name.delete_suffix("Controller")
   module_path = module_name.underscore
   helper module_path
 rescue LoadError => e
@@ -3605,3 +4034,20 @@ end
 ```
 
 NOTE: Defined in `active_support/core_ext/load_error.rb`.
+
+[LoadError#is_missing?]: https://api.rubyonrails.org/classes/LoadError.html#method-i-is_missing-3F
+
+Extensions to Pathname
+-------------------------
+
+### `existência`
+
+O [`existence`][Pathname#existence] retorna o receptor se o arquivo nomeado existir, caso contrário retorna `nil`. É útil para expressões idiomáticas como esta:
+
+```ruby
+content = Pathname.new("file").existence&.read
+```
+
+NOTE: Definido em `active_support/core_ext/pathname/existence.rb`.
+
+[Pathname#existence]: https://api.rubyonrails.org/classes/Pathname.html#method-i-existence

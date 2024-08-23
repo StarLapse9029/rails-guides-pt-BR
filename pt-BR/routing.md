@@ -1,68 +1,79 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
-Rails Routing from the Outside In
+Rotas do Rails de Fora pra Dentro
 =================================
 
-This guide covers the user-facing features of Rails routing.
+Esse guia cobre os recursos de roteamento que os usuários podem utilizar no Rails.
 
-After reading this guide, you will know:
+Após ler esse guia, você saberá:
 
-* How to interpret the code in `config/routes.rb`.
-* How to construct your own routes, using either the preferred resourceful style or the `match` method.
-* How to declare route parameters, which are passed onto controller actions.
-* How to automatically create paths and URLs using route helpers.
-* Advanced techniques such as creating constraints and mounting Rack endpoints.
+* Como interpretar o código em `config/routes.rb`.
+* Como construir suas próprias rotas, seja usando o formato preferido de
+  `resources` ou o método `match`.
+* Como declarar parâmetros de rota, que são passados para ações do _controller_.
+* Como criar automaticamente caminhos e URLs usando _helpers_ de rota.
+* Técnicas avançadas como criar restrições e montar _endpoints Rack_.
 
 --------------------------------------------------------------------------------
 
-The Purpose of the Rails Router
+O Propósito do Roteador do Rails
 -------------------------------
 
-The Rails router recognizes URLs and dispatches them to a controller's action, or to a Rack application. It can also generate paths and URLs, avoiding the need to hardcode strings in your views.
+O roteador do Rails organiza URLs e as direcionam para uma ação de um
+_controller_ ou de um aplicativo _Rack_. Também pode gerar caminhos e URLs,
+evitando a necessidade de codificar sequências de caracteres em suas
+visualizações.
 
-### Connecting URLs to Code
+### Conectando URLs ao código
 
-When your Rails application receives an incoming request for:
+Quando sua aplicação Rails recebe uma requisição para:
 
 ```
 GET /patients/17
 ```
 
-it asks the router to match it to a controller action. If the first matching route is:
+ela solicita ao roteador que corresponda com uma ação do _controller_.
+Se a primeira rota correspondente for:
 
 ```ruby
 get '/patients/:id', to: 'patients#show'
 ```
 
-the request is dispatched to the `patients` controller's `show` action with `{ id: '17' }` in `params`.
+a requisição é direcionada para o _controller_ `patients` na ação `show`
+com `{ id: '17' }` em `params`.
 
-NOTE: Rails uses snake_case for controller names here, if you have a multiple word controller like `MonsterTrucksController`, you want to use `monster_trucks#show` for example.
+NOTE: O Rails usa _snake_case_ para nomes de _controller_ no roteamento, se você
+tem um _controller_ com várias palavras como `MonsterTrucksController`, você
+deve usar `monster_trucks#show`, por exemplo.
 
-### Generating Paths and URLs from Code
+### Gerando Caminhos e URLs a partir do código
 
-You can also generate paths and URLs. If the route above is modified to be:
+Você também pode gerar caminhos e URLs. Se a rota acima for modificada para ser:
 
 ```ruby
 get '/patients/:id', to: 'patients#show', as: 'patient'
 ```
 
-and your application contains this code in the controller:
+e sua aplicação contém esse código no _controller_:
 
 ```ruby
 @patient = Patient.find(params[:id])
 ```
-
-and this in the corresponding view:
+e isso na _view_ correspondente:
 
 ```erb
 <%= link_to 'Patient Record', patient_path(@patient) %>
 ```
 
-then the router will generate the path `/patients/17`. This reduces the brittleness of your view and makes your code easier to understand. Note that the id does not need to be specified in the route helper.
+então seu roteador irá gerar o caminho `/patients/17`. Isso reduz a fragilidade
+da sua _view_ e faz seu código mais simples de entender. Observe que o _id_ não
+não precisa ser especificado no _helper_ da rota.
 
-### Configuring the Rails Router
+### Configurando o Roteador do Rails
 
-The routes for your application or engine live in the file `config/routes.rb` and typically looks like this:
+As rotas para sua aplicação ou _engine_ estão dentro do arquivo `config/routes.rb`
+e tipicamente se parecem com isso:
 
 ```ruby
 Rails.application.routes.draw do
@@ -76,79 +87,96 @@ Rails.application.routes.draw do
 end
 ```
 
-Since this is a regular Ruby source file you can use all of its features to help you define your routes but be careful with variable names as they can clash with the DSL methods of the router.
+Como isso é um arquivo padrão do Ruby você pode utilizar de todos os seus recursos
+para te ajudar a definir suas rotas, porém tenha cautela com nomes de variáveis
+já que ela pode conflitar com os métodos da [DSL](https://pt.wikipedia.org/wiki/Linguagem_de_dom%C3%ADnio_espec%C3%ADfico) do roteador.
 
-NOTE: The `Rails.application.routes.draw do ... end` block that wraps your route definitions is required to establish the scope for the router DSL and must not be deleted.
+NOTE: O bloco `Rails.application.routes.draw do ... end` que encapsula suas
+definições de rotas é necessário para estabelecer o escopo do roteador da DSL e não
+deve ser deletado.
 
-Resource Routing: the Rails Default
+Roteando _Resources_ (Recursos): O padrão do Rails
 -----------------------------------
 
-Resource routing allows you to quickly declare all of the common routes for a given resourceful controller. Instead of declaring separate routes for your `index`, `show`, `new`, `edit`, `create`, `update` and `destroy` actions, a resourceful route declares them in a single line of code.
+O roteamento de _resources_ permite que você rapidamente declare todas as rotas
+comuns para um _controller_. Uma chamada única para [`resources`][] pode declarar todas as rotas
+necessárias para as _actions_ `index`, `show`, `new`, `edit`, `create`, `update` e `destroy`.
 
-### Resources on the Web
+[`resources`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Resources.html#method-i-resources
 
-Browsers request pages from Rails by making a request for a URL using a specific HTTP method, such as `GET`, `POST`, `PATCH`, `PUT` and `DELETE`. Each method is a request to perform an operation on the resource. A resource route maps a number of related requests to actions in a single controller.
+### _Resources_ na Web
 
-When your Rails application receives an incoming request for:
+Navegadores solicitam páginas do Rails através de uma URL usando um método HTTP
+específico, como `GET`,` POST`, `PATCH`,` PUT` e `DELETE`. Cada método é uma
+solicitação para executar uma operação no _resource_. Uma rota de _resource_ mapeia
+uma série de solicitações relacionadas a _actions_ em um único _controller_.
+
+Quando sua aplicação Rails recebe uma requisição para:
 
 ```
 DELETE /photos/17
 ```
 
-it asks the router to map it to a controller action. If the first matching route is:
+ela pede ao roteador para enviar esta requisição para a _action_ no seu
+respectivo _controller_. Se a primeira rota encontrada for:
 
 ```ruby
 resources :photos
 ```
 
-Rails would dispatch that request to the `destroy` action on the `photos` controller with `{ id: '17' }` in `params`.
+O Rails enviará esta requisição para a _action_ `destroy` no _controller_
+`photos` com `{ id: 17 }` no `params`
 
-### CRUD, Verbs, and Actions
+### CRUD, Verbos, e _Actions_
 
-In Rails, a resourceful route provides a mapping between HTTP verbs and URLs to
-controller actions. By convention, each action also maps to a specific CRUD
-operation in a database. A single entry in the routing file, such as:
+No Rails, uma rota de _resources_ fornece um mapeamento entre verbos HTTP e URLs para
+_actions_ do _controller_. Por convenção, cada ação também é mapeada para uma
+operação específica do CRUD em um banco de dados. Uma única entrada no arquivo
+de roteamento, como:
 
 ```ruby
 resources :photos
 ```
 
-creates seven different routes in your application, all mapping to the `Photos` controller:
+cria sete rotas diferentes rotas em sua aplicação, todas mapeando para o
+_controller_ `Photos`:
 
-| HTTP Verb | Path             | Controller#Action | Used for                                     |
-| --------- | ---------------- | ----------------- | -------------------------------------------- |
-| GET       | /photos          | photos#index      | display a list of all photos                 |
-| GET       | /photos/new      | photos#new        | return an HTML form for creating a new photo |
-| POST      | /photos          | photos#create     | create a new photo                           |
-| GET       | /photos/:id      | photos#show       | display a specific photo                     |
-| GET       | /photos/:id/edit | photos#edit       | return an HTML form for editing a photo      |
-| PATCH/PUT | /photos/:id      | photos#update     | update a specific photo                      |
-| DELETE    | /photos/:id      | photos#destroy    | delete a specific photo                      |
+| Verbo HTTP | Path             | Controller#Action | Usado para                                          |
+| ---------- | ---------------- | ----------------- | --------------------------------------------------- |
+| GET        | /photos          | photos#index      | mostra uma lista de todas as fotos                  |
+| GET        | /photos/new      | photos#new        | retorna um formulário HTML para criar uma nova foto |
+| POST       | /photos          | photos#create     | cria uma nova foto                                  |
+| GET        | /photos/:id      | photos#show       | mostra uma foto específica                          |
+| GET        | /photos/:id/edit | photos#edit       | retorna um formulário HTML para editar uma foto     |
+| PATCH/PUT  | /photos/:id      | photos#update     | atualiza uma foto específica                        |
+| DELETE     | /photos/:id      | photos#destroy    | deleta uma foto específica                          |
 
-NOTE: Because the router uses the HTTP verb and URL to match inbound requests, four URLs map to seven different actions.
+NOTE: Por conta do roteador utilizar os verbos HTTP e a URL para corresponder as requisições de entrada, quatro URLs equivalem a sete _actions_ diferentes.
 
-NOTE: Rails routes are matched in the order they are specified, so if you have a `resources :photos` above a `get 'photos/poll'` the `show` action's route for the `resources` line will be matched before the `get` line. To fix this, move the `get` line **above** the `resources` line so that it is matched first.
+NOTE: Rotas de aplicações Rails são combinadas na ordem que são especificadas, portanto, se você tem `resources :photos` acima de `get 'photos/poll'`, a rota da _action_ `show` para a linha do `resources` será correspondida antes da linha `get`. Para resolver este problema, mova a linha `get` **acima** da linha `resources`, assim a rota será equiparada primeiro.
 
-### Path and URL Helpers
+### Helpers _Path_ e _URL_
 
-Creating a resourceful route will also expose a number of helpers to the controllers in your application. In the case of `resources :photos`:
+Criando uma rota de _resource_ vai expor um número de _helpers_ para os _controllers_ em sua aplicação. No caso de `resources :photos`:
 
-* `photos_path` returns `/photos`
-* `new_photo_path` returns `/photos/new`
-* `edit_photo_path(:id)` returns `/photos/:id/edit` (for instance, `edit_photo_path(10)` returns `/photos/10/edit`)
-* `photo_path(:id)` returns `/photos/:id` (for instance, `photo_path(10)` returns `/photos/10`)
+* `photos_path` retorna `/photos`
+* `new_photo_path` retorna `/photos/new`
+* `edit_photo_path(:id)` retorna `/photos/:id/edit` (por exemplo, `edit_photo_path(10)` retorna `/photos/10/edit`)
+* `photo_path(:id)` retorna `/photos/:id` (por exemplo, `photo_path(10)` retorna `/photos/10`)
 
-Each of these helpers has a corresponding `_url` helper (such as `photos_url`) which returns the same path prefixed with the current host, port, and path prefix.
+Cada um desses _helpers_ tem um _helper_ `_url`  (assim como `photos_url`) que retorna o mesmo _path_ prefixado com o _host_ atual, porta e o prefixo do _path_.
 
-### Defining Multiple Resources at the Same Time
+TIP: Para encontrar os nomes dos auxiliares de rota para suas rotas, consulte [Listar rotas existentes](#listing-existing-routes) abaixo.
 
-If you need to create routes for more than one resource, you can save a bit of typing by defining them all with a single call to `resources`:
+### Definindo Múltiplos _Resources_ ao Mesmo tempo
+
+Se você precisa criar rotas para mais de um _resource_, você pode salvar um pouco de digitação definindo todos eles em uma única chamada para `resources`:
 
 ```ruby
 resources :photos, :books, :videos
 ```
 
-This works exactly the same as:
+Isto funciona exatamente igual a:
 
 ```ruby
 resources :photos
@@ -156,51 +184,53 @@ resources :books
 resources :videos
 ```
 
-### Singular Resources
+### _Resources_ no Singular
 
-Sometimes, you have a resource that clients always look up without referencing an ID. For example, you would like `/profile` to always show the profile of the currently logged in user. In this case, you can use a singular resource to map `/profile` (rather than `/profile/:id`) to the `show` action:
+Algumas vezes você tem um _resource_ que clientes sempre veem sem referenciar um ID. Por exemplo, você gostaria que `/profile` sempre mostre o perfil do usuário que esta autenticado. Neste caso, você pode usar um _resource_ no singular para  mapear `/profile` (em vez de `/profile/:id`) para a _action_ `show`:
 
 ```ruby
 get 'profile', to: 'users#show'
 ```
 
-Passing a `String` to `to:` will expect a `controller#action` format. When using a `Symbol`, the `to:` option should be replaced with `action:`. When using a `String` without a `#`, the `to:` option should be replaced with `controller:`:
+Passando uma `String` para `to:` ira esperar um formato `controller#action`. Quando usamos um `Symbol`, a opção `to:` deveria ser trocada por `action:`. Quando usamos uma `String` sem um `#`, a opção `to:` deveria ser trocada por `controller:`:
 
 ```ruby
 get 'profile', action: :show, controller: 'users'
 ```
 
-This resourceful route:
+Esta rota _resourceful_:
 
 ```ruby
 resource :geocoder
 resolve('Geocoder') { [:geocoder] }
 ```
 
-creates six different routes in your application, all mapping to the `Geocoders` controller:
+cria seis rotas diferentes em sua aplicação, todas mapeando para o _controller_ `Geocoders`:
 
-| HTTP Verb | Path           | Controller#Action | Used for                                      |
-| --------- | -------------- | ----------------- | --------------------------------------------- |
-| GET       | /geocoder/new  | geocoders#new     | return an HTML form for creating the geocoder |
-| POST      | /geocoder      | geocoders#create  | create the new geocoder                       |
-| GET       | /geocoder      | geocoders#show    | display the one and only geocoder resource    |
-| GET       | /geocoder/edit | geocoders#edit    | return an HTML form for editing the geocoder  |
-| PATCH/PUT | /geocoder      | geocoders#update  | update the one and only geocoder resource     |
-| DELETE    | /geocoder      | geocoders#destroy | delete the geocoder resource                  |
+| Verbo HTTP | Path           | Controller#Action | Usado para                                        |
+| ---------- | -------------- | ----------------- | ------------------------------------------------- |
+| GET        | /geocoder/new  | geocoders#new     | retorna um formulário HTML para criar o geocoder  |
+| POST       | /geocoder      | geocoders#create  | cria o novo geocoder                              |
+| GET        | /geocoder      | geocoders#show    | mostra o único geocoder _resource_                |
+| GET        | /geocoder/edit | geocoders#edit    | retorna um formulário HTML para editar o geocoder |
+| PATCH/PUT  | /geocoder      | geocoders#update  | atualiza o único geocoder _resource_              |
+| DELETE     | /geocoder      | geocoders#destroy | deleta o geocoder _resource_                      |
 
-NOTE: Because you might want to use the same controller for a singular route (`/account`) and a plural route (`/accounts/45`), singular resources map to plural controllers. So that, for example, `resource :photo` and `resources :photos` creates both singular and plural routes that map to the same controller (`PhotosController`).
+NOTE: Como você pode querer usar o mesmo _controller_ para uma _singular route_ (`/account`) e uma _plural route_ (`/accounts /45`), os _singular resources_ são mapeados para os _plural controllers_. Assim, por exemplo, `resource: photo` e` resources: photos` criam rotas singular e plural que são mapeadas para o mesmo controlador (`PhotosController`).
 
-A singular resourceful route generates these helpers:
+Uma rota _resourceful_ singular gera estes _helpers_:
 
 * `new_geocoder_path` returns `/geocoder/new`
 * `edit_geocoder_path` returns `/geocoder/edit`
 * `geocoder_path` returns `/geocoder`
 
-As with plural resources, the same helpers ending in `_url` will also include the host, port, and path prefix.
+NOTE: A chamada para `resolve` é necessária para converter instâncias do `Geocoder` em rotas por meio de [identificação de registro](form_helpers.html#confiando-na-identificacao-de-registro).
 
-### Controller Namespaces and Routing
+Assim como com _resources_ no plural, os mesmos _helpers_ que terminam com `_url` tambem vão incluir o _host_, porta, e o prefixo do _path_.
 
-You may wish to organize groups of controllers under a namespace. Most commonly, you might group a number of administrative controllers under an `Admin::` namespace. You would place these controllers under the `app/controllers/admin` directory, and you can group them together in your router:
+### Controller Namespaces e Routing
+
+Você pode querer organizar grupos de _controllers_ em um _namespace_. Mais comumente, você pode querer agrupar _controllers_ administrativos sob um _namespace_ `Admin::`, colocar esses _controllers_ no diretório `app/controllers/admin`. Você pode agrupar _routes_ como um grupo usando o bloco [`namespace`][]:
 
 ```ruby
 namespace :admin do
@@ -208,19 +238,19 @@ namespace :admin do
 end
 ```
 
-This will create a number of routes for each of the `articles` and `comments` controller. For `Admin::ArticlesController`, Rails will create:
+Isto criará um número de rotas para cada _controller_ de `articles` e `comments`. Para `Admin::ArticlesController`, o Rails vai criar:
 
-| HTTP Verb | Path                     | Controller#Action      | Named Route Helper           |
-| --------- | ------------------------ | ---------------------- | ---------------------------- |
-| GET       | /admin/articles          | admin/articles#index   | admin_articles_path          |
-| GET       | /admin/articles/new      | admin/articles#new     | new_admin_article_path       |
-| POST      | /admin/articles          | admin/articles#create  | admin_articles_path          |
-| GET       | /admin/articles/:id      | admin/articles#show    | admin_article_path(:id)      |
-| GET       | /admin/articles/:id/edit | admin/articles#edit    | edit_admin_article_path(:id) |
-| PATCH/PUT | /admin/articles/:id      | admin/articles#update  | admin_article_path(:id)      |
-| DELETE    | /admin/articles/:id      | admin/articles#destroy | admin_article_path(:id)      |
+| Verbo HTTP | Path                     | Controller#Action      | Helper de rota nomeado       |
+| ---------- | ------------------------ | ---------------------- | ---------------------------- |
+| GET        | /admin/articles          | admin/articles#index   | admin_articles_path          |
+| GET        | /admin/articles/new      | admin/articles#new     | new_admin_article_path       |
+| POST       | /admin/articles          | admin/articles#create  | admin_articles_path          |
+| GET        | /admin/articles/:id      | admin/articles#show    | admin_article_path(:id)      |
+| GET        | /admin/articles/:id/edit | admin/articles#edit    | edit_admin_article_path(:id) |
+| PATCH/PUT  | /admin/articles/:id      | admin/articles#update  | admin_article_path(:id)      |
+| DELETE     | /admin/articles/:id      | admin/articles#destroy | admin_article_path(:id)      |
 
-If you want to route `/articles` (without the prefix `/admin`) to `Admin::ArticlesController`, you could use:
+Se ao invés você quiser rotear `/articles` (sem o prefixo `/admin`) para `Admin::ArticlesController`, você poderia especificar um *module* com um bloco [`scope`][]:
 
 ```ruby
 scope module: 'admin' do
@@ -228,43 +258,45 @@ scope module: 'admin' do
 end
 ```
 
-or, for a single case:
+Isso também pode ser feito para uma única rota:
 
 ```ruby
 resources :articles, module: 'admin'
 ```
 
-If you want to route `/admin/articles` to `ArticlesController` (without the `Admin::` module prefix), you could use:
+Se ao invés você quiser rotear `/admin/articles` para `ArticlesController` (Sem o prefixo do modulo `Admin::`), você poderia especificar o caminho usando um bloco `scope`:
 
 ```ruby
 scope '/admin' do
   resources :articles, :comments
 end
 ```
-
-or, for a single case:
+Isso também pode ser feito para uma única rota:
 
 ```ruby
 resources :articles, path: '/admin/articles'
 ```
 
-In each of these cases, the named routes remain the same as if you did not use `scope`. In the last case, the following paths map to `ArticlesController`:
+Em cada um desses casos, a rota nomeada continua a mesma, como se você não tivesse usado `scope`. No último exemplo, os _paths_ seguintes mapeiam para `ArticlesController`:
 
-| HTTP Verb | Path                     | Controller#Action    | Named Route Helper     |
-| --------- | ------------------------ | -------------------- | ---------------------- |
-| GET       | /admin/articles          | articles#index       | articles_path          |
-| GET       | /admin/articles/new      | articles#new         | new_article_path       |
-| POST      | /admin/articles          | articles#create      | articles_path          |
-| GET       | /admin/articles/:id      | articles#show        | article_path(:id)      |
-| GET       | /admin/articles/:id/edit | articles#edit        | edit_article_path(:id) |
-| PATCH/PUT | /admin/articles/:id      | articles#update      | article_path(:id)      |
-| DELETE    | /admin/articles/:id      | articles#destroy     | article_path(:id)      |
+| Verbo HTTP | Path                     | Controller#Action    | Helper de rota nomeado |
+| ---------- | ------------------------ | -------------------- | ---------------------- |
+| GET        | /admin/articles          | articles#index       | articles_path          |
+| GET        | /admin/articles/new      | articles#new         | new_article_path       |
+| POST       | /admin/articles          | articles#create      | articles_path          |
+| GET        | /admin/articles/:id      | articles#show        | article_path(:id)      |
+| GET        | /admin/articles/:id/edit | articles#edit        | edit_article_path(:id) |
+| PATCH/PUT  | /admin/articles/:id      | articles#update      | article_path(:id)      |
+| DELETE     | /admin/articles/:id      | articles#destroy     | article_path(:id)      |
 
-TIP: _If you need to use a different controller namespace inside a `namespace` block you can specify an absolute controller path, e.g: `get '/foo', to: '/foo#index'`._
+TIP: Se você precisar usar um _namespace_ de _controller_ diferente dentro de um bloco `namespace` você pode especificar um _path_ absoluto de _controller_, e.g: `get '/foo', to: '/foo#index'`.
 
-### Nested Resources
+[`namespace`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Scoping.html#method-i-namespace
+[`scope`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Scoping.html#method-i-scope
 
-It's common to have resources that are logically children of other resources. For example, suppose your application includes these models:
+### Nested Resources (Recursos Aninhados)
+
+É comum encontrarmos _resources_ que são "filhos" de outros. Por exemplo, supondo que sua aplicação tem esses _models_:
 
 ```ruby
 class Magazine < ApplicationRecord
@@ -276,7 +308,7 @@ class Ad < ApplicationRecord
 end
 ```
 
-Nested routes allow you to capture this relationship in your routing. In this case, you could include this route declaration:
+_Nested routes_ (rotas aninhadas) permitem que você capture este relacionamento no seu roteamento. Neste caso, você poderia incluir esta declaração de rota:
 
 ```ruby
 resources :magazines do
@@ -284,23 +316,23 @@ resources :magazines do
 end
 ```
 
-In addition to the routes for magazines, this declaration will also route ads to an `AdsController`. The ad URLs require a magazine:
+Em adição das rotas para _magazines_, esta declaração também adicionará rotas de _ads_ para um `AdsController`. As URLs de _ad_ vão precisar de um _magazine_:
 
-| HTTP Verb | Path                                 | Controller#Action | Used for                                                                   |
-| --------- | ------------------------------------ | ----------------- | -------------------------------------------------------------------------- |
-| GET       | /magazines/:magazine_id/ads          | ads#index         | display a list of all ads for a specific magazine                          |
-| GET       | /magazines/:magazine_id/ads/new      | ads#new           | return an HTML form for creating a new ad belonging to a specific magazine |
-| POST      | /magazines/:magazine_id/ads          | ads#create        | create a new ad belonging to a specific magazine                           |
-| GET       | /magazines/:magazine_id/ads/:id      | ads#show          | display a specific ad belonging to a specific magazine                     |
-| GET       | /magazines/:magazine_id/ads/:id/edit | ads#edit          | return an HTML form for editing an ad belonging to a specific magazine     |
-| PATCH/PUT | /magazines/:magazine_id/ads/:id      | ads#update        | update a specific ad belonging to a specific magazine                      |
-| DELETE    | /magazines/:magazine_id/ads/:id      | ads#destroy       | delete a specific ad belonging to a specific magazine                      |
+| Verbo HTTP | Path                                 | Controller#Action | Usado para                                                                                        |
+| ---------- | ------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------- |
+| GET        | /magazines/:magazine_id/ads          | ads#index         | mostra a lista de todos os `ads` para um `magazine` específico                                    |
+| GET        | /magazines/:magazine_id/ads/new      | ads#new           | retorna um formulário HTML para a criação de um novo `ad` pertencente de um `magazine` específico |
+| POST       | /magazines/:magazine_id/ads          | ads#create        | cria um novo `ad` pertencente a um `magazine` específico                                          |
+| GET        | /magazines/:magazine_id/ads/:id      | ads#show          | exibe um `ad` pertencente a um `magazine` específico                                              |
+| GET        | /magazines/:magazine_id/ads/:id/edit | ads#edit          | retorna um formulário HTML para editar um `ad` pertencente a um `magazine` específico             |
+| PATCH/PUT  | /magazines/:magazine_id/ads/:id      | ads#update        | atualiza um `ad` específico pertencente a um `magazine` específico                                |
+| DELETE     | /magazines/:magazine_id/ads/:id      | ads#destroy       | deleta um `ad` específico pertencente a um `magazine` específico                                  |
 
-This will also create routing helpers such as `magazine_ads_url` and `edit_magazine_ad_path`. These helpers take an instance of Magazine as the first parameter (`magazine_ads_url(@magazine)`).
+Isto vai também criar _routing helpers_ como `magazine_ads_url` e `edit_magazine_ad_path`. Esses _helpers_ pegam uma instância de _Magazine_ como o primeiro parâmetro (`magazine_ads_url(@magazine)`).
 
-#### Limits to Nesting
+#### Limites para o Aninhamento
 
-You can nest resources within other nested resources if you like. For example:
+Você pode aninhar _resources_ entre outros _resources_ aninhados se você desejar. Por exemplo:
 
 ```ruby
 resources :publishers do
@@ -310,19 +342,19 @@ resources :publishers do
 end
 ```
 
-Deeply-nested resources quickly become cumbersome. In this case, for example, the application would recognize paths such as:
+_Resources_ profundamente aninhados ficam confusos. Neste caso, por exemplo, a aplicação iria reconhecer _paths_ como:
 
 ```
 /publishers/1/magazines/2/photos/3
 ```
 
-The corresponding route helper would be `publisher_magazine_photo_url`, requiring you to specify objects at all three levels. Indeed, this situation is confusing enough that a popular [article](http://weblog.jamisbuck.org/2007/2/5/nesting-resources) by Jamis Buck proposes a rule of thumb for good Rails design:
+O _helper_ correspondente a essa rota seria `publisher_magazine_photo_url`, sendo necessário especificar os objetos de todos os três níveis. De fato, esta situação é confusa o bastante que um [artigo escrito por Jamis Buck](http://weblog.jamisbuck.org/2007/2/5/nesting-resources) propõe uma regra de ouro para um bom design no Rails:
 
-TIP: _Resources should never be nested more than 1 level deep._
+TIP: _Resources_ não devem nunca ser aninhados mais de um nível de profundidade.
 
-#### Shallow Nesting
+#### Shallow Nesting (Aninhamento raso)
 
-One way to avoid deep nesting (as recommended above) is to generate the collection actions scoped under the parent, so as to get a sense of the hierarchy, but to not nest the member actions. In other words, to only build routes with the minimal amount of information to uniquely identify the resource, like this:
+Uma maneira de evitar um aninhamento profundo (como recomendado acima) é gerar uma coleção de _actions_ _scoped_ abaixo de um pai, assim para ter uma sensação de hierarquia, mas não aninhar as _actions_ do membro. Em outras palavras. para apenas construir _routes_ com o mínimo de informação para identificar unicamente o _recurso_, como isto:
 
 ```ruby
 resources :articles do
@@ -331,7 +363,7 @@ end
 resources :comments, only: [:show, :edit, :update, :destroy]
 ```
 
-This idea strikes a balance between descriptive routes and deep nesting. There exists shorthand syntax to achieve just that, via the `:shallow` option:
+Essa ideia encontra um equilíbrio entre rotas descritivas e aninhamento profundo. Existe uma sintaxe abreviada para conseguir exatamente isso, via a opção `:shallow`:
 
 ```ruby
 resources :articles do
@@ -339,7 +371,7 @@ resources :articles do
 end
 ```
 
-This will generate the exact same routes as the first example. You can also specify the `:shallow` option in the parent resource, in which case all of the nested resources will be shallow:
+Isso vai gerar as mesmas rotas do primeiro exemplo, Você pode também especificar a opção `:shallow` no seu _resource_ pai, em cada caso todos os _resources_ aninhados serão rasos:
 
 ```ruby
 resources :articles, shallow: true do
@@ -349,7 +381,40 @@ resources :articles, shallow: true do
 end
 ```
 
-The `shallow` method of the DSL creates a scope inside of which every nesting is shallow. This generates the same routes as the previous example:
+O *resources* de artigos aqui terá as seguintes rotas geradas para ele:
+
+| Verbo HTTP | Caminho                                         | Controller#Action | Nome do Helper de Rota |
+| --------- | -------------------------------------------- | ----------------- | ------------------------ |
+| GET       | /articles/:article_id/comments(.:format)     | comments#index    | article_comments_path    |
+| POST      | /articles/:article_id/comments(.:format)     | comments#create   | article_comments_path    |
+| GET       | /articles/:article_id/comments/new(.:format) | comments#new      | new_article_comment_path |
+| GET       | /comments/:id/edit(.:format)                 | comments#edit     | edit_comment_path        |
+| GET       | /comments/:id(.:format)                      | comments#show     | comment_path             |
+| PATCH/PUT | /comments/:id(.:format)                      | comments#update   | comment_path             |
+| DELETE    | /comments/:id(.:format)                      | comments#destroy  | comment_path             |
+| GET       | /articles/:article_id/quotes(.:format)       | quotes#index      | article_quotes_path      |
+| POST      | /articles/:article_id/quotes(.:format)       | quotes#create     | article_quotes_path      |
+| GET       | /articles/:article_id/quotes/new(.:format)   | quotes#new        | new_article_quote_path   |
+| GET       | /quotes/:id/edit(.:format)                   | quotes#edit       | edit_quote_path          |
+| GET       | /quotes/:id(.:format)                        | quotes#show       | quote_path               |
+| PATCH/PUT | /quotes/:id(.:format)                        | quotes#update     | quote_path               |
+| DELETE    | /quotes/:id(.:format)                        | quotes#destroy    | quote_path               |
+| GET       | /articles/:article_id/drafts(.:format)       | drafts#index      | article_drafts_path      |
+| POST      | /articles/:article_id/drafts(.:format)       | drafts#create     | article_drafts_path      |
+| GET       | /articles/:article_id/drafts/new(.:format)   | drafts#new        | new_article_draft_path   |
+| GET       | /drafts/:id/edit(.:format)                   | drafts#edit       | edit_draft_path          |
+| GET       | /drafts/:id(.:format)                        | drafts#show       | draft_path               |
+| PATCH/PUT | /drafts/:id(.:format)                        | drafts#update     | draft_path               |
+| DELETE    | /drafts/:id(.:format)                        | drafts#destroy    | draft_path               |
+| GET       | /articles(.:format)                          | articles#index    | articles_path            |
+| POST      | /articles(.:format)                          | articles#create   | articles_path            |
+| GET       | /articles/new(.:format)                      | articles#new      | new_article_path         |
+| GET       | /articles/:id/edit(.:format)                 | articles#edit     | edit_article_path        |
+| GET       | /articles/:id(.:format)                      | articles#show     | article_path             |
+| PATCH/PUT | /articles/:id(.:format)                      | articles#update   | article_path             |
+| DELETE    | /articles/:id(.:format)                      | articles#destroy  | article_path             |
+
+O método [`shallow`][] do DSL cria um _scope_ em que todos os aninhamentos são rasos. Isso gera as mesmas rotas que o exemplo anterior:
 
 ```ruby
 shallow do
@@ -361,7 +426,7 @@ shallow do
 end
 ```
 
-There exist two options for `scope` to customize shallow routes. `:shallow_path` prefixes member paths with the specified parameter:
+Existem duas opções no `scope` para customizar _shallow routes_. `:shallow_path` prefixa seus _paths_ membros com o parâmetro especificado:
 
 ```ruby
 scope shallow_path: "sekret" do
@@ -371,9 +436,9 @@ scope shallow_path: "sekret" do
 end
 ```
 
-The comments resource here will have the following routes generated for it:
+O _resource_ _comments_ aqui terá gerado as seguintes rotas para si:
 
-| HTTP Verb | Path                                         | Controller#Action | Named Route Helper       |
+| HTTP Verb | Path                                         | Controller#Action | Helper de rota nomeado   |
 | --------- | -------------------------------------------- | ----------------- | ------------------------ |
 | GET       | /articles/:article_id/comments(.:format)     | comments#index    | article_comments_path    |
 | POST      | /articles/:article_id/comments(.:format)     | comments#create   | article_comments_path    |
@@ -383,7 +448,7 @@ The comments resource here will have the following routes generated for it:
 | PATCH/PUT | /sekret/comments/:id(.:format)               | comments#update   | comment_path             |
 | DELETE    | /sekret/comments/:id(.:format)               | comments#destroy  | comment_path             |
 
-The `:shallow_prefix` option adds the specified parameter to the named route helpers:
+A opção `:shallow_prefix` adiciona o parÂmetro especificado para os _helpers_ da rota nomeada:
 
 ```ruby
 scope shallow_prefix: "sekret" do
@@ -393,9 +458,9 @@ scope shallow_prefix: "sekret" do
 end
 ```
 
-The comments resource here will have the following routes generated for it:
+O _resource_ _comments_ aqui terá gerado as seguintes rotas para si:
 
-| HTTP Verb | Path                                         | Controller#Action | Named Route Helper          |
+| HTTP Verb | Path                                         | Controller#Action | Helper de rota nomeado      |
 | --------- | -------------------------------------------- | ----------------- | --------------------------- |
 | GET       | /articles/:article_id/comments(.:format)     | comments#index    | article_comments_path       |
 | POST      | /articles/:article_id/comments(.:format)     | comments#create   | article_comments_path       |
@@ -405,9 +470,11 @@ The comments resource here will have the following routes generated for it:
 | PATCH/PUT | /comments/:id(.:format)                      | comments#update   | sekret_comment_path         |
 | DELETE    | /comments/:id(.:format)                      | comments#destroy  | sekret_comment_path         |
 
-### Routing concerns
+[`shallow`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Resources.html#method-i-shallow
 
-Routing concerns allow you to declare common routes that can be reused inside other resources and routes. To define a concern:
+### Roteamento com método *Concerns*
+
+Roteamento com método concerns permitem você declarar rotas comuns que podem ser reutilizadas dentro de outros _resources_ e rotas. Para definir um _concern_, use um bloco [`concern`][]:
 
 ```ruby
 concern :commentable do
@@ -419,7 +486,7 @@ concern :image_attachable do
 end
 ```
 
-These concerns can be used in resources to avoid code duplication and share behavior across routes:
+Estes _concerns_ podem ser usados em _resources_ para evitar duplicação de códigos e compartilhar o mesmo comportamento por entre as rotas:
 
 ```ruby
 resources :messages, concerns: :commentable
@@ -427,7 +494,7 @@ resources :messages, concerns: :commentable
 resources :articles, concerns: [:commentable, :image_attachable]
 ```
 
-The above is equivalent to:
+O exemplo acima é equivalente a:
 
 ```ruby
 resources :messages do
@@ -440,7 +507,7 @@ resources :articles do
 end
 ```
 
-Also you can use them in any place that you want inside the routes, for example in a `scope` or `namespace` call:
+Além disso você pode usá-los em qualquer lugar que você quiser chamando [`concerns`][]. Por exemplo, em um bloco de `scope` ou `namespace`:
 
 ```ruby
 namespace :articles do
@@ -448,9 +515,12 @@ namespace :articles do
 end
 ```
 
-### Creating Paths and URLs From Objects
+[`concern`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Concerns.html#method-i-concern
+[`concerns`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Concerns.html#method-i-concerns
 
-In addition to using the routing helpers, Rails can also create paths and URLs from an array of parameters. For example, suppose you have this set of routes:
+### Criando Paths e URLs de Objetos
+
+Além de usarmos os _helpers_ de roteamento, o Rails pode também criar _paths_ e _URLs_ de um _array_ de parâmetros. Por exemplo, imagine que você tem este grupo de rotas:
 
 ```ruby
 resources :magazines do
@@ -458,45 +528,47 @@ resources :magazines do
 end
 ```
 
-When using `magazine_ad_path`, you can pass in instances of `Magazine` and `Ad` instead of the numeric IDs:
+Enquanto estiver usando `magazine_ad_path`, você pode passar as instâncias de `Magazine` e `Ad` em contrapartida a IDs numéricos:
 
 ```erb
 <%= link_to 'Ad details', magazine_ad_path(@magazine, @ad) %>
 ```
 
-You can also use `url_for` with a set of objects, and Rails will automatically determine which route you want:
+Você pode também usar [`url_for`][ActionView::RoutingUrlFor#url_for] com um grupo de objetos, e o Rails vai automaticamente determinar qual rota você quer:
 
 ```erb
 <%= link_to 'Ad details', url_for([@magazine, @ad]) %>
 ```
 
-In this case, Rails will see that `@magazine` is a `Magazine` and `@ad` is an `Ad` and will therefore use the `magazine_ad_path` helper. In helpers like `link_to`, you can specify just the object in place of the full `url_for` call:
+Neste caso, o Rails verá que `@magazine` é um `Magazine` e `@ad` é um `Ad` e vai portanto usar o _helper_ `magazine_ad_path`. em _helpers_ como `link_to`, você pode especificar apenas o objeto no lugar da chamada `url_for` inteira:
 
 ```erb
 <%= link_to 'Ad details', [@magazine, @ad] %>
 ```
 
-If you wanted to link to just a magazine:
+Se você queria apenas o link da magazine:
 
 ```erb
 <%= link_to 'Magazine details', @magazine %>
 ```
 
-For other actions, you just need to insert the action name as the first element of the array:
+Para outras _actions_, você apenas precisa inserir o nome desta _action_ como o primeiro elemento deste _array_:
 
 ```erb
 <%= link_to 'Edit Ad', [:edit, @magazine, @ad] %>
 ```
 
-This allows you to treat instances of your models as URLs, and is a key advantage to using the resourceful style.
+Isto permite você tratar instâncias de seus _models_ como URLs, e é uma vantagem chave de usar o estilo _resourceful_.
 
-### Adding More RESTful Actions
+[ActionView::RoutingUrlFor#url_for]: https://api.rubyonrails.org/classes/ActionView/RoutingUrlFor.html#method-i-url_for
 
-You are not limited to the seven routes that RESTful routing creates by default. If you like, you may add additional routes that apply to the collection or individual members of the collection.
+### Adicionando mais RESTful Actions
 
-#### Adding Member Routes
+Você não esta limitado as sete rotas que o _RESTful routing_ cria por padrão. Se você quiser, pode criar rotas adicionais  que aplicam a uma coleção ou membros individuais da coleção.
 
-To add a member route, just add a `member` block into the resource block:
+#### Adicionando Rotas de Membros
+
+Para adicionar uma rota para um membro, apenas adicione um bloco [`member`][] em um bloco de _resource_:
 
 ```ruby
 resources :photos do
@@ -505,13 +577,12 @@ resources :photos do
   end
 end
 ```
+Isso vai reconhecer `/photos/1/preview` com GET, e rotear para a _action_ `preview` de `PhotosController`, com o valor do _resource id_  passado em `params[:id]`. Isso vai tambem criar os _helpers_ `preview_photo_url` e `preview_photo_path`.
 
-This will recognize `/photos/1/preview` with GET, and route to the `preview` action of `PhotosController`, with the resource id value passed in `params[:id]`. It will also create the `preview_photo_url` and `preview_photo_path` helpers.
-
-Within the block of member routes, each route name specifies the HTTP verb that
-will be recognized. You can use `get`, `patch`, `put`, `post`, or `delete` here
-. If you don't have multiple `member` routes, you can also pass `:on` to a
-route, eliminating the block:
+Dentro do bloco de rotas para membros, cada nome de rota especifica o verbo HTTP
+que vai ser reconhecido. Você pode usar [`get`][], [`patch`][], [`put`][], [`post`][] ou
+[`delete`][] aqui. Se você não tiver múltiplas rotas para membros, você pode também
+passar `:on` para a rota, eliminando o bloco:
 
 ```ruby
 resources :photos do
@@ -519,11 +590,19 @@ resources :photos do
 end
 ```
 
-You can leave out the `:on` option, this will create the same member route except that the resource id value will be available in `params[:photo_id]` instead of `params[:id]`. Route helpers will also be renamed from `preview_photo_url` and `preview_photo_path` to `photo_preview_url` and `photo_preview_path`.
+Você pode deixar fora a opção `:on`, isso vai criar o mesmo _member route_ exceto que o valor do _resource id_ estará disponível em `params[:photo_id]` ao invés de `params[:id]`. _Helpers_ de rota tambem serão renomeados de `preview_photo_url` para `photo_preview_url` e `photo_preview_path`.
 
-#### Adding Collection Routes
+[`delete`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/HttpHelpers.html#method-i-delete
+[`get`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/HttpHelpers.html#method-i-get
+[`member`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Resources.html#method-i-member
+[`patch`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/HttpHelpers.html#method-i-patch
+[`post`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/HttpHelpers.html#method-i-post
+[`put`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/HttpHelpers.html#method-i-put
+[`put`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/HttpHelpers.html#method-i-put
 
-To add a route to the collection:
+#### Adicionando Collection Routes
+
+Para adicionar uma rota para uma coleção, use um bloco [`collection`][]:
 
 ```ruby
 resources :photos do
@@ -533,9 +612,9 @@ resources :photos do
 end
 ```
 
-This will enable Rails to recognize paths such as `/photos/search` with GET, and route to the `search` action of `PhotosController`. It will also create the `search_photos_url` and `search_photos_path` route helpers.
+Isto vai permitir que o Rails reconheça _paths_ como `/photos/search` com GET, e a rota para a _action_ `search` do `PhotosController`. Isto também criará os _helpers_ `search_photos_url` e `search_photos_path`.
 
-Just as with member routes, you can pass `:on` to a route:
+Assim como em _member routes_, você pode passar `:on` para uma rota:
 
 ```ruby
 resources :photos do
@@ -543,11 +622,13 @@ resources :photos do
 end
 ```
 
-NOTE: If you're defining additional resource routes with a symbol as the first positional argument, be mindful that it is not equivalent to using a string. Symbols infer controller actions while strings infer paths.
+NOTE: Se vocês estão definindo rotas de _resource_ adicionais com um _symbol_ como o primeiro argumento posicional, tenha em mente que não é igual a usar uma _string_. _Symbols_ inferem _actions_ do _controller_ enquanto _strings_ inferem _paths_.
 
-#### Adding Routes for Additional New Actions
+[`collection`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Resources.html#method-i-collection
 
-To add an alternate new action using the `:on` shortcut:
+#### Adicionando Rotas para Novas Actions Adicionais
+
+Para adicionar uma _action_ alternativa nova usando o atalho `:on`:
 
 ```ruby
 resources :comments do
@@ -555,72 +636,72 @@ resources :comments do
 end
 ```
 
-This will enable Rails to recognize paths such as `/comments/new/preview` with GET, and route to the `preview` action of `CommentsController`. It will also create the `preview_new_comment_url` and `preview_new_comment_path` route helpers.
+Isto vai permitir que o Rails reconheça _paths_ como `/comments/new/preview` com GET, e rotear para a _action_ `preview` do `CommentesController`. Isto também vai criar os _helpers_ `preview_new_comment_url` e `preview_new_comment_path`.
 
-TIP: If you find yourself adding many extra actions to a resourceful route, it's time to stop and ask yourself whether you're disguising the presence of another resource.
+TIP: Se você se encontrar adicionando muitas _actions_ extras para uma rota _resourceful_, é um bom momento para perguntar a si mesmo se você está mascarando a presença de outro _resource_.
 
-Non-Resourceful Routes
+Rotas sem uso de *Resources*
 ----------------------
 
-In addition to resource routing, Rails has powerful support for routing arbitrary URLs to actions. Here, you don't get groups of routes automatically generated by resourceful routing. Instead, you set up each route separately within your application.
+Além do roteamento de *resources*, o Rails possui um suporte poderoso para rotear URLs arbitrárias para *actions*. Aqui, você não obtém grupos de rotas gerados automaticamente pelo roteamento de *resources*. Em vez disso, você configura cada rota separadamente na sua aplicação.
 
-While you should usually use resourceful routing, there are still many places where the simpler routing is more appropriate. There's no need to try to shoehorn every last piece of your application into a resourceful framework if that's not a good fit.
+Embora você geralmente deva usar roteamento com *resources*, ainda existem muitos lugares em que o roteamento mais simples é mais apropriado. Não é necessário tentar encaixar todas as partes do seu aplicativo em uma estrutura de *resources* se isso não for um bom ajuste.
 
-In particular, simple routing makes it very easy to map legacy URLs to new Rails actions.
+Em particular, o roteamento simples facilita o mapeamento de URLs herdados para novas *actions* do Rails.
 
-### Bound Parameters
+### Parâmetros Vinculados
 
-When you set up a regular route, you supply a series of symbols that Rails maps to parts of an incoming HTTP request. For example, consider this route:
+Ao configurar uma rota regular, você fornece uma série de *symbols* que o Rails mapeia para partes de uma requisição HTTP chegando na aplicação. Por exemplo, considere esta rota:
 
 ```ruby
 get 'photos(/:id)', to: 'photos#display'
 ```
 
-If an incoming request of `/photos/1` is processed by this route (because it hasn't matched any previous route in the file), then the result will be to invoke the `display` action of the `PhotosController`, and to make the final parameter `"1"` available as `params[:id]`. This route will also route the incoming request of `/photos` to `PhotosController#display`, since `:id` is an optional parameter, denoted by parentheses.
+Se uma requisição para `/photos/1` for processada por esta rota (porque não corresponde a nenhuma rota anterior no arquivo), o resultado será invocar a *action* `display` do `PhotosController`, e tornar o parâmetro final `"1"` disponível como `params[:id]`. Esta rota também encaminhará uma requisição recebida de `/photos` para `PhotosController#display`, pois `:id` é um parâmetro opcional, indicado por parênteses.
 
-### Dynamic Segments
+### Segmentos Dinâmicos
 
-You can set up as many dynamic segments within a regular route as you like. Any segment will be available to the action as part of `params`. If you set up this route:
+Você pode configurar quantos segmentos dinâmicos em uma rota regular desejar. Qualquer segmento estará disponível para a *action* como parte de `params`. Se você configurar esta rota:
 
 ```ruby
 get 'photos/:id/:user_id', to: 'photos#show'
 ```
 
-An incoming path of `/photos/1/2` will be dispatched to the `show` action of the `PhotosController`. `params[:id]` will be `"1"`, and `params[:user_id]` will be `"2"`.
+Uma requisição para o endereço `/photos/1/2` será enviada para a *action* `show` do `PhotosController`. `params[:id]` será `"1"` e `params[:user_id]` será `"2"`.
 
-TIP: By default, dynamic segments don't accept dots - this is because the dot is used as a separator for formatted routes. If you need to use a dot within a dynamic segment, add a constraint that overrides this – for example, `id: /[^\/]+/` allows anything except a slash.
+TIP: Por padrão, os segmentos dinâmicos não aceitam pontos - isso ocorre porque o ponto é usado como um separador para rotas formatadas. Se você precisar usar um ponto em um segmento dinâmico, adicione uma restrição que o substitua - por exemplo, `id: /[^\/]+/` permite qualquer coisa, exceto uma barra.
 
-### Static Segments
+### Segmentos Estáticos
 
-You can specify static segments when creating a route by not prepending a colon to a fragment:
+Você pode especificar segmentos estáticos ao criar uma rota somente não acrescentando dois pontos a um segmento:
 
 ```ruby
 get 'photos/:id/with_user/:user_id', to: 'photos#show'
 ```
 
-This route would respond to paths such as `/photos/1/with_user/2`. In this case, `params` would be `{ controller: 'photos', action: 'show', id: '1', user_id: '2' }`.
+Esta rota responderia a caminhos como `/photos/1/with_user/2`. Nesse caso, `params` seria `{ controller: 'photos', action: 'show', id: '1', user_id: '2' }`.
 
-### The Query String
+### Usando *Query String*
 
-The `params` will also include any parameters from the query string. For example, with this route:
+Os `params` também incluirão quaisquer parâmetros da *query string*. Por exemplo, com esta rota:
 
 ```ruby
 get 'photos/:id', to: 'photos#show'
 ```
 
-An incoming path of `/photos/1?user_id=2` will be dispatched to the `show` action of the `Photos` controller. `params` will be `{ controller: 'photos', action: 'show', id: '1', user_id: '2' }`.
+Uma requisição para o caminho `/photos/1?user_id=2` será enviada para a *action* `show` do *controller* `Photos`. `params` será `{ controller: 'photos', action: 'show', id: '1', user_id: '2' }`.
 
-### Defining Defaults
+### Definindo Padrões
 
-You can define defaults in a route by supplying a hash for the `:defaults` option. This even applies to parameters that you do not specify as dynamic segments. For example:
+Você pode definir padrões em uma rota fornecendo um hash para a opção `:defaults`. Isso também se aplica a parâmetros que você não especifica como segmentos dinâmicos. Por exemplo:
 
 ```ruby
 get 'photos/:id', to: 'photos#show', defaults: { format: 'jpg' }
 ```
 
-Rails would match `photos/12` to the `show` action of `PhotosController`, and set `params[:format]` to `"jpg"`.
+O Rails corresponderia `photos/12` com a *action* `show` do `PhotosController` e definiria `params[:format]` como `"jpg"`.
 
-You can also use `defaults` in a block format to define the defaults for multiple items:
+Você também pode usar [`defaults`][] em um formato de bloco para definir os padrões para múltiplos itens:
 
 ```ruby
 defaults format: :json do
@@ -628,84 +709,89 @@ defaults format: :json do
 end
 ```
 
-NOTE: You cannot override defaults via query parameters - this is for security reasons. The only defaults that can be overridden are dynamic segments via substitution in the URL path.
+NOTE: Você não pode substituir os padrões via *query parameters* por motivos de segurança. Os únicos padrões que podem ser substituídos são segmentos dinâmicos via substituição no caminho da URL.
 
-### Naming Routes
+[`defaults`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Scoping.html#method-i-defaults
 
-You can specify a name for any route using the `:as` option:
+### Nomeando Rotas
+
+Você pode especificar um nome para qualquer rota usando a opção `:as`:
 
 ```ruby
 get 'exit', to: 'sessions#destroy', as: :logout
 ```
 
-This will create `logout_path` and `logout_url` as named route helpers in your application. Calling `logout_path` will return `/exit`
+Isso criará `logout_path` e `logout_url` como *helpers* de rota em sua aplicação. Chamar `logout_path` retornará `/exit`.
 
-You can also use this to override routing methods defined by resources, like this:
+Você também pode usar isso para substituir os métodos de roteamento definidos pelos *resources* usando rotas customizadas antes do *resource* ser definido, da seguinte forma:
 
 ```ruby
 get ':username', to: 'users#show', as: :user
+resources :users
 ```
 
-This will define a `user_path` method that will be available in controllers, helpers, and views that will go to a route such as `/bob`. Inside the `show` action of `UsersController`, `params[:username]` will contain the username for the user. Change `:username` in the route definition if you do not want your parameter name to be `:username`.
+Isso definirá um método `user_path` que estará disponível em *controllers*, *helpers* e *views* que irão para uma rota como `/bob`. Dentro da *action* `show` do `UsersController`, `params[:username]` conterá o nome do usuário. Altere `:username` na definição da rota se você não quiser que o nome do seu parâmetro seja `:username`.
 
-### HTTP Verb Constraints
+### Restringindo Verbos HTTP
 
-In general, you should use the `get`, `post`, `put`, `patch`  and `delete` methods to constrain a route to a particular verb. You can use the `match` method with the `:via` option to match multiple verbs at once:
+Em geral, você deve usar os métodos [`get`][], [`post`][], [`put`][], [`patch`][] e [`delete`][] para restringir uma rota a um verbo específico. Você pode usar o método [`match`][] com a opção `:via` para combinar vários verbos ao mesmo tempo:
 
 ```ruby
 match 'photos', to: 'photos#show', via: [:get, :post]
 ```
 
-You can match all verbs to a particular route using `via: :all`:
+Você pode combinar todos os verbos em uma rota específica usando `via: :all`:
 
 ```ruby
 match 'photos', to: 'photos#show', via: :all
 ```
 
-NOTE: Routing both `GET` and `POST` requests to a single action has security implications. In general, you should avoid routing all verbs to an action unless you have a good reason to.
+NOTE: Rotear solicitações `GET` e `POST` para uma única *action* tem implicações de segurança. Em geral, você deve evitar rotear todos os verbos para uma *action*, a menos que tenha um bom motivo.
 
-NOTE: `GET` in Rails won't check for CSRF token. You should never write to the database from `GET` requests, for more information see the [security guide](security.html#csrf-countermeasures) on CSRF countermeasures.
+NOTE: `GET` no Rails não verificará o token CSRF. Você nunca deve escrever no banco de dados a partir de solicitações `GET`, para obter mais informações, consulte o [guia de segurança](security.html#csrf-countermeasures) para contramedidas CSRF.
 
-### Segment Constraints
+[`match`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Base.html#method-i-match
 
-You can use the `:constraints` option to enforce a format for a dynamic segment:
+### Restrições de Segmento
+
+Você pode usar a opção `:constraints` para impor um formato para um segmento dinâmico:
 
 ```ruby
 get 'photos/:id', to: 'photos#show', constraints: { id: /[A-Z]\d{5}/ }
 ```
 
-This route would match paths such as `/photos/A12345`, but not `/photos/893`. You can more succinctly express the same route this way:
+Essa rota corresponderia a caminhos como `/photos/A12345`, mas não `/photos/893`. Você pode expressar de forma mais sucinta a mesma rota desta maneira:
 
 ```ruby
 get 'photos/:id', to: 'photos#show', id: /[A-Z]\d{5}/
 ```
 
-`:constraints` takes regular expressions with the restriction that regexp anchors can't be used. For example, the following route will not work:
+`: constraints` usam expressões regulares com a restrição de que as âncoras regexp não podem ser usadas. Por exemplo, a seguinte rota não funcionará:
 
 ```ruby
 get '/:id', to: 'articles#show', constraints: { id: /^\d/ }
 ```
 
-However, note that you don't need to use anchors because all routes are anchored at the start.
+No entanto, note que você não precisa usar âncoras porque todas as rotas estão ancoradas no início e no fim.
 
-For example, the following routes would allow for `articles` with `to_param` values like `1-hello-world` that always begin with a number and `users` with `to_param` values like `david` that never begin with a number to share the root namespace:
+Por exemplo, as rotas a seguir permitiriam `articles` com valores `to_param` como `1-hello-world` que sempre começam com um número e `users` com valores `to_param` como `david` que nunca começam com um número compartilhem o mesmo *namespace* raiz:
 
 ```ruby
 get '/:id', to: 'articles#show', constraints: { id: /\d.+/ }
 get '/:username', to: 'users#show'
 ```
 
-### Request-Based Constraints
+### Restrições Baseadas em Requisições
 
-You can also constrain a route based on any method on the [Request object](action_controller_overview.html#the-request-object) that returns a `String`.
+Você também pode restringir uma rota com base em qualquer método no [objeto `request`](action_controller_overview.html#o-objeto-request) que retorna uma `String`.
 
-You specify a request-based constraint the same way that you specify a segment constraint:
+Você especifica uma restrição baseada em requisições da mesma maneira que especifica uma restrição de segmento:
 
 ```ruby
 get 'photos', to: 'photos#index', constraints: { subdomain: 'admin' }
 ```
 
-You can also specify constraints in a block form:
+Você também pode especificar restrições usando blocos de [`constraints`][]:
 
 ```ruby
 namespace :admin do
@@ -715,13 +801,15 @@ namespace :admin do
 end
 ```
 
-NOTE: Request constraints work by calling a method on the [Request object](action_controller_overview.html#the-request-object) with the same name as the hash key and then compare the return value with the hash value. Therefore, constraint values should match the corresponding Request object method return type. For example: `constraints: { subdomain: 'api' }` will match an `api` subdomain as expected, however using a symbol `constraints: { subdomain: :api }` will not, because `request.subdomain` returns `'api'` as a String.
+NOTE: As restrições de requisição funcionam chamando um método no [Objeto `request`](action_controller_overview.html#o-objeto-request) com o mesmo nome que a chave de hash e, em seguida, compara o valor retornado com o valor de hash. Portanto, os valores de restrição devem corresponder ao tipo de retorno do método no objeto `request` correspondente. Por exemplo: `constraints: { subdomain: 'api' }` corresponderá a um subdomínio `api` conforme o esperado. No entanto, o uso de um símbolo `constraints: { subdomain: :api }` não será, porque `request.subdomain` retorna `'api'` como uma *String*.
 
-NOTE: There is an exception for the `format` constraint: while it's a method on the Request object, it's also an implicit optional parameter on every path. Segment constraints take precedence and the `format` constraint is only applied as such when enforced through a hash. For example, `get 'foo', constraints: { format: 'json' }` will match `GET  /foo` because the format is optional by default. However, you can [use a lambda](#advanced-constraints) like in `get 'foo', constraints: lambda { |req| req.format == :json }` and the route will only match explicit JSON requests.
+NOTE: Há uma exceção para a restrição `format`: embora seja um método no objeto `request`, também é um parâmetro opcional implícito em todos os endereços. Restrições de segmento têm precedência e a restrição de `format` só é aplicada quando através de um hash. Por exemplo, `get 'foo', constraints: { format: 'json' }` corresponderão a `GET /foo` porque o formato é opcional por padrão. No entanto, você pode [usar uma expressão lambda](#restricoes-avancadas) como em `get 'foo', constraints: lambda { |req| req.format == :json }` assim a rota corresponderá apenas a requisições JSON explícitas.
 
-### Advanced Constraints
+[`constraints`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Scoping.html#method-i-constraints
 
-If you have a more advanced constraint, you can provide an object that responds to `matches?` that Rails should use. Let's say you wanted to route all users on a restricted list to the `RestrictedListController`. You could do:
+### Restrições Avançadas
+
+Se você tiver uma restrição mais avançada, poderá fornecer um objeto que responda a `matches?` que o Rails deve usar. Digamos que você queira rotear todos os usuários em uma lista restrita para o `RestrictedListController`. Você poderia fazer:
 
 ```ruby
 class RestrictedListConstraint
@@ -740,7 +828,7 @@ Rails.application.routes.draw do
 end
 ```
 
-You can also specify constraints as a lambda:
+Você também pode especificar restrições como uma lambda:
 
 ```ruby
 Rails.application.routes.draw do
@@ -749,116 +837,151 @@ Rails.application.routes.draw do
 end
 ```
 
-Both the `matches?` method and the lambda gets the `request` object as an argument.
+Tanto o método `matches?` quanto a lambda usam o objeto `request` como argumento.
 
-### Route Globbing and Wildcard Segments
+#### *Constraints* em forma de bloco
 
-Route globbing is a way to specify that a particular parameter should be matched to all the remaining parts of a route. For example:
+Você pode especificar restrições em forma de bloco. Isso é útil quando você precisa aplicar a mesma regra a várias rotas. Por exemplo:
+
+```ruby
+class RestrictedListConstraint
+  # ...Same as the example above
+end
+
+Rails.application.routes.draw do
+  constraints(RestrictedListConstraint.new) do
+    get '*path', to: 'restricted_list#index'
+    get '*other-path', to: 'other_restricted_list#index'
+  end
+end
+```
+
+Você também pode usar `lambda`:
+
+```ruby
+Rails.application.routes.draw do
+  constraints(lambda { |request| RestrictedList.retrieve_ips.include?(request.remote_ip) }) do
+    get '*path', to: 'restricted_list#index'
+    get '*other-path', to: 'other_restricted_list#index'
+  end
+end
+```
+
+### Rotas Englobadas (*Glob*) e Segmentos Curinga
+
+O englobamento de rota é uma maneira de especificar que um parâmetro em particular deve corresponder a todas as partes restantes de uma rota. Por exemplo:
 
 ```ruby
 get 'photos/*other', to: 'photos#unknown'
 ```
 
-This route would match `photos/12` or `/photos/long/path/to/12`, setting `params[:other]` to `"12"` or `"long/path/to/12"`. The fragments prefixed with a star are called "wildcard segments".
+Esta rota irá corresponder a `photos/12` ou `/photos/long/path/to/12`, definindo `params[:other]` como `"12"` ou `"long/path/to/12"`. Os segmentos prefixados com um asterisco são chamados de "segmentos curinga".
 
-Wildcard segments can occur anywhere in a route. For example:
+Segmentos curinga podem ocorrer em qualquer lugar da rota. Por exemplo:
 
 ```ruby
 get 'books/*section/:title', to: 'books#show'
 ```
 
-would match `books/some/section/last-words-a-memoir` with `params[:section]` equals `'some/section'`, and `params[:title]` equals `'last-words-a-memoir'`.
+corresponderia `books/some/section/last-words-a-memoir` para `params[:section]` igual a `'some/section'` e `params[:title]` igual a `'last-words-a-memoir'`.
 
-Technically, a route can have even more than one wildcard segment. The matcher assigns segments to parameters in an intuitive way. For example:
+Tecnicamente, uma rota pode ter ainda mais de um segmento curinga. O *matcher* de rotas atribui segmentos aos parâmetros de maneira intuitiva. Por exemplo:
 
 ```ruby
 get '*a/foo/*b', to: 'test#index'
 ```
 
-would match `zoo/woo/foo/bar/baz` with `params[:a]` equals `'zoo/woo'`, and `params[:b]` equals `'bar/baz'`.
+corresponderia `zoo/woo/foo/bar/baz` para `params[:a]` igual a `'zoo/woo'`, e `params[:b]` igual a `'bar/baz'`.
 
-NOTE: By requesting `'/foo/bar.json'`, your `params[:pages]` will be equal to `'foo/bar'` with the request format of JSON. If you want the old 3.0.x behavior back, you could supply `format: false` like this:
+NOTE: Ao solicitar `'/foo/bar.json'`, seu `params[:pages]` serão iguais a `'foo/bar'` com o formato de solicitação JSON. Se você quiser o antigo comportamento 3.0.x de volta, poderá fornecer `format: false` assim:
 
 ```ruby
 get '*pages', to: 'pages#show', format: false
 ```
 
-NOTE: If you want to make the format segment mandatory, so it cannot be omitted, you can supply `format: true` like this:
+NOTE: Se você quiser tornar o segmento de formato obrigatório, para que ele não possa ser omitido, você pode fornecer `format: true` assim:
 
 ```ruby
 get '*pages', to: 'pages#show', format: true
 ```
 
-### Redirection
+### Redirecionamento
 
-You can redirect any path to another path using the `redirect` helper in your router:
+Você pode redirecionar qualquer rota para outra usando o auxiliar [`redirect`][] no seu roteador:
 
 ```ruby
 get '/stories', to: redirect('/articles')
 ```
 
-You can also reuse dynamic segments from the match in the path to redirect to:
+Você também pode reutilizar segmentos dinâmicos para corresponder a rotas e redirecionar para:
 
 ```ruby
 get '/stories/:name', to: redirect('/articles/%{name}')
 ```
 
-You can also provide a block to redirect, which receives the symbolized path parameters and the request object:
+Você também pode fornecer um bloco para redirecionar, que recebe os parâmetros do caminho simbolizado e o objeto `request`:
 
 ```ruby
 get '/stories/:name', to: redirect { |path_params, req| "/articles/#{path_params[:name].pluralize}" }
 get '/stories', to: redirect { |path_params, req| "/articles/#{req.subdomain}" }
 ```
 
-Please note that default redirection is a 301 "Moved Permanently" redirect. Keep in mind that some web browsers or proxy servers will cache this type of redirect, making the old page inaccessible. You can use the `:status` option to change the response status:
+Observe que o redirecionamento padrão é um redirecionamento 301 "Moved Permanently". Lembre-se de que alguns navegadores da Web ou servidores proxy armazenam em cache esse tipo de redirecionamento, tornando a página antiga inacessível. Você pode usar a opção `:status` para alterar o status da resposta:
+
 
 ```ruby
 get '/stories/:name', to: redirect('/articles/%{name}', status: 302)
 ```
 
-In all of these cases, if you don't provide the leading host (`http://www.example.com`), Rails will take those details from the current request.
+Em todos esses casos, se você não fornecer o host principal (`http://www.example.com`), o Rails obterá esses detalhes da requisição atual.
 
-### Routing to Rack Applications
+[`redirect`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Redirection.html#method-i-redirect
 
-Instead of a String like `'articles#index'`, which corresponds to the `index` action in the `ArticlesController`, you can specify any [Rack application](rails_on_rack.html) as the endpoint for a matcher:
+### Roteamento para Aplicações Rack
+
+Em vez de uma String como `'articles#index'`, que corresponde à *action* `index` no `ArticlesController`, você pode especificar qualquer [aplicação Rack](rails_on_rack.html) como o *endpoint*:
 
 ```ruby
 match '/application.js', to: MyRackApp, via: :all
 ```
 
-As long as `MyRackApp` responds to `call` and returns a `[status, headers, body]`, the router won't know the difference between the Rack application and an action. This is an appropriate use of `via: :all`, as you will want to allow your Rack application to handle all verbs as it considers appropriate.
+Desde que o `MyRackApp` responda ao método `call` e retorne um `[status, headers, body]`, o roteador não saberá a diferença entre a aplicação Rack e uma *action*. Este é um uso apropriado de `via: :all`, pois você deseja permitir que sua aplicação Rack manipule todos os verbos conforme considerar apropriado.
 
-NOTE: For the curious, `'articles#index'` actually expands out to `ArticlesController.action(:index)`, which returns a valid Rack application.
+NOTE: Para os curiosos, `'articles#index'` na verdade se expande para `ArticlesController.action(:index)`, que retorna uma aplicação Rack válida.
 
-If you specify a Rack application as the endpoint for a matcher, remember that
-the route will be unchanged in the receiving application. With the following
-route your Rack application should expect the route to be `/admin`:
+NOTE: Como *procs/lambdas* são objetos que respondem a `call`, você pode implementar rotas muito simples (por exemplo, para verificações de integridade) inline:<br>`get '/health', to: ->(env) { [204, {}, ['']] }`
+
+Se você especificar uma aplicação Rack como *endpoint*, lembre-se de que
+a rota não será alterada na aplicação de recebimento. Com a seguinte
+rota sua aplicação Rack deve esperar que a rota seja `/admin`:
 
 ```ruby
 match '/admin', to: AdminApp, via: :all
 ```
 
-If you would prefer to have your Rack application receive requests at the root
-path instead, use `mount`:
+Se você preferir que sua aplicação Rack receba requisições no *root
+path* em vez disso, use [`mount`][]:
 
 ```ruby
 mount AdminApp, at: '/admin'
 ```
 
-### Using `root`
+[`mount`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Base.html#method-i-mount
 
-You can specify what Rails should route `'/'` to with the `root` method:
+### Usando `root`
+
+Você pode especificar para onde o Rails deve rotear `'/'` com o método [`root`][]:
 
 ```ruby
 root to: 'pages#main'
 root 'pages#main' # shortcut for the above
 ```
 
-You should put the `root` route at the top of the file, because it is the most popular route and should be matched first.
+Você deve colocar a rota `root` no topo do arquivo, porque é a rota mais popular e deve ser correspondida primeiro.
 
-NOTE: The `root` route only routes `GET` requests to the action.
+NOTE: A rota `root` direciona apenas requisições `GET` para a *action*.
 
-You can also use root inside namespaces and scopes as well. For example:
+Você também pode usar o *root* dentro de *namespaces* e *scopes*. Por exemplo:
 
 ```ruby
 namespace :admin do
@@ -868,28 +991,30 @@ end
 root to: "home#index"
 ```
 
-### Unicode character routes
+[`root`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Resources.html#method-i-root
 
-You can specify unicode character routes directly. For example:
+### Rotas com Caracteres Unicode
+
+Você pode especificar rotas de caracteres unicode diretamente. Por exemplo:
 
 ```ruby
 get 'こんにちは', to: 'welcome#index'
 ```
 
-### Direct routes
+### Rotas Diretas
 
-You can create custom URL helpers directly. For example:
+Você pode criar *URL helpers* personalizados diretamente chamando [`direct`][]. Por exemplo:
 
 ```ruby
 direct :homepage do
-  "http://www.rubyonrails.org"
+  "https://rubyonrails.org"
 end
 
 # >> homepage_url
-# => "http://www.rubyonrails.org"
+# => "https://rubyonrails.org"
 ```
 
-The return value of the block must be a valid argument for the `url_for` method. So, you can pass a valid string URL, Hash, Array, an Active Model instance, or an Active Model class.
+O valor de retorno do bloco deve ser um argumento válido para o método `url_for`. Portanto, você pode transmitir uma URL como *string* válida, Hash, Array, ou uma instância de *Active Model* ou uma classe *Active Model*.
 
 ```ruby
 direct :commentable do |model|
@@ -901,40 +1026,44 @@ direct :main do
 end
 ```
 
-### Using `resolve`
+[`direct`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/CustomUrls.html#method-i-direct
 
-The `resolve` method allows customizing polymorphic mapping of models. For example:
+### Usando `resolve`
 
-``` ruby
+O método [`resolve`][] permite personalizar o mapeamento polimórfico de *models*. Por exemplo:
+
+```ruby
 resource :basket
 
 resolve("Basket") { [:basket] }
 ```
 
-``` erb
-<%= form_for @basket do |form| %>
+```erb
+<%= form_with model: @basket do |form| %>
   <!-- basket form -->
 <% end %>
 ```
 
-This will generate the singular URL `/basket` instead of the usual `/baskets/:id`.
+Isso irá gerar uma URL singular `/basket` ​​em vez da habitual `/baskets/:id`.
 
-Customizing Resourceful Routes
+[`resolve`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/CustomUrls.html#method-i-resolve
+
+Customizando Rotas com Recursos
 ------------------------------
 
-While the default routes and helpers generated by `resources :articles` will usually serve you well, you may want to customize them in some way. Rails allows you to customize virtually any generic part of the resourceful helpers.
+Enquanto as rotas padrões e *helpers* gerados por [`resources`][] normalmente atendem a maior parte dos casos de uso, você pode querer customizá-los de alguma forma. O Rails lhe permite customizar virtualmente qualquer parte genérica dos *helpers* de recursos.
 
-### Specifying a Controller to Use
+### Especificando um *Controller* para Usar
 
-The `:controller` option lets you explicitly specify a controller to use for the resource. For example:
+A opção `:controller` permite que você especifique um *controller* de forma explícita para usar para o recurso. Por exemplo:
 
 ```ruby
 resources :photos, controller: 'images'
 ```
 
-will recognize incoming paths beginning with `/photos` but route to the `Images` controller:
+vai reconhecer caminhos requisitados iniciando com `/photos` mas vai rotear para o *controller* `Images`:
 
-| HTTP Verb | Path             | Controller#Action | Named Route Helper   |
+| Verbo HTTP | Caminho             | Controller#Action |  Nome do *Helper* de Rota   |
 | --------- | ---------------- | ----------------- | -------------------- |
 | GET       | /photos          | images#index      | photos_path          |
 | GET       | /photos/new      | images#new        | new_photo_path       |
@@ -944,32 +1073,31 @@ will recognize incoming paths beginning with `/photos` but route to the `Images`
 | PATCH/PUT | /photos/:id      | images#update     | photo_path(:id)      |
 | DELETE    | /photos/:id      | images#destroy    | photo_path(:id)      |
 
-NOTE: Use `photos_path`, `new_photo_path`, etc. to generate paths for this resource.
+NOTE: Utilize `photos_path`, `new_photo_path`, etc. para gerar caminhos para este recurso.
 
-For namespaced controllers you can use the directory notation. For example:
+Você pode usar a notação de diretório para *controllers* com *namespaces* associados. Por exemplo:
 
 ```ruby
 resources :user_permissions, controller: 'admin/user_permissions'
 ```
 
-This will route to the `Admin::UserPermissions` controller.
+Isso vai direcionar a chamada da rota para o *controller* `Admin::UserPermissions`.
 
-NOTE: Only the directory notation is supported. Specifying the
-controller with Ruby constant notation (eg. `controller: 'Admin::UserPermissions'`)
-can lead to routing problems and results in
-a warning.
+NOTE: Apenas a notação de diretório é suportada. Especificar o *controller* com
+a notação de constante do Ruby (e.g. `controller: 'Admin::UserPermissions'`) pode
+causar problemas e resulta em um aviso.
 
-### Specifying Constraints
+### Especificando Restrições
 
-You can use the `:constraints` option to specify a required format on the implicit `id`. For example:
+Você pode usar a opção `:constraints` pra especificar um formato exigido no `id` implícito. Por exemplo:
 
 ```ruby
 resources :photos, constraints: { id: /[A-Z][A-Z][0-9]+/ }
 ```
 
-This declaration constrains the `:id` parameter to match the supplied regular expression. So, in this case, the router would no longer match `/photos/1` to this route. Instead, `/photos/RR27` would match.
+Essa declaração restringe o parâmetro `:id` de forma que ele seja igual à especificação da expressão regular. Então, nesse caso, o roteador não iria mais aceitar `/photos/1` para essa rota. Por outro lado, a requisição `/photos/RR27` seria aceita.
 
-You can specify a single constraint to apply to a number of routes by using the block form:
+Você pode especificar uma única restrição para aplicar a mais de uma rota usando a forma de bloco:
 
 ```ruby
 constraints(id: /[A-Z][A-Z][0-9]+/) do
@@ -978,21 +1106,21 @@ constraints(id: /[A-Z][A-Z][0-9]+/) do
 end
 ```
 
-NOTE: Of course, you can use the more advanced constraints available in non-resourceful routes in this context.
+NOTE: De fato, você pode usar restrições mais avançadas disponíveis em rotas sem recursos nesse contexto.
 
-TIP: By default the `:id` parameter doesn't accept dots - this is because the dot is used as a separator for formatted routes. If you need to use a dot within an `:id` add a constraint which overrides this - for example `id: /[^\/]+/` allows anything except a slash.
+TIP: Por padrão o parâmetro `:id` não aceita pontos - isto acontece pois os pontos são usados como separadores para rotas com formato de arquivo especificado. Se você precisa usar um ponto dentro do `:id` adicione uma restrição que sobrescreva isto - a expressão regular `id: /[^\/]+/` permite tudo exceto uma barra (`\`).
 
-### Overriding the Named Route Helpers
+### Sobrescrevendo *Helpers* de Nome de Rota
 
-The `:as` option lets you override the normal naming for the named route helpers. For example:
+A opção `:as` permite que você sobrescreva a convenção de nomes para os *helpers* de nome de rota. Por exemplo:
 
 ```ruby
 resources :photos, as: 'images'
 ```
 
-will recognize incoming paths beginning with `/photos` and route the requests to `PhotosController`, but use the value of the `:as` option to name the helpers.
+vai reconhecer chamadas que chegarem iniciando com `/photos` e direcionar as requisições para o `PhotosController`, mas vai usar o valor especificado na opção `:as` para nomear os *helpers*.
 
-| HTTP Verb | Path             | Controller#Action | Named Route Helper   |
+| Verbo HTTP | Caminho             | Controller#Action |  Nome do *Helper* de Rota   |
 | --------- | ---------------- | ----------------- | -------------------- |
 | GET       | /photos          | photos#index      | images_path          |
 | GET       | /photos/new      | photos#new        | new_image_path       |
@@ -1002,24 +1130,24 @@ will recognize incoming paths beginning with `/photos` and route the requests to
 | PATCH/PUT | /photos/:id      | photos#update     | image_path(:id)      |
 | DELETE    | /photos/:id      | photos#destroy    | image_path(:id)      |
 
-### Overriding the `new` and `edit` Segments
+### Sobrescrevendo os Segmentos `new` e `edit`
 
-The `:path_names` option lets you override the automatically-generated `new` and `edit` segments in paths:
+A opção `:path_names` permite que você sobrescreva os segmentos `new` e `edit` gerados automaticamente nos caminhos:
 
 ```ruby
 resources :photos, path_names: { new: 'make', edit: 'change' }
 ```
 
-This would cause the routing to recognize paths such as:
+Isso faz o roteamento reconhecer caminhos como:
 
 ```
 /photos/make
 /photos/1/change
 ```
 
-NOTE: The actual action names aren't changed by this option. The two paths shown would still route to the `new` and `edit` actions.
+NOTE: Os nomes das ações não sofrem alterações devido a esta opção. Os dois caminhos exibidos ainda apontarão para as ações `new` e `edit`.
 
-TIP: If you find yourself wanting to change this option uniformly for all of your routes, you can use a scope.
+TIP: Se você quiser mudar esta opção para todas as rotas, você pode usar um *scope*. Da seguinte forma:
 
 ```ruby
 scope path_names: { new: 'make' } do
@@ -1027,9 +1155,9 @@ scope path_names: { new: 'make' } do
 end
 ```
 
-### Prefixing the Named Route Helpers
+### Prefixando os *Helpers* de Nome de Rota
 
-You can use the `:as` option to prefix the named route helpers that Rails generates for a route. Use this option to prevent name collisions between routes using a path scope. For example:
+Você pode usar a opção `:as` pra prefixar os *helpers* de nome de rota que o Rails gera. Use esta opção para evitar colisões de nomes entre rotas usando um escopo de caminho. Por exemplo:
 
 ```ruby
 scope 'admin' do
@@ -1039,9 +1167,9 @@ end
 resources :photos
 ```
 
-This will provide route helpers such as `admin_photos_path`, `new_admin_photo_path`, etc.
+Isto fornecerá *helpers* de rota como `admin_photos_path`, `new_admin_photo_path`, etc.
 
-To prefix a group of route helpers, use `:as` with `scope`:
+Para prefixar um grupo de *helpers* de rota, utilize `:as` com `scope`:
 
 ```ruby
 scope 'admin', as: 'admin' do
@@ -1051,43 +1179,58 @@ end
 resources :photos, :accounts
 ```
 
-This will generate routes such as `admin_photos_path` and `admin_accounts_path` which map to `/admin/photos` and `/admin/accounts` respectively.
+Isto irá gerar rotas como `admin_photos_path` e `admin_accounts_path` que são mapeadas para `/admin/photos` e `/admin/accounts` respectivamente.
 
-NOTE: The `namespace` scope will automatically add `:as` as well as `:module` and `:path` prefixes.
+NOTE: O *scope* `namespace` adicionará automaticamente os prefixos `:as`, assim como `:module` e `:path`.
 
-You can prefix routes with a named parameter also:
+#### Parametric Scopes
+
+You can prefix routes with a named parameter:
 
 ```ruby
-scope ':username' do
+scope ':account_id', as: 'account', constraints: { account_id: /\d+/ } do
   resources :articles
 end
 ```
 
-This will provide you with URLs such as `/bob/articles/1` and will allow you to reference the `username` part of the path as `params[:username]` in controllers, helpers, and views.
+This will provide you with paths such as `/1/articles/9` and will allow you to reference the `account_id` part of the path as `params[:account_id]` in controllers, helpers, and views.
 
-### Restricting the Routes Created
+It will also generate path and URL helpers prefixed with `account_`, into which you can pass your objects as expected:
 
-By default, Rails creates routes for the seven default actions (`index`, `show`, `new`, `create`, `edit`, `update`, and `destroy`) for every RESTful route in your application. You can use the `:only` and `:except` options to fine-tune this behavior. The `:only` option tells Rails to create only the specified routes:
+```ruby
+account_article_path(@account, @article) # => /1/article/9
+url_for([@account, @article])            # => /1/article/9
+form_with(model: [@account, @article])   # => <form action="/1/article/9" ...>
+```
+
+We are [using a constraint](#segment-constraints) to limit the scope to only match ID-like strings. You can change the constraint to suit your needs, or omit it entirely. The `:as` option is also not strictly required, but without it, Rails will raise an error when evaluating `url_for([@account, @article])` or other helpers that rely on `url_for`, such as [`form_with`][].
+
+[`form_with`]: https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-form_with
+
+### Restringindo as Rotas Criadas
+
+O Rails cria rotas para sete ações diferentes (`index`, `show`, `new`, `create`, `edit`, `update`, and `destroy`) por padrão pra cada rota *RESTful* na sua aplicação.
+A opção `:only` diz ao Rails para criar apenas as rotas especificadas:
 
 ```ruby
 resources :photos, only: [:index, :show]
 ```
 
-Now, a `GET` request to `/photos` would succeed, but a `POST` request to `/photos` (which would ordinarily be routed to the `create` action) will fail.
+Agora, a requisição `GET` para `/photos` daria certo, mas uma requisição `POST` para `/photos` (que por padrão iria para ação `create`) falhará.
 
-The `:except` option specifies a route or list of routes that Rails should _not_ create:
+A opção `:except` específica uma rota ou lista de rotas que o Rails _não_ deve criar:
 
 ```ruby
 resources :photos, except: :destroy
 ```
 
-In this case, Rails will create all of the normal routes except the route for `destroy` (a `DELETE` request to `/photos/:id`).
+Nesse caso, o Rails vai criar todas as rotas normais exceto a rota para `destroy` (uma requisição `DELETE` para `/photos/:id`).
 
-TIP: If your application has many RESTful routes, using `:only` and `:except` to generate only the routes that you actually need can cut down on memory use and speed up the routing process.
+TIP: Se sua aplicação tem muitas rotas *RESTful*, usar `:only` e `:except` para gerar somente as rotas que você realmente precisa pode reduzir o consumo de memória e agilizar o processo de roteamento.
 
-### Translated Paths
+### Traduzindo Caminhos
 
-Using `scope`, we can alter path names generated by `resources`:
+Podemos alterar nomes de caminho gerados por `resources` usando `scope`:
 
 ```ruby
 scope(path_names: { new: 'neu', edit: 'bearbeiten' }) do
@@ -1095,9 +1238,9 @@ scope(path_names: { new: 'neu', edit: 'bearbeiten' }) do
 end
 ```
 
-Rails now creates routes to the `CategoriesController`.
+O Rails agora cria rotas para o `CategoriesController`.
 
-| HTTP Verb | Path                       | Controller#Action  | Named Route Helper      |
+| Verbo HTTP | Caminho             | Controller#Action |  Nome do *Helper* de Rota   |
 | --------- | -------------------------- | ------------------ | ----------------------- |
 | GET       | /kategorien                | categories#index   | categories_path         |
 | GET       | /kategorien/neu            | categories#new     | new_category_path       |
@@ -1107,9 +1250,9 @@ Rails now creates routes to the `CategoriesController`.
 | PATCH/PUT | /kategorien/:id            | categories#update  | category_path(:id)      |
 | DELETE    | /kategorien/:id            | categories#destroy | category_path(:id)      |
 
-### Overriding the Singular Form
+### Sobrescrevendo a Forma Singular
 
-If you want to define the singular form of a resource, you should add additional rules to the `Inflector`:
+Se você quer sobrescrever a forma singular de um recurso, você deve colocar regras adicionais para o `Inflector` via [`inflections`][]:
 
 ```ruby
 ActiveSupport::Inflector.inflections do |inflect|
@@ -1117,9 +1260,11 @@ ActiveSupport::Inflector.inflections do |inflect|
 end
 ```
 
-### Using `:as` in Nested Resources
+[`inflections`]: https://api.rubyonrails.org/classes/ActiveSupport/Inflector.html#method-i-inflections
 
-The `:as` option overrides the automatically-generated name for the resource in nested route helpers. For example:
+### Usando `:as` em Recursos Aninhados
+
+A opção `:as` sobrescreve o nome gerado automaticamente para o recurso em *helpers* de rota aninhados. Por exemplo:
 
 ```ruby
 resources :magazines do
@@ -1127,14 +1272,11 @@ resources :magazines do
 end
 ```
 
-This will create routing helpers such as `magazine_periodical_ads_url` and `edit_magazine_periodical_ad_path`.
+Isto criará helpers de rota como `magazine_periodical_ads_url` e `edit_magazine_periodical_ad_path`.
 
-### Overriding Named Route Parameters
+### Sobrescrevendo Parâmetros de Nome de Rota
 
-The `:param` option overrides the default resource identifier `:id` (name of
-the [dynamic segment](routing.html#dynamic-segments) used to generate the
-routes). You can access that segment from your controller using
-`params[<:param>]`.
+A opção `:param` sobrescreve o identificador padrão de recurso `:id` (nome do [segmento dinâmico](routing.html#dynamic-segments) usado para gerar as rotas). Você pode acessar o segmento do seu *controller* usando `params[<:param>]`.
 
 ```ruby
 resources :videos, param: :identifier
@@ -1151,8 +1293,7 @@ edit_video GET  /videos/:identifier/edit(.:format) videos#edit
 Video.find_by(identifier: params[:identifier])
 ```
 
-You can override `ActiveRecord::Base#to_param` of a related model to construct
-a URL:
+Você pode sobrescrever `ActiveRecord::Base#to_param` de um *model* associado para construir a URL:
 
 ```ruby
 class Video < ApplicationRecord
@@ -1160,28 +1301,73 @@ class Video < ApplicationRecord
     identifier
   end
 end
+```
 
+```ruby
 video = Video.find_by(identifier: "Roman-Holiday")
 edit_video_path(video) # => "/videos/Roman-Holiday/edit"
 ```
 
-Inspecting and Testing Routes
+Separando arquivos de rotas *gigantes* em vários arquivos menores:
+-------------------------------------------------------
+
+Se você trabalha em uma aplicação grande com milhares de rotas, um único arquivo `config/routes.rb` pode se tornar complicado e difícil de ler.
+
+O Rails oferece uma forma de quebrar esse único gigante `routes.rb` em vários arquivos pequenos
+usando a macro [`draw`][].
+
+Você pode ter uma rota `admin.rb` que contém todas as rotas para a área de administração, outro arquivo `api.rb` para recursos relacionados à API, etc.
+
+```ruby
+# config/routes.rb
+
+Rails.application.routes.draw do
+  get 'foo', to: 'foo#bar'
+
+  draw(:admin) # Carregará outro arquivo de rotas localizado em: `config/routes/admin.rb`
+end
+```
+
+```ruby
+# config/routes/admin.rb
+
+namespace :admin do
+  resources :comments
+end
+```
+
+Chamar o `draw(:admin)` dentro do próprio bloco `Rails.application.routes.draw` tentará
+carregar um arquivo de rotas com o mesmo nome do argumento passado (`admin.rb` neste exemplo).
+Para isso o arquivo precisa estar localizado dentro da pasta `config/routes` ou algum subdiretório
+(ex: `config/routes/admin.rb` or `config/routes/external/admin.rb`)
+
+Você pode usar a DSL de roteamento normal dentro do arquivo de rotas `admin.rb`, porém,
+você **não deve** cercá-lo com o bloco `Rails.application.routes.draw` como fez no arquivo
+principal `config/routes.rb`.
+
+[`draw`]: https://api.rubyonrails.org/classes/ActionDispatch/Routing/Mapper/Resources.html#method-i-draw
+
+### Não use este recurso a menos que você realmente precise dele
+
+Ter vários arquivos de roteamento dificulta a descoberta e a compreensão. Para a maioria das aplicações - mesmo aqueles com algumas centenas de rotas - é mais fácil para as pessoas desenvolvedoras terem um único arquivo de roteamento. A DSL de roteamento Rails já oferece uma forma de quebrar rotas de forma organizada com `namespace` e `scope`.
+
+Inspecionando e Testando Rotas
 -----------------------------
 
-Rails offers facilities for inspecting and testing your routes.
+Rails oferece recursos para inspecionar e testar suas rotas.
 
-### Listing Existing Routes
+### Listando Rotas Existentes
 
-To get a complete list of the available routes in your application, visit `http://localhost:3000/rails/info/routes` in your browser while your server is running in the **development** environment. You can also execute the `rails routes` command in your terminal to produce the same output.
+Para obter uma lista completa de rotas disponíveis na sua aplicação, visite <http://localhost:3000/rails/info/routes> no browser quando o servidor estiver rodando em ambiente de desenvolvimento. Você pode também executar o comando `bin/rails routes` no terminal para reproduzir o mesmo resultado.
 
-Both methods will list all of your routes, in the same order that they appear in `config/routes.rb`. For each route, you'll see:
+Ambos os métodos irão listas todas suas rotas, na mesma ordem que aparece em `config/routes.rb`. Para cada rota, você irá ver:
 
-* The route name (if any)
-* The HTTP verb used (if the route doesn't respond to all verbs)
-* The URL pattern to match
-* The routing parameters for the route
+* O Nome da rota (se houver)
+* O verbo HTTP usado (se a rota não responder a todos os verbos)
+* O padrão ao qual a URL deve corresponder
+* Os parâmetros para a cada rota
 
-For example, here's a small section of the `rails routes` output for a RESTful route:
+Por exemplo, segue uma pequena parte da resposta `bin/rails routes` para uma rota RESTful:
 
 ```
     users GET    /users(.:format)          users#index
@@ -1190,10 +1376,10 @@ For example, here's a small section of the `rails routes` output for a RESTful r
 edit_user GET    /users/:id/edit(.:format) users#edit
 ```
 
-You can also use the `--expanded` option to turn on the expanded table formatting mode.
+Você pode também utilizar a opção `--expanded` para ativar o modo de formatação por tabela expandida.
 
-```
-$ rails routes --expanded
+```bash
+$ bin/rails routes --expanded
 
 --[ Route 1 ]----------------------------------------------------
 Prefix            | users
@@ -1217,59 +1403,63 @@ URI               | /users/:id/edit(.:format)
 Controller#Action | users#edit
 ```
 
-You can search through your routes with the grep option: -g. This outputs any routes that partially match the URL helper method name, the HTTP verb, or the URL path.
+Você pode procurar por rotas utilizando a opção grep: -g. Isso resulta qualquer rota que corresponda parcialmente ao nome do método da URL, o verbo HTTP, ou a URL.
 
-```
-$ rails routes -g new_comment
-$ rails routes -g POST
-$ rails routes -g admin
-```
-
-If you only want to see the routes that map to a specific controller, there's the -c option.
-
-```
-$ rails routes -c users
-$ rails routes -c admin/users
-$ rails routes -c Comments
-$ rails routes -c Articles::CommentsController
+```bash
+$ bin/rails routes -g new_comment
+$ bin/rails routes -g POST
+$ bin/rails routes -g admin
 ```
 
-TIP: You'll find that the output from `rails routes` is much more readable if you widen your terminal window until the output lines don't wrap.
+Se você quiser ver somente as rotas que mapeiam um controller especifico, existe a opção `-c`.
 
-### Testing Routes
+```bash
+$ bin/rails routes -c users
+$ bin/rails routes -c admin/users
+$ bin/rails routes -c Comments
+$ bin/rails routes -c Articles::CommentsController
+```
 
-Routes should be included in your testing strategy (just like the rest of your application). Rails offers three [built-in assertions](https://api.rubyonrails.org/classes/ActionDispatch/Assertions/RoutingAssertions.html) designed to make testing routes simpler:
+TIP: O resultado do comando `bin/rails routes` fica muito mais legível se você ampliar a janela do seu terminal até que não haja quebra de linha.
 
-* `assert_generates`
-* `assert_recognizes`
-* `assert_routing`
+### Testando Rotas
 
-#### The `assert_generates` Assertion
+Rotas deveriam ser incluidas na sua estratégia de testes (assim como resto da sua aplicação). Rails oferece três validações nativas desenvolvidas para fazer os testes de rotas mais simples:
 
-`assert_generates` asserts that a particular set of options generate a particular path and can be used with default routes or custom routes. For example:
+* [`assert_generates`][]
+* [`assert_recognizes`][]
+* [`assert_routing`][]
+
+[`assert_generates`]: https://api.rubyonrails.org/classes/ActionDispatch/Assertions/RoutingAssertions.html#method-i-assert_generates
+[`assert_recognizes`]: https://api.rubyonrails.org/classes/ActionDispatch/Assertions/RoutingAssertions.html#method-i-assert_recognizes
+[`assert_routing`]: https://api.rubyonrails.org/classes/ActionDispatch/Assertions/RoutingAssertions.html#method-i-assert_routing
+
+#### A validação `assert_generates`
+
+[`assert_generates`][] valida que um conjunto de opções em particular gera um caminho equivalente que pode ser usar com rota padrão ou rota customizada. Por exemplo:
 
 ```ruby
 assert_generates '/photos/1', { controller: 'photos', action: 'show', id: '1' }
 assert_generates '/about', controller: 'pages', action: 'about'
 ```
 
-#### The `assert_recognizes` Assertion
+#### A validação `assert_recognizes`
 
-`assert_recognizes` is the inverse of `assert_generates`. It asserts that a given path is recognized and routes it to a particular spot in your application. For example:
+[`assert_recognizes`][] é o inverso de `assert_generates`. Valida que um dado caminho é reconhecido e roteia-o a um lugar determinado na sua aplicação. Por exemplo:
 
 ```ruby
 assert_recognizes({ controller: 'photos', action: 'show', id: '1' }, '/photos/1')
 ```
 
-You can supply a `:method` argument to specify the HTTP verb:
+Você pode passar um argumento `:method` para especificar um verbo HTTP:
 
 ```ruby
 assert_recognizes({ controller: 'photos', action: 'create' }, { path: 'photos', method: :post })
 ```
 
-#### The `assert_routing` Assertion
+#### A validação `assert_routing`
 
-The `assert_routing` assertion checks the route both ways: it tests that the path generates the options, and that the options generate the path. Thus, it combines the functions of `assert_generates` and `assert_recognizes`:
+A validação [`assert_routing`][] testa a rota dos dois jeitos: Testa que um caminho gera opções, e que opções gera um caminho. Logo, Ela combina as validações `assert_generates` e `assert_recognizes`:
 
 ```ruby
 assert_routing({ path: 'photos', method: :post }, { controller: 'photos', action: 'create' })

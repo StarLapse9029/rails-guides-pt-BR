@@ -1,167 +1,659 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
-Upgrading Ruby on Rails
+Atualizando o Ruby on Rails
 =======================
 
-This guide provides steps to be followed when you upgrade your applications to a newer version of Ruby on Rails. These steps are also available in individual release guides.
+Este guia fornece os passos a serem seguidos quando você for atualizar suas aplicações
+para uma versão mais nova do Ruby on Rails. Estes passos também estão disponíveis em guias de *releases* individuais.
 
 --------------------------------------------------------------------------------
 
-General Advice
+Conselho Geral
 --------------
 
-Before attempting to upgrade an existing application, you should be sure you have a good reason to upgrade. You need to balance several factors: the need for new features, the increasing difficulty of finding support for old code, and your available time and skills, to name a few.
+Antes de tentar atualizar uma aplicação existente, você deve ter certeza que possui uma boa razão para fazê-lo. Então tenha em mente alguns fatores: a necessidade de novas funcionalidades, a crescente dificuldade de encontrar suporte para código mais antigo, seu tempo disponível e habilidades, entre outros.
 
-### Test Coverage
+### Cobertura de Testes
 
-The best way to be sure that your application still works after upgrading is to have good test coverage before you start the process. If you don't have automated tests that exercise the bulk of your application, you'll need to spend time manually exercising all the parts that have changed. In the case of a Rails upgrade, that will mean every single piece of functionality in the application. Do yourself a favor and make sure your test coverage is good _before_ you start an upgrade.
+A melhor maneira de garantir que sua aplicação ainda funciona após a atualização é possuir uma boa cobertura de testes antes de começar o processo. Se você não tiver testes automatizados para a maior parte de sua aplicação, será necessário gastar algum tempo realizando testes manuais de todas as partes alteradas. No caso da atualização do Rails, isso significa cada umas das funcionalidades dentro da aplicação. Faça a si mesmo um favor e tenha certeza de ter uma boa cobertura de teste **antes** de iniciar uma atualização.
 
-### The Upgrade Process
+### Versões Ruby
 
-When changing Rails versions, it's best to move slowly, one minor version at a time, in order to make good use of the deprecation warnings. Rails version numbers are in the form Major.Minor.Patch. Major and Minor versions are allowed to make changes to the public API, so this may cause errors in your application. Patch versions only include bug fixes, and don't change any public API.
+Rails geralmente se mantém próximo à versão mais recente do Ruby quando é liberado:
 
-The process should go as follows:
+* Rails 7 requer Ruby 2.7.0 ou mais recente.
+* Rails 6 requer Ruby 2.5.0 ou mais recente.
+* Rails 5 requer Ruby 2.2.2 ou mais recente.
 
-1. Write tests and make sure they pass.
-2. Move to the latest patch version after your current version.
-3. Fix tests and deprecated features.
-4. Move to the latest patch version of the next minor version.
+É uma boa ideia atualizar Ruby e Rails separadamente. Atualize para o Ruby mais recente que puder primeiro e, em seguida, atualize o Rails.
 
-Repeat this process until you reach your target Rails version. Each time you move versions, you will need to change the Rails version number in the `Gemfile` (and possibly other gem versions) and run `bundle update`. Then run the Update task mentioned below to update configuration files, then run your tests.
+### O Processo de Atualização
 
-You can find a list of all released Rails versions [here](https://rubygems.org/gems/rails/versions).
+Quando estiver atualizando a versão do Rails, o melhor é ir devagar, uma versão *Minor* por vez, para fazer bom uso dos avisos de depreciação. As versões do Rails são numeradas da maneira *Major*.*Minor*.*Patch*. Versões *Major* e *Minor* têm permissão para alterar API pública, isso pode causar erros em sua aplicação. Versões *Patch* incluem apenas correções de *bug*, e não alteram nenhuma API pública.
 
-### Ruby Versions
+O processo deve correr da seguinte maneira:
 
-Rails generally stays close to the latest released Ruby version when it's released:
+1. Escreva os testes e garanta que eles passem.
+2. Atualize para a última versão *Patch* após a versão atual de seu projeto.
+3. Conserte os testes e funcionalidades depreciadas.
+4. Atualize para a última versão *Patch* da versão *Minor* seguinte.
 
-* Rails 6 requires Ruby 2.5.0 or newer.
-* Rails 5 requires Ruby 2.2.2 or newer.
-* Rails 4 prefers Ruby 2.0 and requires 1.9.3 or newer.
-* Rails 3.2.x is the last branch to support Ruby 1.8.7.
-* Rails 3 and above require Ruby 1.8.7 or higher. Support for all of the previous Ruby versions has been dropped officially. You should upgrade as early as possible.
+Repita este processo até chegar na versão desejada do Rails.
 
-TIP: Ruby 1.8.7 p248 and p249 have marshalling bugs that crash Rails. Ruby Enterprise Edition has these fixed since the release of 1.8.7-2010.02. On the 1.9 front, Ruby 1.9.1 is not usable because it outright segfaults, so if you want to use 1.9.x, jump straight to 1.9.3 for smooth sailing.
+#### Movendo-se entre as versões
 
-### The Update Task
+Para alternar entre as versões:
 
-Rails provides the `app:update` command (`rake rails:update` on 4.2 and earlier). After updating the Rails version
-in the `Gemfile`, run this command.
-This will help you with the creation of new files and changes of old files in an
-interactive session.
+1. Altere o número da versão do Rails no `Gemfile` e execute o `bundle update`.
+2. Altere as versões dos pacotes JavaScript do Rails em `package.json` e execute `yarn install`, se estiver executando no Webpacker.
+3. Execute a [Tarefa de atualização](#the-update-task).
+4. Execute seus testes.
+
+Você pode encontrar uma lista de todas as gems do Rails lançadas [aqui](https://rubygems.org/gems/rails/versions).
+
+### A Tarefa de Atualização
+
+Rails fornece o comando `rails app:update`. Execute este comando após atualizar a versão do Rails no `Gemfile`. Isto lhe ajudará na criação de novos arquivos e na alteração de arquivos antigos em uma sessão interativa.
 
 ```bash
-$ rails app:update
-   identical  config/boot.rb
+$ bin/rails app:update
        exist  config
-    conflict  config/routes.rb
-Overwrite /myapp/config/routes.rb? (enter "h" for help) [Ynaqdh]
-       force  config/routes.rb
     conflict  config/application.rb
 Overwrite /myapp/config/application.rb? (enter "h" for help) [Ynaqdh]
        force  config/application.rb
-    conflict  config/environment.rb
+      create  config/initializers/new_framework_defaults_7_0.rb
 ...
 ```
 
-Don't forget to review the difference, to see if there were any unexpected changes.
+Não esqueça de revisar a diferença, para verificar se houveram mudanças inesperadas.
 
-### Configure Framework Defaults
+### Configurar Padrões de Framework
 
-The new Rails version might have different configuration defaults than the previous version. However, after following the steps described above, your application would still run with configuration defaults from the *previous* Rails version. That's because the value for `config.load_defaults` in `config/application.rb` has not been changed yet.
+A nova versão do Rails pode ter configurações padrão diferentes da versão anterior. No entanto, após seguir os passos descritos acima, sua aplicação ainda estaria rodando com configurações padrão da versão **anterior** do Rails. Isso porque o valor para `config.load_defaults` em `config/application.rb` ainda não foi alterado.
 
-To allow you to upgrade to new defaults one by one, the update task has created a file `config/initializers/new_framework_defaults.rb`. Once your application is ready to run with new defaults, you can remove this file and flip the `config.load_defaults` value.
+Para permitir que você atualize para novos padrões um por um, a tarefa de atualização criou um arquivo `config/initializers/new_framework_defaults_X.Y.rb` (com a versão desejada do Rails no nome do arquivo). Você deve habilitar os novos padrões de configuração descomentando-os no arquivo; isso pode ser feito gradualmente ao longo de várias implantações. Assim que sua aplicação estiver pronta para rodar com novos padrões, você pode remover este arquivo e inverter o valor `config.load_defaults`.
 
-
-Upgrading from Rails 5.2 to Rails 6.0
+Upgrading from Rails 6.1 to Rails 7.0
 -------------------------------------
 
-For more information on changes made to Rails 6.0 please see the [release notes](6_0_release_notes.html).
+For more information on changes made to Rails 7.0 please see the [release notes](7_0_release_notes.html).
 
-### Using Webpacker
+### `ActionView::Helpers::UrlHelper#button_to` changed behavior
+
+Starting from Rails 7.0 `button_to` renders a `form` tag with `patch` HTTP verb if a persisted Active Record object is used to build button URL.
+To keep current behavior consider explicitly passing `method:` option:
+
+```diff
+-button_to("Do a POST", [:my_custom_post_action_on_workshop, Workshop.find(1)])
++button_to("Do a POST", [:my_custom_post_action_on_workshop, Workshop.find(1)], method: :post)
+```
+
+or using helper to build the URL:
+
+```diff
+-button_to("Do a POST", [:my_custom_post_action_on_workshop, Workshop.find(1)])
++button_to("Do a POST", my_custom_post_action_on_workshop_workshop_path(Workshop.find(1)))
+```
+
+### Spring
+
+If your application uses Spring, it needs to be upgraded to at least version 3.0.0. Otherwise you'll get
+
+```
+undefined method `mechanism=' for ActiveSupport::Dependencies:Module
+```
+
+Also, make sure [`config.cache_classes`][] is set to `false` in `config/environments/test.rb`.
+
+[`config.cache_classes`]: configuring.html#config-cache-classes
+
+### Sprockets is now an optional dependency
+
+The gem `rails` doesn't depend on `sprockets-rails` anymore. If your application still needs to use Sprockets,
+make sure to add `sprockets-rails` to your Gemfile.
+
+```
+gem "sprockets-rails"
+```
+
+### Applications need to run in `zeitwerk` mode
+
+Applications still running in `classic` mode have to switch to `zeitwerk` mode. Please check the [Classic to Zeitwerk HOWTO](https://guides.rubyonrails.org/v7.0/classic_to_zeitwerk_howto.html) guide for details.
+
+### The setter `config.autoloader=` has been deleted
+
+In Rails 7 there is no configuration point to set the autoloading mode, `config.autoloader=` has been deleted. If you had it set to `:zeitwerk` for whatever reason, just remove it.
+
+### `ActiveSupport::Dependencies` private API has been deleted
+
+The private API of `ActiveSupport::Dependencies` has been deleted. That includes methods like `hook!`, `unhook!`, `depend_on`, `require_or_load`, `mechanism`, and many others.
+
+A few of highlights:
+
+* If you used `ActiveSupport::Dependencies.constantize` or `ActiveSupport::Dependencies.safe_constantize`, just change them to `String#constantize` or `String#safe_constantize`.
+
+  ```ruby
+  ActiveSupport::Dependencies.constantize("User") # NO LONGER POSSIBLE
+  "User".constantize # 👍
+  ```
+
+* Any usage of `ActiveSupport::Dependencies.mechanism`, reader or writer, has to be replaced by accessing `config.cache_classes` accordingly.
+
+* If you want to trace the activity of the autoloader, `ActiveSupport::Dependencies.verbose=` is no longer available, just throw `Rails.autoloaders.log!` in `config/application.rb`.
+
+Auxiliary internal classes or modules are also gone, like like `ActiveSupport::Dependencies::Reference`, `ActiveSupport::Dependencies::Blamable`, and others.
+
+### Autoloading during initialization
+
+Applications that autoloaded reloadable constants during initialization outside of `to_prepare` blocks got those constants unloaded and had this warning issued since Rails 6.0:
+
+```
+DEPRECATION WARNING: Initialization autoloaded the constant ....
+
+Being able to do this is deprecated. Autoloading during initialization is going
+to be an error condition in future versions of Rails.
+
+...
+```
+
+If you still get this warning in the logs, please check the section about autoloading when the application boots in the [autoloading guide](https://guides.rubyonrails.org/v7.0/autoloading_and_reloading_constants.html#autoloading-when-the-application-boots). You'd get a `NameError` in Rails 7 otherwise.
+
+### Ability to configure `config.autoload_once_paths`
+
+[`config.autoload_once_paths`][] can be set in the body of the application class defined in `config/application.rb` or in the configuration for environments in `config/environments/*`.
+
+Similarly, engines can configure that collection in the class body of the engine class or in the configuration for environments.
+
+After that, the collection is frozen, and you can autoload from those paths. In particular, you can autoload from there during initialization. They are managed by the `Rails.autoloaders.once` autoloader, which does not reload, only autoloads/eager loads.
+
+If you configured this setting after the environments configuration has been processed and are getting `FrozenError`, please just move the code.
+
+[`config.autoload_once_paths`]: configuring.html#config-autoload-once-paths
+
+### `ActionDispatch::Request#content_type` now returns Content-Type header as it is.
+
+Previously, `ActionDispatch::Request#content_type` returned value does NOT contain charset part.
+This behavior changed to returned Content-Type header containing charset part as it is.
+
+If you want just MIME type, please use `ActionDispatch::Request#media_type` instead.
+
+Before:
+
+```ruby
+request = ActionDispatch::Request.new("CONTENT_TYPE" => "text/csv; header=present; charset=utf-16", "REQUEST_METHOD" => "GET")
+request.content_type #=> "text/csv"
+```
+
+After:
+
+```ruby
+request = ActionDispatch::Request.new("Content-Type" => "text/csv; header=present; charset=utf-16", "REQUEST_METHOD" => "GET")
+request.content_type #=> "text/csv; header=present; charset=utf-16"
+request.media_type   #=> "text/csv"
+```
+
+### Key generator digest class changing to use SHA256
+
+The default digest class for the key generator is changing from SHA1 to SHA256.
+This has consequences in any encrypted message generated by Rails, including
+encrypted cookies.
+
+In order to be able to read messages using the old digest class it is necessary
+to register a rotator.
+
+The following is an example for rotator for the encrypted and the signed cookies.
+
+```ruby
+# config/initializers/cookie_rotator.rb
+Rails.application.config.after_initialize do
+  Rails.application.config.action_dispatch.cookies_rotations.tap do |cookies|
+    authenticated_encrypted_cookie_salt = Rails.application.config.action_dispatch.authenticated_encrypted_cookie_salt
+    signed_cookie_salt = Rails.application.config.action_dispatch.signed_cookie_salt
+
+    secret_key_base = Rails.application.secret_key_base
+
+    key_generator = ActiveSupport::KeyGenerator.new(
+      secret_key_base, iterations: 1000, hash_digest_class: OpenSSL::Digest::SHA1
+    )
+    key_len = ActiveSupport::MessageEncryptor.key_len
+
+    old_encrypted_secret = key_generator.generate_key(authenticated_encrypted_cookie_salt, key_len)
+    old_signed_secret = key_generator.generate_key(signed_cookie_salt)
+
+    cookies.rotate :encrypted, old_encrypted_secret
+    cookies.rotate :signed, old_signed_secret
+  end
+end
+```
+
+### Digest class for ActiveSupport::Digest changing to SHA256
+
+The default digest class for ActiveSupport::Digest is changing from SHA1 to SHA256.
+This has consequences for things like Etags that will change and cache keys as well.
+Changing these keys can have impact on cache hit rates, so be careful and watch out
+for this when upgrading to the new hash.
+
+### New ActiveSupport::Cache serialization format
+
+A faster and more compact serialization format was introduced.
+
+To enable it you must set `config.active_support.cache_format_version = 7.0`:
+
+```ruby
+# config/application.rb
+
+config.load_defaults 6.1
+config.active_support.cache_format_version = 7.0
+```
+
+Or simply:
+
+```ruby
+# config/application.rb
+
+config.load_defaults 7.0
+```
+
+However Rails 6.1 applications are not able to read this new serialization format,
+so to ensure a seamless upgrade you must first deploy your Rails 7.0 upgrade with
+`config.active_support.cache_format_version = 6.1`, and then only once all Rails
+processes have been updated you can set `config.active_support.cache_format_version = 7.0`.
+
+Rails 7.0 is able to read both formats so the cache won't be invalidated during the
+upgrade.
+
+### Active Storage video preview image generation
+
+Video preview image generation now uses FFmpeg's scene change detection to generate
+more meaningful preview images. Previously the first frame of the video would be used
+and that caused problems if the video faded in from black. This change requires
+FFmpeg v3.4+.
+
+### Active Storage default variant processor changed to `:vips`
+
+For new apps, image transformation will use libvips instead of ImageMagick. This will reduce
+the time taken to generate variants as well as CPU and memory usage, improving response
+times in apps that rely on Active Storage to serve their images.
+
+The `:mini_magick` option is not being deprecated, so it is fine to keep using it.
+
+To migrate an existing app to libvips, set:
+
+```ruby
+Rails.application.config.active_storage.variant_processor = :vips
+```
+
+You will then need to change existing image transformation code to the
+`image_processing` macros, and replace ImageMagick's options with libvips' options.
+
+#### Replace resize with resize_to_limit
+```diff
+- variant(resize: "100x")
++ variant(resize_to_limit: [100, nil])
+```
+
+If you don't do this, when you switch to vips you will see this error: `no implicit conversion to float from string`.
+
+#### Use an array when cropping
+```diff
+- variant(crop: "1920x1080+0+0")
++ variant(crop: [0, 0, 1920, 1080])
+```
+
+If you don't do this when migrating to vips, you will see the following error: `unable to call crop: you supplied 2 arguments, but operation needs 5`.
+
+#### Clamp your crop values:
+
+Vips is more strict than ImageMagick when it comes to cropping:
+
+1. It will not crop if `x` and/or `y` are negative values. e.g.: `[-10, -10, 100, 100]`
+2. It will not crop if position (`x` or `y`) plus crop dimension (`width`, `height`) is larger than the image. e.g.: a 125x125 image and a crop of `[50, 50, 100, 100]`
+
+If you don't do this when migrating to vips, you will see the following error: `extract_area: bad extract area`
+
+#### Adjust the background color used for `resize_and_pad`
+Vips uses black as the default background color `resize_and_pad`, instead of white like ImageMagick. Fix that by using the `background` option:
+
+```diff
+- variant(resize_and_pad: [300, 300])
++ variant(resize_and_pad: [300, 300, background: [255]])
+```
+
+#### Remove any EXIF based rotation
+Vips will auto rotate images using the EXIF value when processing variants. If you were storing rotation values from user uploaded photos to apply rotation with ImageMagick, you must stop doing that:
+
+```diff
+- variant(format: :jpg, rotate: rotation_value)
++ variant(format: :jpg)
+```
+
+#### Replace monochrome with colourspace
+Vips uses a different option to make monochrome images:
+
+```diff
+- variant(monochrome: true)
++ variant(colourspace: "b-w")
+```
+
+#### Switch to libvips options for compressing images
+JPEG
+
+```diff
+- variant(strip: true, quality: 80, interlace: "JPEG", sampling_factor: "4:2:0", colorspace: "sRGB")
++ variant(saver: { strip: true, quality: 80, interlace: true })
+```
+
+PNG
+
+```diff
+- variant(strip: true, quality: 75)
++ variant(saver: { strip: true, compression: 9 })
+```
+
+WEBP
+
+```diff
+- variant(strip: true, quality: 75, define: { webp: { lossless: false, alpha_quality: 85, thread_level: 1 } })
++ variant(saver: { strip: true, quality: 75, lossless: false, alpha_q: 85, reduction_effort: 6, smart_subsample: true })
+```
+
+GIF
+
+```diff
+- variant(layers: "Optimize")
++ variant(saver: { optimize_gif_frames: true, optimize_gif_transparency: true })
+```
+
+#### Deploy to production
+Active Storage encodes into the url for the image the list of transformations that must be performed.
+If your app is caching these urls, your images will break after you deploy the new code to production.
+Because of this you must manually invalidate your affected cache keys.
+
+For example, if you have something like this in a view:
+
+```erb
+<% @products.each do |product| %>
+  <% cache product do %>
+    <%= image_tag product.cover_photo.variant(resize: "200x") %>
+  <% end %>
+<% end %>
+```
+
+You can invalidate the cache either by touching the product, or changing the cache key:
+
+```erb
+<% @products.each do |product| %>
+  <% cache ["v2", product] do %>
+    <%= image_tag product.cover_photo.variant(resize_to_limit: [200, nil]) %>
+  <% end %>
+<% end %>
+```
+
+### Rails version is now included in the Active Record schema dump
+
+Rails 7.0 changed some default values for some column types. To avoid that application upgrading from 6.1 to 7.0
+load the current schema using the new 7.0 defaults, Rails now includes the version of the framework in the schema dump.
+
+Before loading the schema for the first time in Rails 7.0, make sure to run `rails app:update` to ensure that the
+version of the schema is included in the schema dump.
+
+The schema file will look like this:
+
+```ruby
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema[6.1].define(version: 2022_01_28_123512) do
+```
+
+NOTE: The first time you dump the schema with Rails 7.0, you will see many changes to that file, including
+some column information. Make sure to review the new schema file content and commit it to your repository.
+
+Atualizando do Rails 6.0 para o Rails 6.1
+-------------------------------------
+
+Para mais informações sobre as mudanças feitas no Rails 6.1 consulte as [notas de lançamento](6_1_release_notes.html).
+
+### `Rails.application.config_for` o valor de retorno não oferece mais suporte para acesso com chaves *String*.
+
+Dado um arquivo de configuração como este:
+
+```yaml
+# config/example.yml
+development:
+  options:
+    key: value
+```
+
+```ruby
+Rails.application.config_for(:example).options
+```
+
+Isso costumava retornar um *hash* no qual você podia acessar valores com chaves *String*. Isso foi descontinuado no 6.0 e agora não funciona mais.
+
+Você pode chamar `with_indifferent_access` no valor de retorno de` config_for` se ainda quiser acessar valores com chaves *String*, por exemplo:
+
+```ruby
+Rails.application.config_for(:example).with_indifferent_access.dig('options', 'key')
+```
+
+### Respostas do tipo de conteúdo ao utilizar `respond_to#any`
+
+O cabeçalho (*header*) do tipo de conteúdo (*Content-Type*) retornado na resposta pode ser diferente do que o Rails 6.0 retornou,
+mais especificamente se sua aplicação usa o formato `respond_to { |format| format.any }`.
+O tipo de conteúdo será baseado no bloco fornecido e não no formato da solicitação.
+
+Exemplo:
+
+```ruby
+def my_action
+  respond_to do |format|
+    format.any { render(json: { foo: 'bar' }) }
+  end
+end
+```
+
+```ruby
+get('my_action.csv')
+```
+
+O comportamento anterior era retornar um tipo de conteúdo de resposta `text/csv` que é impreciso uma vez que uma resposta JSON está sendo renderizada.
+O comportamento atual retorna corretamente o tipo de conteúdo de uma resposta `application/json`.
+
+Se sua aplicação depende do comportamento incorreto anterior, você é incentivado a especificar
+quais formatos sua ação aceita, ou seja.
+
+```ruby
+format.any(:xml, :json) { render request.format.to_sym => @people }
+```
+
+### `ActiveSupport::Callbacks#halted_callback_hook` agora recebe um segundo argumento
+
+*Active Support* permite que você substitua o `halted_callback_hook` sempre que um retorno de chamada
+pare a sequência. Este método agora recebe um segundo argumento que é o nome do retorno de chamada que está sendo interrompido.
+Se você tiver classes que substituem esse método, certifique-se de que ele aceite dois argumentos. Observe que isso é uma mudança
+significativa sem um ciclo de depreciação anterior (por motivos de desempenho).
+
+Exemplo:
+
+```ruby
+class Book < ApplicationRecord
+  before_save { throw(:abort) }
+  before_create { throw(:abort) }
+
+  def halted_callback_hook(filter, callback_name) # => Este método agora aceita 2 argumentos em vez de 1
+    Rails.logger.info("Book couldn't be #{callback_name}d")
+  end
+end
+```
+
+### O método de classe `helper` nos *controllers* usa `String#constantize`
+
+Conceitualmente antes do Rails 6.1
+
+```ruby
+helper "foo/bar"
+```
+
+resultou em
+
+```ruby
+require_dependency "foo/bar_helper"
+module_name = "foo/bar_helper".camelize
+module_name.constantize
+```
+
+Agora ele faz isso:
+
+```ruby
+prefix = "foo/bar".camelize
+"#{prefix}Helper".constantize
+```
+
+Essa mudança é compatível com as versões anteriores para a maioria das aplicações, nesse caso, você não precisa fazer nada.
+
+Tecnicamente, no entanto, os controllers podem configurar `helpers_path` para apontar para um diretório em `$LOAD_PATH` que não estava nos caminhos de carregamento automático. Esse caso de uso não é mais compatível com o uso imediato. Se o módulo auxiliar não for auto-carregável, a aplicação é responsável por carregá-lo antes de chamar o `helper`.
+
+### Redirecionamento para HTTPS vindo de HTTP agora usará o código de status 308 HTTP
+
+O código de status HTTP padrão usado em `ActionDispatch::SSL` ao redirecionar solicitações não GET/HEAD de HTTP para HTTPS foi alterado para `308` conforme definido em https://tools.ietf.org/html/rfc7538.
+
+### Active Storage agora requer Processamento de Imagem
+
+Ao processar variantes no Active Storage, agora é necessário ter a *gem* [image_processing](https://github.com/janko/image_processing) empacotada em vez de usar diretamente `mini_magick`. O processamento de imagem é configurado por padrão para usar `mini_magick` nos bastidores, então a maneira mais fácil de atualizar é substituindo a gem `mini_magick` pela gem `image_processing` e certificando-se de remover o uso explícito de `combine_options`, uma vez que não é mais necessário.
+
+Para facilitar a leitura, você pode desejar alterar as chamadas `resize` brutas para macros `image_processing`. Por exemplo, em vez de:
+
+```ruby
+video.preview(resize: "100x100")
+video.preview(resize: "100x100>")
+video.preview(resize: "100x100^")
+```
+
+você pode fazer respectivamente:
+
+```ruby
+video.preview(resize_to_fit: [100, 100])
+video.preview(resize_to_limit: [100, 100])
+video.preview(resize_to_fill: [100, 100])
+```
+
+Atualizando do Rails 5.2 para o Rails 6.0
+-------------------------------------
+
+Para mais informações sobre as mudanças feitas no Rails 6.0 consulte as [notas de lançamento](6_0_release_notes.html).
+
+### Usando Webpacker
 
 [Webpacker](https://github.com/rails/webpacker)
-is the default JavaScript compiler for Rails 6. But if you are upgrading the app, it is not activated by default.
-If you want to use Webpacker, then include it in your Gemfile and install it:
+é o compilador *JavaScript* padrão para Rails 6. Mas se você estiver atualizando a aplicação, ele não é ativado por padrão.
+Se você quiser usar o *Webpacker*, adicione ele em seu *Gemfile* e instale:
 
 ```ruby
 gem "webpacker"
 ```
 
-```sh
-bin/rails webpacker:install
+```bash
+$ bin/rails webpacker:install
 ```
 
-### Force SSL
+### Forçar SSL
 
-The `force_ssl` method on controllers has been deprecated and will be removed in
-Rails 6.1. You are encouraged to enable `config.force_ssl` to enforce HTTPS
-connections throughout your application. If you need to exempt certain endpoints
-from redirection, you can use `config.ssl_options` to configure that behavior.
+O método `force_ssl` nos *controllers* foi descontinuado e será removido no
+Rails 6.1. Você é encorajado a habilitar [`config.force_ssl`][] para impor conexões
+HTTPS ao longo de sua aplicação. Se você precisar isentar certos *endpoints*
+do redirecionamento, você pode usar [`config.ssl_options`][] para configurar esse comportamento.
 
-### Purpose in signed or encrypted cookie is now embedded within cookies
+[`config.force_ssl`]: configuring.html#config-force-ssl
+[`config.ssl_options`]: configuring.html#config-ssl-options
 
-To improve security, Rails embeds the purpose information in encrypted or signed cookies value.
-Rails can then thwart attacks that attempt to copy the signed/encrypted value
-of a cookie and use it as the value of another cookie.
+### Propósito (*Purpose*) e metadados de expiração agora estão incorporados em cookies assinados e criptografados para maior segurança
 
-This new embed information make those cookies incompatible with versions of Rails older than 6.0.
+Para melhorar a segurança, o Rails incorpora os metadados de propósito e expiração dentro do valor de cookies criptografados ou assinados.
 
-If you require your cookies to be read by Rails 5.2 and older, or you are still validating your 6.0 deploy and want
-to be able to rollback set
-`Rails.application.config.action_dispatch.use_cookies_with_metadata` to `false`.
+Rails pode então impedir ataques que tentam copiar o valor assinado/criptografado
+de um *cookie* e usá-lo como o valor de outro *cookie*.
 
-### Action Cable JavaScript API Changes
+Esses novos metadados incorporados tornam esses *cookies* incompatíveis com versões do Rails anteriores a 6.0.
 
-The Action Cable JavaScript package has been converted from CoffeeScript
-to ES2015, and we now publish the source code in the npm distribution.
+Se você deseja que seus *cookies* sejam lidos pelo Rails 5.2 e anteriores, ou ainda está validando seu *deploy* do 6.0 e deseja ser capaz de reverter (*rollback*)
+`Rails.application.config.action_dispatch.use_cookies_with_metadata` para `false`.
 
-This release includes some breaking changes to optional parts of the
-Action Cable JavaScript API:
+### Todos os pacotes npm foram movidos para o escopo `@rails`
 
-- Configuration of the WebSocket adapter and logger adapter have been moved
-  from properties of `ActionCable` to properties of `ActionCable.adapters`.
-  If you are configuring these adapters you will need to make
-  these changes:
+Se você estava anteriormente carregando qualquer um dos pacotes `actioncable`, `activestorage`,
+ou `rails-ujs` através de npm/yarn, você deve atualizar os nomes destas
+dependências antes de atualizá-los para o `6.0.0`:
 
-  ```diff
-  -    ActionCable.WebSocket = MyWebSocket
-  +    ActionCable.adapters.WebSocket = MyWebSocket
-  ```
-  ```diff
-  -    ActionCable.logger = myLogger
-  +    ActionCable.adapters.logger = myLogger
-  ```
+```
+actioncable   → @rails/actioncable
+activestorage → @rails/activestorage
+rails-ujs     → @rails/ujs
+```
 
-- The `ActionCable.startDebugging()` and `ActionCable.stopDebugging()`
-  methods have been removed and replaced with the property
-  `ActionCable.logger.enabled`. If you are using these methods you
-  will need to make these changes:
+### Mudanças na API do *Action Cable JavaScript*
 
-  ```diff
-  -    ActionCable.startDebugging()
-  +    ActionCable.logger.enabled = true
-  ```
-  ```diff
-  -    ActionCable.stopDebugging()
-  +    ActionCable.logger.enabled = false
-  ```
+O pacote *Action Cable JavaScript* foi convertido do *CoffeeScript*
+para *ES2015*, e agora publicamos o código-fonte via distribuição pelo npm.
 
-### `ActionDispatch::Response#content_type` now returned Content-Type header as it is.
+Esta versão inclui algumas mudanças importantes para partes opcionais da
+*API JavaScript Action Cable*:
 
-Previously, `ActionDispatch::Response#content_type` returned value does NOT contain charset part.
-This behavior changed to returned Content-Type header containing charset part as it is.
+- A configuração do adaptador *WebSocket* e do adaptador *logger* foi movida
+  das propriedades de `ActionCable` para as propriedades de `ActionCable.adapters`.
+  Se você estiver configurando esses adaptadores, você precisará fazer
+  estas alterações:
 
-If you want just MIME type, please use `ActionDispatch::Response#media_type` instead.
+    ```diff
+    -    ActionCable.WebSocket = MyWebSocket
+    +    ActionCable.adapters.WebSocket = MyWebSocket
+    ```
 
-Before:
+    ```diff
+    -    ActionCable.logger = myLogger
+    +    ActionCable.adapters.logger = myLogger
+    ```
+
+- Os métodos `ActionCable.startDebugging()` e `ActionCable.stopDebugging()`
+  foram movidos e substituídos pela propriedade
+  `ActionCable.logger.enabled`. Se você estiver usando esse métodos, você
+  precisará fazer estas alterações:
+
+    ```diff
+    -    ActionCable.startDebugging()
+    +    ActionCable.logger.enabled = true
+    ```
+
+    ```diff
+    -    ActionCable.stopDebugging()
+    +    ActionCable.logger.enabled = false
+    ```
+
+### `ActionDispatch::Response#content_type` agora retorna o cabeçalho (*header*) do tipo de conteúdo (*Content-Type*) sem modificação
+
+Anteriormente, o valor de retorno de `ActionDispatch::Response#content_type` NÃO continha a parte do conjunto de caracteres.
+Este comportamento foi alterado para incluir também a parte do conjunto de caracteres omitida anteriormente.
+
+Se você quiser apenas o tipo *MIME*, use `ActionDispatch::Response#media_type` em seu lugar.
+
+Antes:
 
 ```ruby
 resp = ActionDispatch::Response.new(200, "Content-Type" => "text/csv; header=present; charset=utf-16")
 resp.content_type #=> "text/csv; header=present"
 ```
 
-After:
+Depois:
 
 ```ruby
 resp = ActionDispatch::Response.new(200, "Content-Type" => "text/csv; header=present; charset=utf-16")
@@ -169,62 +661,71 @@ resp.content_type #=> "text/csv; header=present; charset=utf-16"
 resp.media_type   #=> "text/csv"
 ```
 
-### Autoloading
+### Carregamento Automático
 
-The default configuration for Rails 6
+A configuração padrão para Rails 6
 
 ```ruby
 # config/application.rb
 
-config.load_defaults "6.0"
+config.load_defaults 6.0
 ```
 
-enables `zeitwerk` autoloading mode on CRuby. In that mode, autoloading, reloading, and eager loading are managed by [Zeitwerk](https://github.com/fxn/zeitwerk).
+ativa o modo de carregamento automático `zeitwerk` no CRuby. Nesse modo, o carregamento automático, o recarregamento e o carregamento antecipado são gerenciados pelo [Zeitwerk](https://github.com/fxn/zeitwerk).
 
-#### Public API
 
-In general, applications do not need to use the API of Zeitwerk directly. Rails sets things up according to the existing contract: `config.autoload_paths`, `config.cache_classes`, etc.
+Se você estiver usando os padrões de uma versão anterior do Rails, você pode habilitar o zeitwerk assim:
 
-While applications should stick to that interface, the actual Zeitwerk loader object can be accessed as
+```ruby
+# config/application.rb
+
+config.autoloader = :zeitwerk
+```
+
+#### API Pública
+
+Em geral, as aplicações não precisam usar a API do *Zeitwerk* diretamente. Rails configura as coisas de acordo com o contrato existente: `config.autoload_paths`,`config.cache_classes`, etc.
+
+Embora as aplicações devam seguir essa interface, o objeto do carregador *Zeitwerk* atual pode ser acessado como
 
 ```ruby
 Rails.autoloaders.main
 ```
 
-That may be handy if you need to preload STIs or configure a custom inflector, for example.
+Isso pode ser útil se você precisar pré-carregar classes com herança de tabela única (Single Table Inheritance - STIs) ou configurar um *inflector* customizado, por exemplo.
 
-#### Project Structure
+#### Estrutura do Projeto
 
-If the application being upgraded autoloads correctly, the project structure should be already mostly compatible.
+Se a aplicação que está sendo atualizada for carregada automaticamente de forma correta, a estrutura do projeto já deve ser compatível.
 
-However, `classic` mode infers file names from missing constant names (`underscore`), whereas `zeitwerk` mode infers constant names from file names (`camelize`). These helpers are not always inverse of each other, in particular if acronyms are involved. For instance, `"FOO".underscore` is `"foo"`, but `"foo".camelize` is `"Foo"`, not `"FOO"`.
+No entanto, o modo `clássico` entende nomes de arquivos com (`underscore`), enquanto o modo `zeitwerk` entende nomes de arquivos (`camelize`). Esses *helpers* nem sempre são inversos entre si, especialmente se houver acrônimos envolvidos. Por exemplo, `"FOO".underscore` é `"foo"`, mas `"foo".camelize` é `"Foo"`, não `"FOO "`.
 
-Compatibility can be checked with the `zeitwerk:check` task:
+A compatibilidade pode ser verificada com a tarefa `zeitwerk:check`:
 
-```
+```bash
 $ bin/rails zeitwerk:check
 Hold on, I am eager loading the application.
 All is good!
 ```
 
-#### require_dependency
+#### *require_dependency*
 
-All known use cases of `require_dependency` have been eliminated, you should grep the project and delete them.
+Todos os casos de uso conhecidos de `require_dependency` foram eliminados, você deve executar o *grep* no projeto e excluí-los.
 
-If your application has STIs, please check their section in the guide [Autoloading and Reloading Constants (Zeitwerk Mode)](autoloading_and_reloading_constants.html#single-table-inheritance).
+Se sua aplicação usa herança de tabela única (STI), consulte a [seção Herança de tabela única](autoloading_and_reloading_constants.html#single-table-inheritance) do guia Autoloading and Reloading Constants (Zeitwerk Mode).
 
-#### Qualified names in class and module definitions
+#### Nomes qualificados nas definições de classe e módulo
 
-You can now robustly use constant paths in class and module definitions:
+Agora você pode usar *constant paths* de forma robusta nas definições de classe e módulo:
 
 ```ruby
-# Autoloading in this class' body matches Ruby semantics now.
+# O carregamento automático no corpo desta classe corresponde à semântica Ruby agora.
 class Admin::UsersController < ApplicationController
   # ...
 end
 ```
 
-A gotcha to be aware of is that, depending on the order of execution, the classic autoloader could sometimes be able to autoload `Foo::Wadus` in
+Um problema a ter em conta é que, dependendo da ordem de execução, o auto carregamento clássico pode às vezes ser capaz de carregar automaticamente `Foo::Wadus` em
 
 ```ruby
 class Foo::Bar
@@ -232,7 +733,7 @@ class Foo::Bar
 end
 ```
 
-That does not match Ruby semantics because `Foo` is not in the nesting, and won't work at all in `zeitwerk` mode. If you find such corner case you can use the qualified name `Foo::Wadus`:
+Isso não corresponde à semântica Ruby porque `Foo` não está no aninhamento e não funcionará no modo `zeitwerk`. Se você encontrar esse caso, você pode usar o nome qualificado `Foo::Wadus`:
 
 ```ruby
 class Foo::Bar
@@ -240,7 +741,7 @@ class Foo::Bar
 end
 ```
 
-or add `Foo` to the nesting:
+ou adicione `Foo` ao aninhamento:
 
 ```ruby
 module Foo
@@ -250,66 +751,66 @@ module Foo
 end
 ```
 
-#### Concerns
+#### (*Concerns*)
 
-You can autoload and eager load from a standard structure like
+Você pode carregar automaticamente e antecipadamente a partir de uma estrutura padrão como
 
 ```
 app/models
 app/models/concerns
 ```
 
-In that case, `app/models/concerns` is assumed to be a root directory (because it belongs to the autoload paths), and it is ignored as namespace. So, `app/models/concerns/foo.rb` should define `Foo`, not `Concerns::Foo`.
+Nesse caso, `app/models/concerns` é considerado um diretório raiz (porque pertence aos caminhos de carregamento automático) e é ignorado como *namespace*. Portanto, `app/models/concern/foo.rb` deve definir `Foo`, não `Concerns::Foo`.
 
-The `Concerns::` namespace worked with the classic autoloader as a side-effect of the implementation, but it was not really an intended behavior. An application using `Concerns::` needs to rename those classes and modules to be able to run in `zeitwerk` mode.
+O *namespace* `Concerns::` funcionou com o carregamento automático clássico como um efeito colateral da implementação, mas não foi realmente um comportamento pretendido. Uma aplicação que usa `Concerns::` precisa renomear essas classes e módulos para poder rodar no modo `zeitwerk`.
 
-#### Having `app` in the autoload paths
+#### Tendo `app` nos caminhos de carregamento automático
 
-Some projects want something like `app/api/base.rb` to define `API::Base`, and add `app` to the autoload paths to accomplish that in `classic` mode. Since Rails adds all subdirectories of `app` to the autoload paths automatically, we have another situation in which there are nested root directories, so that setup no longer works. Similar principle we explained above with `concerns`.
+Alguns projetos querem algo como `app/api/base.rb` para definir `API::Base`, e adicionar `app` aos caminhos de carregamento automático para fazer isso no modo `clássico`. Já que Rails adiciona todos os subdiretórios de `app` aos caminhos de carregamento automático automaticamente, temos outra situação em que há diretórios raiz aninhados, de forma que a configuração não funciona mais. Princípio semelhante que explicamos acima com `concerns`.
 
-If you want to keep that structure, you'll need to delete the subdirectory from the autoload paths in an initializer:
+Se quiser manter essa estrutura, você precisará excluir o subdiretório dos caminhos de carregamento automático em um inicializador:
 
 ```ruby
 ActiveSupport::Dependencies.autoload_paths.delete("#{Rails.root}/app/api")
 ```
 
-#### Autoloaded Constants and Explicit Namespaces
+#### Constantes carregadas automaticamente e *namespaces* explícitos
 
-If a namespace is defined in a file, as `Hotel` is here:
+Se um *namespace* for definido em um arquivo, como `Hotel` está aqui:
 
 ```
 app/models/hotel.rb         # Defines Hotel.
 app/models/hotel/pricing.rb # Defines Hotel::Pricing.
 ```
 
-the `Hotel` constant has to be set using the `class` or `module` keywords. For example:
+a constante `Hotel` deve ser definida usando as palavras-chave `class` ou `module`. Por exemplo:
 
 ```ruby
 class Hotel
 end
 ```
 
-is good.
+é bom.
 
-Alternatives like
+Alternativas como
 
 ```ruby
 Hotel = Class.new
 ```
 
-or
+ou
 
 ```ruby
 Hotel = Struct.new
 ```
 
-won't work, child objects like `Hotel::Pricing` won't be found.
+não funcionará, objetos filhos como `Hotel::Pricing` não serão encontrados.
 
-This restriction only applies to explicit namespaces. Classes and modules not defining a namespace can be defined using those idioms.
+Essa restrição se aplica apenas a *namespaces* explícitos. Classes e módulos que não definem um *namespace* podem ser definidos usando esses idiomas.
 
-#### One file, one constant (at the same top-level)
+#### Um arquivo, uma constante (no mesmo nível superior)
 
-In `classic` mode you could technically define several constants at the same top-level and have them all reloaded. For example, given
+No modo `classic`, você pode definir tecnicamente várias constantes no mesmo nível superior e ter todas elas recarregadas. Por exemplo, dado
 
 ```ruby
 # app/models/foo.rb
@@ -321,9 +822,9 @@ class Bar
 end
 ```
 
-while `Bar` could not be autoloaded, autoloading `Foo` would mark `Bar` as autoloaded too. This is not the case in `zeitwerk` mode, you need to move `Bar` to its own file `bar.rb`. One file, one constant.
+enquanto `Bar` não pôde ser carregado automaticamente, o carregamento automático de `Foo` marcaria `Bar` como carregado automaticamente também. Este não é o caso no modo `zeitwerk`, você precisa mover `Bar` para seu próprio arquivo `bar.rb`. Um arquivo, uma constante.
 
-This affects only to constants at the same top-level as in the example above. Inner classes and modules are fine. For example, consider
+Isso se aplica apenas as constantes no mesmo nível superior do exemplo acima. Classes e módulos internos são adequados. Por exemplo, considere
 
 ```ruby
 # app/models/foo.rb
@@ -334,11 +835,11 @@ class Foo
 end
 ```
 
-If the application reloads `Foo`, it will reload `Foo::InnerClass` too.
+Se a aplicação recarregar `Foo`, ela irá recarregar `Foo::InnerClass` também.
 
-#### Spring and the `test` Environment
+#### *Spring* e o ambiente `test`
 
-Spring reloads the application code if something changes. In the `test` environment you need to enable reloading for that to work:
+*Spring* recarrega o código da aplicação se algo mudar. No ambiente `test`, você precisa habilitar o recarregamento para que funcione:
 
 ```ruby
 # config/environments/test.rb
@@ -346,76 +847,72 @@ Spring reloads the application code if something changes. In the `test` environm
 config.cache_classes = false
 ```
 
-Otherwise you'll get this error:
+Caso contrário, você obterá este erro:
 
 ```
 reloading is disabled because config.cache_classes is true
 ```
 
-#### Bootsnap
+#### *Bootsnap*
 
-Bootsnap should be at least version 1.4.2.
+O *Bootsnap* deve ter pelo menos a versão 1.4.2.
 
-In addition to that, Bootsnap needs to disable the iseq cache due to a bug in the interpreter if running Ruby 2.5. Please make sure to depend on at least Bootsnap 1.4.4 in that case.
+Além disso, o *Bootsnap* precisa desabilitar o cache *iseq* devido a um bug no interpretador se estiver executando o Ruby 2.5. Certifique-se de depender de pelo menos Bootsnap 1.4.4 nesse caso.
 
 #### `config.add_autoload_paths_to_load_path`
 
-The new configuration point
+O novo ponto de configuração [`config.add_autoload_paths_to_load_path`][] é `true` por padrão para compatibilidade com versões anteriores, mas permite que você opte por não adicionar os caminhos de carregamento automático a `$LOAD_PATH`.
 
-```ruby
-config.add_autoload_paths_to_load_path
-```
+Isso faz sentido na maioria das aplicações, já que você nunca deve requerer um arquivo em `app/models`, por exemplo, e o *Zeitwerk* só usa nomes de arquivo absolutos internamente.
 
-is `true` by default for backwards compatibility, but allows you to opt-out from adding the autoload paths to `$LOAD_PATH`.
+Ao optar pela exclusão, você otimiza as pesquisas ao `$LOAD_PATH` (menos diretórios para verificar) e economiza o trabalho do *Bootsnap* e o consumo de memória, já que não é necessário construir um índice para esses diretórios.
 
-This makes sense in most applications, since you never should require a file in `app/models`, for example, and Zeitwerk only uses absolute file names internally.
+[`config.add_autoload_paths_to_load_path`]: configuring.html#config-add-autoload-paths-to-load-path
 
-By opting-out you optimize `$LOAD_PATH` lookups (less directories to check), and save Bootsnap work and memory consumption, since it does not need to build an index for these directories.
+#### *Thread-safety*
 
-#### Thread-safety
+No modo clássico, o carregamento automático constante não é *thread-safe*, embora o Rails tenha travas, por exemplo, para tornar as solicitações da web *thread-safe* quando o carregamento automático está habilitado, como é comum no ambiente de desenvolvimento.
 
-In classic mode, constant autoloading is not thread-safe, though Rails has locks in place for example to make web requests thread-safe when autoloading is enabled, as it is common in `development` mode.
+O carregamento automático constante é *thread-safe* no modo `zeitwerk`. Por exemplo, agora você pode carregar automaticamente em scripts *multi-threaded* executados pelo comando `runner`.
 
-Constant autoloading is thread-safe in `zeitwerk` mode. For example, you can now autoload in multi-threaded scripts executed by the `runner` command.
+#### *Globs* em *config.autoload_paths*
 
-#### Globs in config.autoload_paths
-
-Beware of configurations like
+Cuidado com configurações como
 
 ```ruby
 config.autoload_paths += Dir["#{config.root}/lib/**/"]
 ```
 
-Every element of `config.autoload_paths` should represent the top-level namespace (`Object`) and they cannot be nested in consequence (with the exception of `concerns` directories explained above).
+Cada elemento de `config.autoload_paths` deve representar o *namespace* de nível superior (`Object`) e eles não podem ser aninhados em consequência (com exceção dos diretórios `concerns` explicados acima).
 
-To fix this, just remove the wildcards:
+Para corrigir isso, basta remover os curingas (*wildcards*):
 
 ```ruby
 config.autoload_paths << "#{config.root}/lib"
 ```
 
-#### Eager loading and autoloading are consistent
+#### Carregamento rápido (*Eager loading*) e carregamento automático são consistentes
 
-In `classic` mode, if `app/models/foo.rb` defines `Bar`, you won't be able to autoload that file, but eager loading will work because it loads files recursively blindly. This can be a source of errors if you test things first eager loading, execution may fail later autoloading.
+No modo `clássico`, se `app/models/foo.rb` define `Bar`, você não será capaz de carregar automaticamente aquele arquivo, mas o carregamento rápido funcionará porque carrega os arquivos recursivamente às cegas. Isso pode ser uma fonte de erros se você testar as coisas primeiro com carregamento rápido; a execução pode falhar no carregamento automático posterior.
 
-In `zeitwerk` mode both loading modes are consistent, they fail and err in the same files.
+No modo `zeitwerk` ambos os modos de carregamento são consistentes, eles falham e erram nos mesmos arquivos.
 
-#### How to Use the Classic Autoloader in Rails 6
+#### Como usar o Carregamento Automático Clássico no Rails 6
 
-Applications can load Rails 6 defaults and still use the classic autoloader by setting `config.autoloader` this way:
+As aplicações podem carregar os padrões do Rails 6 e ainda usar o carregamento automático clássico definindo `config.autoloader` desta forma:
 
 ```ruby
 # config/application.rb
 
-config.load_defaults "6.0"
+config.load_defaults 6.0
 config.autoloader = :classic
 ```
 
-When using the Classic Autoloader in Rails 6 application it is recommended to set concurrency level to 1 in development environment, for the web servers and background processors, due to the thread-safety concerns.
+Ao usar o Carregamento Automático Clássico na aplicação Rails 6, é recomendado definir o nível de simultaneidade (*concurrency*) como 1 no ambiente de desenvolvimento, para os servidores web e processadores de segundo plano, devido às questões de *thread-safety*.
 
-### Active Storage assignment behavior change
+### Alteração de comportamento de atribuição do *Active Storage*
 
-In Rails 5.2, assigning to a collection of attachments declared with `has_many_attached` appended new files:
+Com os padrões de configuração para Rails 5.2, atribuir a uma coleção de anexos declarados com `has_many_attached` acrescenta novos arquivos:
 
 ```ruby
 class User < ApplicationRecord
@@ -423,7 +920,7 @@ class User < ApplicationRecord
 end
 
 user.highlights.attach(filename: "funky.jpg", ...)
-user.higlights.count # => 1
+user.highlights.count # => 1
 
 blob = ActiveStorage::Blob.create_after_upload!(filename: "town.jpg", ...)
 user.update!(highlights: [ blob ])
@@ -433,8 +930,7 @@ user.highlights.first.filename # => "funky.jpg"
 user.highlights.second.filename # => "town.jpg"
 ```
 
-With the default configuration for Rails 6.0, assigning to a collection of attachments replaces existing files
-instead of appending to them. This matches Active Record behavior when assigning to a collection association:
+Com os padrões de configuração do Rails 6.0, atribuir a uma coleção de anexos substitui os arquivos existentes em vez de anexar a eles. Isso corresponde ao comportamento do *Active Record* ao atribuir a uma associação de coleção:
 
 ```ruby
 user.highlights.attach(filename: "funky.jpg", ...)
@@ -447,7 +943,7 @@ user.highlights.count # => 1
 user.highlights.first.filename # => "town.jpg"
 ```
 
-`#attach` can be used to add new attachments without removing the existing ones:
+`#attach` pode ser usado para adicionar novos anexos sem remover os existentes:
 
 ```ruby
 blob = ActiveStorage::Blob.create_after_upload!(filename: "town.jpg", ...)
@@ -458,230 +954,235 @@ user.highlights.first.filename # => "funky.jpg"
 user.highlights.second.filename # => "town.jpg"
 ```
 
-Opt in to the new default behavior by setting `config.active_storage.replace_on_assign_to_many` to `true`.
-The old behavior will be deprecated in Rails 6.1 and removed in a subsequent release.
+As aplicações existentes podem aceitar este novo comportamento definindo [`config.active_storage.replace_on_assign_to_many`][] como `true`. O comportamento antigo será descontinuado no Rails 7.0 e removido no Rails 7.1.
 
-Upgrading from Rails 5.1 to Rails 5.2
+[`config.active_storage.replace_on_assign_to_many`]: configuring.html#config-active-storage-replace-on-assign-to-many
+
+Atualizando do Rails 5.1 para o Rails 5.2
 -------------------------------------
 
-For more information on changes made to Rails 5.2 please see the [release notes](5_2_release_notes.html).
+Para mais informações sobre as mudanças feitas no Rails 5.2 consulte as [notas de lançamento](5_2_release_notes.html).
 
-### Bootsnap
+### *Bootsnap*
 
-Rails 5.2 adds bootsnap gem in the [newly generated app's Gemfile](https://github.com/rails/rails/pull/29313).
-The `app:update` command sets it up in `boot.rb`. If you want to use it, then add it in the Gemfile,
-otherwise change the `boot.rb` to not use bootsnap.
+Rails 5.2 adiciona a *gem bootsnap* no [novo Gemfile](https://github.com/rails/rails/pull/29313).
+O comando `app:update` o configura em `boot.rb`. Se você quiser utilizá-lo, então adicione-o no Gemfile:
 
-### Expiry in signed or encrypted cookie is now embedded in the cookies values
+```ruby
+# Reduces boot times through caching; required in config/boot.rb
+gem 'bootsnap', require: false
+```
 
-To improve security, Rails now embeds the expiry information also in encrypted or signed cookies value.
+Caso contrário, mude o `boot.rb` para não utilizar o *bootsnap*.
 
-This new embed information make those cookies incompatible with versions of Rails older than 5.2.
+### A expiração em *cookies* assinados ou criptografados está agora incorporada nos valores dos *cookies*
 
-If you require your cookies to be read by 5.1 and older, or you are still validating your 5.2 deploy and want
-to allow you to rollback set
-`Rails.application.config.action_dispatch.use_authenticated_cookie_encryption` to `false`.
+Para melhorar a segurança, Rails agora incorpora as informações de expiração também no valor de cookies criptografados ou assinados.
 
-Upgrading from Rails 5.0 to Rails 5.1
+Estas novas informações incorporadas tornam estes *cookies* incompatíveis com versões do Rails mais antigas que 5.2.
+
+Se você quer que seus cookies sejam lidos até 5.1 e anteriores, ou se ainda estiver validando seu *deploy* 5.2 e quiser permitir o *rollback* configure
+ `Rails.application.config.action_dispatch.use_authenticated_cookie_encryption` para `false`.
+
+Atualizando do Rails 5.0 para o Rails 5.1
 -------------------------------------
 
-For more information on changes made to Rails 5.1 please see the [release notes](5_1_release_notes.html).
+Para mais informações sobre as mudanças feitas no Rails 5.1 consulte as [notas de lançamento](5_1_release_notes.html).
 
-### Top-level `HashWithIndifferentAccess` is soft-deprecated
+### `HashWithIndifferentAccess` de nível superior está descontinuado
 
-If your application uses the top-level `HashWithIndifferentAccess` class, you
-should slowly move your code to instead use `ActiveSupport::HashWithIndifferentAccess`.
+Se sua aplicação usa a classe `HashWithIndifferentAccess` de nível superior, você
+ deve mover lentamente seu código para usar `ActiveSupport::HashWithIndifferentAccess`.
 
-It is only soft-deprecated, which means that your code will not break at the
-moment and no deprecation warning will be displayed, but this constant will be
-removed in the future.
+Está apenas descontinuado, o que significa que seu código não quebrará no momento e nenhum aviso de descontinuação será exibido, mas esta constante será removida no futuro.
 
-Also, if you have pretty old YAML documents containing dumps of such objects,
-you may need to load and dump them again to make sure that they reference
-the right constant, and that loading them won't break in the future.
+Além disso, se você tiver documentos *YAML* muito antigos contendo despejos (*dumps*) de tais objetos, pode ser necessário carregá-los e despejá-los novamente para ter certeza de que referenciam à constante correta, e que carregá-los não quebrará no futuro.
 
-### `application.secrets` now loaded with all keys as symbols
+### `application.secrets` agora é carregado com todas as chaves como símbolos
 
-If your application stores nested configuration in `config/secrets.yml`, all keys
-are now loaded as symbols, so access using strings should be changed.
+Se sua aplicação armazena configuração aninhada em `config/secrets.yml`, todas as chaves agora são carregadas como símbolos, então o acesso usando *strings* deve ser alterado.
 
-From:
+De:
 
 ```ruby
 Rails.application.secrets[:smtp_settings]["address"]
 ```
 
-To:
+Para:
 
 ```ruby
 Rails.application.secrets[:smtp_settings][:address]
 ```
 
-Upgrading from Rails 4.2 to Rails 5.0
--------------------------------------
+### Removido suporte obsoleto para `:text` e `:nothing` em `render`
 
-For more information on changes made to Rails 5.0 please see the [release notes](5_0_release_notes.html).
+Se seus *controllers* estiverem usando `render :text`, elas não funcionarão mais. O novo método de renderização de texto com o tipo MIME de `text/plain` é usar `render :plain`.
 
-### Ruby 2.2.2+ required
+Similarmente, `render :nothing` também é removido e você deve usar o método `head` para enviar respostas que contenham apenas cabeçalhos (*headers*). Por exemplo, `head :ok` envia uma resposta 200 sem corpo (*body*) para renderizar.
 
-From Ruby on Rails 5.0 onwards, Ruby 2.2.2+ is the only supported Ruby version.
-Make sure you are on Ruby 2.2.2 version or greater, before you proceed.
+### Removido suporte obsoleto para `redirect_to :back`
 
-### Active Record Models Now Inherit from ApplicationRecord by Default
+No Rails 5.0, `redirect_to :back` foi descontinuado. No Rails 5.1, foi removido completamente.
 
-In Rails 4.2, an Active Record model inherits from `ActiveRecord::Base`. In Rails 5.0,
-all models inherit from `ApplicationRecord`.
-
-`ApplicationRecord` is a new superclass for all app models, analogous to app
-controllers subclassing `ApplicationController` instead of
-`ActionController::Base`. This gives apps a single spot to configure app-wide
-model behavior.
-
-When upgrading from Rails 4.2 to Rails 5.0, you need to create an
-`application_record.rb` file in `app/models/` and add the following content:
+Como alternativa, use `redirect_back`. É importante notar que `redirect_back` também leva
+uma opção `fallback_location` que será usada caso o `HTTP_REFERER` esteja faltando.
 
 ```
+redirect_back(fallback_location: root_path)
+```
+
+Atualizando do Rails 4.2 para o Rails 5.0
+-------------------------------------
+
+Para mais informações sobre as mudanças feitas no Rails 5.0 consulte as [notas de lançamento](5_0_release_notes.html).
+
+### Necessário Ruby 2.2.2+
+
+Do Ruby on Rails 5.0 em diante, Ruby 2.2.2+ é a única versão do Ruby suportada.
+Certifique-se de ter a versão Ruby 2.2.2 ou superior, antes de prosseguir.
+
+### *Active Record Models* agora herdam de *ApplicationRecord* por padrão
+
+No Rails 4.2, um *Active Record model* herda de `ActiveRecord::Base`. No Rails 5.0,
+todos os *models* são herdados de `ApplicationRecord`.
+
+`ApplicationRecord` é uma nova superclasse para todos os *models* da aplicação, análogo ao que o
+`ApplicationController` é para os *controllers* em vez de `ActionController::Base`. Isso dá as aplicações um único local para configurar o comportamento dos *models*.
+
+Ao atualizar do Rails 4.2 para o Rails 5.0, você precisa criar um arquivo `application_record.rb` em `app/models/` e adicionar o seguinte conteúdo:
+
+```ruby
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 end
 ```
 
-Then make sure that all your models inherit from it.
+Em seguida, certifique-se de que todos os seus *models* herdem dele.
 
-### Halting Callback Chains via `throw(:abort)`
+### Interrompendo Sequências de *Callback* via `throw(:abort)`
 
-In Rails 4.2, when a 'before' callback returns `false` in Active Record
-and Active Model, then the entire callback chain is halted. In other words,
-successive 'before' callbacks are not executed, and neither is the action wrapped
-in callbacks.
+No Rails 4.2, quando um *'before' callback* retorna `false` no *Active Record*
+e *Active Model*, então toda a sequência de *callback* é interrompida. Em outras palavras,
+sucessivos *'before' callback* não são executados, e nem é a ação encapsulada
+em *callbacks*.
 
-In Rails 5.0, returning `false` in an Active Record or Active Model callback
-will not have this side effect of halting the callback chain. Instead, callback
-chains must be explicitly halted by calling `throw(:abort)`.
+No Rails 5.0, ao retornar `false` em um *callback* no *Active Record* ou *Active Model*
+não terá o efeito colateral de interromper a sequência de *callback*. Em vez disso, a sequência de *callback* deve ser interrompida explicitamente chamando `throw(:abort)`.
 
-When you upgrade from Rails 4.2 to Rails 5.0, returning `false` in those kind of
-callbacks will still halt the callback chain, but you will receive a deprecation
-warning about this upcoming change.
+Quando você atualiza do Rails 4.2 para o Rails 5.0, retornando `false` nesse tipo de
+*callback* a sequência de *callback* ainda será interrompida, mas você receberá um aviso de suspensão de uso sobre esta mudança futura.
 
-When you are ready, you can opt into the new behavior and remove the deprecation
-warning by adding the following configuration to your `config/application.rb`:
+Quando estiver pronto, você pode optar pelo novo comportamento e remover o aviso de suspensão de uso adicionando a seguinte configuração ao seu `config/application.rb`:
 
-    ActiveSupport.halt_callback_chains_on_return_false = false
-
-Note that this option will not affect Active Support callbacks since they never
-halted the chain when any value was returned.
-
-See [#17227](https://github.com/rails/rails/pull/17227) for more details.
-
-### ActiveJob Now Inherits from ApplicationJob by Default
-
-In Rails 4.2, an Active Job inherits from `ActiveJob::Base`. In Rails 5.0, this
-behavior has changed to now inherit from `ApplicationJob`.
-
-When upgrading from Rails 4.2 to Rails 5.0, you need to create an
-`application_job.rb` file in `app/jobs/` and add the following content:
-
+```ruby
+ActiveSupport.halt_callback_chains_on_return_false = false
 ```
+
+Observe que esta opção não afetará os *callbacks* do *Active Support*, uma vez que eles nunca
+interrompem a sequência quando algum valor foi retornado.
+
+Consulte [#17227](https://github.com/rails/rails/pull/17227) para obter mais detalhes.
+
+### *ActiveJob* agora herda de *ApplicationJob* por padrão
+
+No Rails 4.2, um *Active Job* herda de `ActiveJob::Base`. No Rails 5.0, este
+comportamento mudou para agora herdar de `ApplicationJob`.
+
+Ao atualizar do Rails 4.2 para o Rails 5.0, você precisa criar um
+arquivo `application_job.rb` em `app/jobs/` e adicionar o seguinte conteúdo:
+
+```ruby
 class ApplicationJob < ActiveJob::Base
 end
 ```
 
-Then make sure that all your job classes inherit from it.
+Em seguida, certifique-se de que todas as classes *job* herdam dele.
 
-See [#19034](https://github.com/rails/rails/pull/19034) for more details.
+Veja [#19034](https://github.com/rails/rails/pull/19034) para maiores detalhes.
 
-### Rails Controller Testing
+### Testando Rails *Controller*
 
-#### Extraction of some helper methods to `rails-controller-testing`
+#### Extração de alguns métodos auxiliares (*helper*) para `rails-controller-testing`
 
-`assigns` and `assert_template` have been extracted to the `rails-controller-testing` gem. To
-continue using these methods in your controller tests, add `gem 'rails-controller-testing'` to
-your `Gemfile`.
+`assigns` e `assert_template` foram extraídos para a gem `rails-controller-testing`. Para
+continuar usando esses métodos em seus testes de *controller*, adicione a `gem 'rails-controller-testing'` para seu `Gemfile`.
 
-If you are using Rspec for testing, please see the extra configuration required in the gem's
-documentation.
+Se você estiver usando RSpec para teste, consulte a configuração extra necessária na
+documentação da gem.
 
-#### New behavior when uploading files
+#### Novo comportamento ao enviar arquivos
 
-If you are using `ActionDispatch::Http::UploadedFile` in your tests to
-upload files, you will need to change to use the similar `Rack::Test::UploadedFile`
-class instead.
+Se você estiver usando `ActionDispatch::Http::UploadedFile` em seus testes para
+envio de arquivos, você precisará alterar para usar a classe `Rack::Test::UploadedFile`.
 
-See [#26404](https://github.com/rails/rails/issues/26404) for more details.
+Veja [#26404](https://github.com/rails/rails/issues/26404) para maiores detalhes.
 
-### Autoloading is Disabled After Booting in the Production Environment
+### Carregamento automático é desabilitado após a inicialização no ambiente de produção
 
-Autoloading is now disabled after booting in the production environment by
-default.
+O carregamento automático agora está desativado após a inicialização no ambiente de produção por padrão.
 
-Eager loading the application is part of the boot process, so top-level
-constants are fine and are still autoloaded, no need to require their files.
+O carregamento rápido (*Eager loading*) da aplicação faz parte do processo de inicialização, portanto, constantes de alto nível estão bem e ainda são carregadas automaticamente, não há necessidade de exigir seus arquivos.
 
-Constants in deeper places only executed at runtime, like regular method bodies,
-are also fine because the file defining them will have been eager loaded while booting.
+Constantes em locais mais profundos são executados apenas em tempo de execução, como corpos de métodos regulares, também estão bem porque o arquivo que os define terá sido carregado durante a inicialização.
 
-For the vast majority of applications this change needs no action. But in the
-very rare event that your application needs autoloading while running in
-production mode, set `Rails.application.config.enable_dependency_loading` to
-true.
+Para a grande maioria das aplicações, essa alteração não exige nenhuma ação. Mas no
+evento muito raro em que sua aplicação precisa de carregamento automático durante a execução em
+produção, defina `Rails.application.config.enable_dependency_loading` para *true*.
 
-### XML Serialization
+### Serialização XML
 
-`ActiveModel::Serializers::Xml` has been extracted from Rails to the `activemodel-serializers-xml`
-gem. To continue using XML serialization in your application, add `gem 'activemodel-serializers-xml'`
-to your `Gemfile`.
+`ActiveModel::Serializers::Xml` foi extraído do Rails para a *gem* `activemodel-serializers-xml`.
+Para continuar usando a serialização XML em sua aplicação, adicione a `gem 'activemodel-serializers-xml'` para o seu `Gemfile`.
 
-### Removed Support for Legacy `mysql` Database Adapter
+### Removido o suporte para o antigo adaptador de banco de dados `mysql`
 
-Rails 5 removes support for the legacy `mysql` database adapter. Most users should be able to
-use `mysql2` instead. It will be converted to a separate gem when we find someone to maintain
-it.
+O Rails 5 remove o suporte para o antigo adaptador de banco de dados `mysql`. A maioria dos usuários devem usar o `mysql2` em vez disso. Será convertido em uma *gem* separada quando encontrarmos alguém para manter.
 
-### Removed Support for Debugger
+### Removido suporte para o *Debugger*
 
-`debugger` is not supported by Ruby 2.2 which is required by Rails 5. Use `byebug` instead.
+`debugger` não é suportado pelo Ruby 2.2 que é requerido pelo Rails 5. Use `byebug` ao invés.
 
-### Use `rails` for running tasks and tests
+### Use `bin/rails` para executar tarefas e testes
 
-Rails 5 adds the ability to run tasks and tests through `bin/rails` instead of rake. Generally
-these changes are in parallel with rake, but some were ported over altogether. As the `rails`
-command already looks for and runs `bin/rails`, we recommend you to use the shorter `rails`
-over `bin/rails.
+Rails 5 adiciona a habilidade de executar tarefas e testes através de `bin/rails` ao invés de *rake*.
+Geralmente essas mudanças ocorrem em paralelo com o *rake*, mas algumas foram portadas completamente.
 
-To use the new test runner simply type `rails test`.
+Para usar o novo executor de teste, simplesmente digite `bin/rails test`.
 
-`rake dev:cache` is now `rails dev:cache`.
+`rake dev:cache` é agora `bin/rails dev:cache`.
 
-Run `rails` inside your application's directory to see the list of commands available.
+Execute `bin/rails` dentro do diretório raiz da sua aplicação para ver a lista de comandos disponíveis.
 
-### `ActionController::Parameters` No Longer Inherits from `HashWithIndifferentAccess`
+### `ActionController::Parameters` Não herda mais de `HashWithIndifferentAccess`
 
-Calling `params` in your application will now return an object instead of a hash. If your
-parameters are already permitted, then you will not need to make any changes. If you are using `map`
-and other methods that depend on being able to read the hash regardless of `permitted?` you will
-need to upgrade your application to first permit and then convert to a hash.
+Chamar `params` em sua aplicação agora retornará um objeto em vez de um *hash*. Se seus
+parâmetros já são permitidos, então você não precisará fazer nenhuma alteração. Se você estiver usando `map`
+e outros métodos que dependem de ser capaz de ler o *hash* independentemente de `permitted?` você
+precisará atualizar sua aplicação para primeiro permitir e depois converter para um *hash*.
 
-    params.permit([:proceed_to, :return_to]).to_h
+```ruby
+params.permit([:proceed_to, :return_to]).to_h
+```
 
-### `protect_from_forgery` Now Defaults to `prepend: false`
+### `protect_from_forgery` Agora assume como padrão `prepend:false`
 
-`protect_from_forgery` defaults to `prepend: false` which means that it will be inserted into
-the callback chain at the point in which you call it in your application. If you want
-`protect_from_forgery` to always run first, then you should change your application to use
+O padrão `protect_from_forgery` é `prepend: false`, o que significa que será inserido no
+*callback* no ponto em que você a chama em sua aplicação. Se você quiser
+`protect_from_forgery` para sempre executar primeiro, então você deve alterar sua aplicação para usar
 `protect_from_forgery prepend: true`.
 
-### Default Template Handler is Now RAW
+### O *Template Handler* padrão agora é *RAW*
 
-Files without a template handler in their extension will be rendered using the raw handler.
-Previously Rails would render files using the ERB template handler.
+Os arquivos sem um *template handler* em sua extensão serão renderizados usando o *raw handler*.
+Anteriormente, o Rails renderizava arquivos usando o *ERB template handler*.
 
-If you do not want your file to be handled via the raw handler, you should add an extension
-to your file that can be parsed by the appropriate template handler.
+Se você não deseja que seu arquivo seja tratado por meio do *raw handler*, você deve adicionar uma extensão
+ao seu arquivo que pode ser analisado pelo *template handler* apropriado.
 
-### Added Wildcard Matching for Template Dependencies
+### Adicionada correspondência de curinga (*Wildcard*) para *Template Dependencies*
 
-You can now use wildcard matching for your template dependencies. For example, if you were
-defining your templates as such:
+Agora você pode usar a correspondência de curinga para suas *template dependencies*. Por exemplo, se você
+definisse seus *templates* como:
 
 ```erb
 <% # Template Dependency: recordings/threads/events/subscribers_changed %>
@@ -689,34 +1190,34 @@ defining your templates as such:
 <% # Template Dependency: recordings/threads/events/uncompleted %>
 ```
 
-You can now just call the dependency once with a wildcard.
+Agora você pode chamar a dependência apenas uma vez com um curinga.
 
 ```erb
 <% # Template Dependency: recordings/threads/events/* %>
 ```
 
-### `ActionView::Helpers::RecordTagHelper` moved to external gem (record_tag_helper)
+### `ActionView::Helpers::RecordTagHelper` movido para a *gem* externa (record_tag_helper)
 
-`content_tag_for` and `div_for` have been removed in favor of just using `content_tag`. To continue using the older methods, add the `record_tag_helper` gem to your `Gemfile`:
+`content_tag_for` e `div_for` foram removidos em favor de usar apenas `content_tag`. Para continuar usando os métodos mais antigos, adicione a *gem* `record_tag_helper` ao seu `Gemfile`:
 
 ```ruby
 gem 'record_tag_helper', '~> 1.0'
 ```
 
-See [#18411](https://github.com/rails/rails/pull/18411) for more details.
+Veja [#18411](https://github.com/rails/rails/pull/18411) para mais detalhes.
 
-### Removed Support for `protected_attributes` Gem
+### Removido suporte para a *Gem* `protected_attributes`
 
-The `protected_attributes` gem is no longer supported in Rails 5.
+A *gem* `protected_attributes` não é mais suportada no Rails 5.
 
-### Removed support for `activerecord-deprecated_finders` gem
+### Removido o suporte para a *gem* `activerecord-deprecated_finders`
 
-The `activerecord-deprecated_finders` gem is no longer supported in Rails 5.
+A *gem* `activerecord-deprecated_finders` não é mais suportada no Rails 5.
 
-### `ActiveSupport::TestCase` Default Test Order is Now Random
+### A ordem do teste padrão `ActiveSupport::TestCase` agora é aleatória
 
-When tests are run in your application, the default order is now `:random`
-instead of `:sorted`. Use the following config option to set it back to `:sorted`.
+Quando os testes são executados em sua aplicação, a ordem padrão agora é `:random`
+em vez de `:sorted`. Use a seguinte opção de configuração para defini-lo de volta para `:sorted`.
 
 ```ruby
 # config/environments/test.rb
@@ -725,22 +1226,22 @@ Rails.application.configure do
 end
 ```
 
-### `ActionController::Live` became a `Concern`
+### `ActionController::Live` tornou-se uma `Concern`
 
-If you include `ActionController::Live` in another module that is included in your controller, then you
-should also extend the module with `ActiveSupport::Concern`. Alternatively, you can use the `self.included` hook
-to include `ActionController::Live` directly to the controller once the `StreamingSupport` is included.
+Se você incluir `ActionController::Live` em outro módulo que está incluído em seu *controller*, então você
+também deve estender o módulo com `ActiveSupport::Concern`. Alternativamente, você pode usar o gancho (*hook*)
+`self.included` para incluir `ActionController::Live` diretamente no *controller* uma vez que o `StreamingSupport` está incluído.
 
-This means that if your application used to have its own streaming module, the following code
-would break in production mode:
+Isso significa que se sua aplicação costumava ter seu próprio módulo de *streaming*, o código a seguir
+seria interrompido em produção:
 
 ```ruby
-# This is a work-around for streamed controllers performing authentication with Warden/Devise.
-# See https://github.com/plataformatec/devise/issues/2332
-# Authenticating in the router is another solution as suggested in that issue
+# Esta é uma solução alternativa para *streamed controllers* realizando autenticação com *Warden/Devise*.
+# Veja https://github.com/plataformatec/devise/issues/2332
+# Autenticando no *router* é outra solução, conforme sugerido nessa *issue*
 class StreamingSupport
-  include ActionController::Live # this won't work in production for Rails 5
-  # extend ActiveSupport::Concern # unless you uncomment this line.
+  include ActionController::Live # isso não funcionará em produção para Rails 5
+  # extend ActiveSupport::Concern # a menos que você descomente esta linha.
 
   def process(name)
     super(name)
@@ -754,87 +1255,125 @@ class StreamingSupport
 end
 ```
 
-### New Framework Defaults
+### Novos Padrões do Framework
 
-#### Active Record `belongs_to` Required by Default Option
+#### *Active Record* `belongs_to` Exigido por Padrão
 
-`belongs_to` will now trigger a validation error by default if the association is not present.
+`belongs_to` agora irá disparar um erro de validação por padrão se a associação não estiver presente.
 
-This can be turned off per-association with `optional: true`.
+Isso pode ser desativado por associação com `optional: true`.
 
-This default will be automatically configured in new applications. If existing application
-want to add this feature it will need to be turned on in an initializer.
+Este padrão será configurado automaticamente em novas aplicações. Se uma aplicação existente
+deseja adicionar este recurso, ele precisará ser ativado em um *initializer*:
 
-    config.active_record.belongs_to_required_by_default = true
+```ruby
+config.active_record.belongs_to_required_by_default = true
+```
 
-#### Per-form CSRF Tokens
+A configuração é global por padrão para todos os seus *models*, mas você pode
+sobrepor individualmente por *model*. Isso deve ajudá-lo a migrar todos os seus *models* para ter suas
+associações exigidas por padrão.
 
-Rails 5 now supports per-form CSRF tokens to mitigate against code-injection attacks with forms
-created by JavaScript. With this option turned on, forms in your application will each have their
-own CSRF token that is specific to the action and method for that form.
+```ruby
+class Book < ApplicationRecord
+  # model ainda não está pronto para ter sua associação exigida por padrão
 
-    config.action_controller.per_form_csrf_tokens = true
+  self.belongs_to_required_by_default = false
+  belongs_to(:author)
+end
 
-#### Forgery Protection with Origin Check
+class Car < ApplicationRecord
+  # model está pronto para ter sua associação exigida por padrão
 
-You can now configure your application to check if the HTTP `Origin` header should be checked
-against the site's origin as an additional CSRF defense. Set the following in your config to
+  self.belongs_to_required_by_default = true
+  belongs_to(:pilot)
+end
+```
+
+#### *Tokens* CSRF por formulário
+
+Rails 5 agora suporta *tokens* CSRF por formulário para mitigar ataques de injeção de código com formulários
+criados por JavaScript. Com esta opção ativada, cada formulário em sua aplicação terá seu
+próprio *token* CSRF que é específico para a ação e o método desse formulário.
+
+```ruby
+config.action_controller.per_form_csrf_tokens = true
+```
+
+#### Proteção contra Falsificação com Verificação de Origem
+
+Agora você pode configurar sua aplicação para verificar se o cabeçalho (*header*) HTTP `Origin` deve ser
+verificado contra a origem do site como uma defesa adicional de CSRF. Defina o seguinte em sua configuração para
 true:
 
-    config.action_controller.forgery_protection_origin_check = true
+```ruby
+config.action_controller.forgery_protection_origin_check = true
+```
 
-#### Allow Configuration of Action Mailer Queue Name
+#### Permitir Configuração do Nome da Fila do *Action Mailer*
 
-The default mailer queue name is `mailers`. This configuration option allows you to globally change
-the queue name. Set the following in your config:
+O nome da fila do *mailer* padrão é `mailers`. Esta opção de configuração permite que você mude globalmente
+o nome da fila. Defina o seguinte em sua configuração:
 
-    config.action_mailer.deliver_later_queue_name = :new_queue_name
+```ruby
+config.action_mailer.deliver_later_queue_name = :new_queue_name
+```
 
-#### Support Fragment Caching in Action Mailer Views
+#### Suportar *Fragment Caching* na *Action Mailer Views*
 
-Set `config.action_mailer.perform_caching` in your config to determine whether your Action Mailer views
-should support caching.
+Defina [`config.action_mailer.perform_caching`][] em sua configuração para determinar se sua *Action Mailer views*
+deve suportar cache.
 
-    config.action_mailer.perform_caching = true
+```ruby
+config.action_mailer.perform_caching = true
+```
 
-#### Configure the Output of `db:structure:dump`
+[`config.action_mailer.perform_caching`]: configuring.html#config-action-mailer-perform-caching
 
-If you're using `schema_search_path` or other PostgreSQL extensions, you can control how the schema is
-dumped. Set to `:all` to generate all dumps, or to `:schema_search_path` to generate from schema search path.
+#### Configure a Saída de `db:structure:dump`
 
-    config.active_record.dump_schemas = :all
+Se você estiver usando `schema_search_path` ou outras extensões PostgreSQL, você pode controlar como o esquema é
+despejado. Defina como `:all` para gerar todos os *dumps*, ou como `:schema_search_path` para gerar a partir do caminho de pesquisa do esquema.
 
-#### Configure SSL Options to Enable HSTS with Subdomains
+```ruby
+config.active_record.dump_schemas = :all
+```
 
-Set the following in your config to enable HSTS when using subdomains:
+#### Configurar Opções de SSL para Habilitar HSTS com Subdomínios
 
-    config.ssl_options = { hsts: { subdomains: true } }
+Defina o seguinte em sua configuração para habilitar HSTS ao usar subdomínios:
 
-#### Preserve Timezone of the Receiver
+```ruby
+config.ssl_options = { hsts: { subdomains: true } }
+```
 
-When using Ruby 2.4, you can preserve the timezone of the receiver when calling `to_time`.
+#### Preservar Fuso Horário do Receptor
 
-    ActiveSupport.to_time_preserves_timezone = false
+Ao usar Ruby 2.4, você pode preservar o fuso horário do receptor ao chamar `to_time`.
 
-### Changes with JSON/JSONB serialization
+```ruby
+ActiveSupport.to_time_preserves_timezone = false
+```
 
-In Rails 5.0, how JSON/JSONB attributes are serialized and deserialized changed. Now, if
-you set a column equal to a `String`, Active Record will no longer turn that string
-into a `Hash`, and will instead only return the string. This is not limited to code
-interacting with models, but also affects `:default` column settings in `db/schema.rb`.
-It is recommended that you do not set columns equal to a `String`, but pass a `Hash`
-instead, which will be converted to and from a JSON string automatically.
+### Mudanças na Serialização JSON/JSONB
 
-Upgrading from Rails 4.1 to Rails 4.2
+No Rails 5.0, como os atributos JSON/JSONB são serializados e desserializados foram alterados. Agora se
+você definir uma coluna igual a uma `String`, *Active Record* não irá mais transformar essa *string*
+em um `Hash` e, em vez disso, apenas retornará a *string*. Isso não se limita ao código que
+interage com os *models*, mas também afeta as configurações da coluna `:default` em `db/schema.rb`.
+É recomendado que você não defina colunas iguais a `String`, mas passe `Hash`
+em vez disso, que será convertido de e para uma *string* JSON automaticamente.
+
+Atualizando do Rails 4.1 para o Rails 4.2
 -------------------------------------
 
-### Web Console
+### *Web Console*
 
-First, add `gem 'web-console', '~> 2.0'` to the `:development` group in your `Gemfile` and run `bundle install` (it won't have been included when you upgraded Rails). Once it's been installed, you can simply drop a reference to the console helper (i.e., `<%= console %>`) into any view you want to enable it for. A console will also be provided on any error page you view in your development environment.
+Primeiro, adicione a `gem 'web-console', '~> 2.0'` ao grupo `:development` em seu `Gemfile` e execute `bundle install` (ela não foi incluída quando você atualizou o Rails). Depois de instalado, você pode simplesmente colocar uma referência ao *console helper* (ou seja, `<%= console %>`) em qualquer *view* para a qual deseja habilitá-lo. Um *console* também será fornecido em qualquer página de erro exibida em seu ambiente de desenvolvimento.
 
-### Responders
+### *Responders*
 
-`respond_with` and the class-level `respond_to` methods have been extracted to the `responders` gem. To use them, simply add `gem 'responders', '~> 2.0'` to your `Gemfile`. Calls to `respond_with` and `respond_to` (again, at the class level) will no longer work without having included the `responders` gem in your dependencies:
+Os métodos de classe `respond_with` e `respond_to` foram extraídos para a *gem* `responders`. Para usá-los, simplesmente adicione a `gem 'responders', '~> 2.0'` ao seu `Gemfile`. Chamadas para `respond_with` e `respond_to` (novamente, no nível de classe) não funcionarão mais sem incluir a *gem* `responders` em suas dependências:
 
 ```ruby
 # app/controllers/users_controller.rb
@@ -849,7 +1388,7 @@ class UsersController < ApplicationController
 end
 ```
 
-Instance-level `respond_to` is unaffected and does not require the additional gem:
+`respond_to` em nível de instância não é afetado e não requer a *gem* adicional:
 
 ```ruby
 # app/controllers/users_controller.rb
@@ -865,68 +1404,56 @@ class UsersController < ApplicationController
 end
 ```
 
-See [#16526](https://github.com/rails/rails/pull/16526) for more details.
+Veja [#16526](https://github.com/rails/rails/pull/16526) para mais detalhes.
 
-### Error handling in transaction callbacks
+### Tratamento de erros em *transaction callbacks*
 
-Currently, Active Record suppresses errors raised
-within `after_rollback` or `after_commit` callbacks and only prints them to
-the logs. In the next version, these errors will no longer be suppressed.
-Instead, the errors will propagate normally just like in other Active
-Record callbacks.
+Atualmente, o *Active Record* suprime os erros levantados dentro de *callbacks* `after_rollback` ou `after_commit` e apenas os imprime para os logs.
+Na próxima versão, esses erros não serão mais suprimidos. Em vez disso, os erros serão propagados normalmente como em outros *Active Record callbacks*.
 
-When you define an `after_rollback` or `after_commit` callback, you
-will receive a deprecation warning about this upcoming change. When
-you are ready, you can opt into the new behavior and remove the
-deprecation warning by adding following configuration to your
+Quando você define um *callback* `after_rollback` ou `after_commit`, você receberá um aviso de suspensão de uso sobre essa mudança futura.
+Quando você estiver pronto, pode optar pelo novo comportamento e remover o aviso de suspensão de uso, adicionando a seguinte configuração ao seu
 `config/application.rb`:
 
-    config.active_record.raise_in_transactional_callbacks = true
+```ruby
+config.active_record.raise_in_transactional_callbacks = true
+```
 
-See [#14488](https://github.com/rails/rails/pull/14488) and
-[#16537](https://github.com/rails/rails/pull/16537) for more details.
+Veja [#14488](https://github.com/rails/rails/pull/14488) e
+[#16537](https://github.com/rails/rails/pull/16537) para mais detalhes.
 
-### Ordering of test cases
+### Ordenando os casos de teste
 
-In Rails 5.0, test cases will be executed in random order by default. In
-anticipation of this change, Rails 4.2 introduced a new configuration option
-`active_support.test_order` for explicitly specifying the test ordering. This
-allows you to either lock down the current behavior by setting the option to
-`:sorted`, or opt into the future behavior by setting the option to `:random`.
+No Rails 5.0, os casos de teste serão executados em ordem aleatória por padrão. Em antecipação a esta mudança, Rails 4.2 introduziu uma nova opção de configuração
+`active_support.test_order` para especificar explicitamente a ordem dos testes. Isso permite que você bloqueie o comportamento atual, definindo a opção para
+`:sorted`, ou opte pelo comportamento futuro configurando a opção para `:random`.
 
-If you do not specify a value for this option, a deprecation warning will be
-emitted. To avoid this, add the following line to your test environment:
+Se você não especificar um valor para esta opção, um aviso de suspensão de uso será emitido. Para evitar isso, adicione a seguinte linha ao seu ambiente de teste:
 
 ```ruby
 # config/environments/test.rb
 Rails.application.configure do
-  config.active_support.test_order = :sorted # or `:random` if you prefer
+  config.active_support.test_order = :sorted # ou `:random` se você preferir
 end
 ```
 
-### Serialized attributes
+### Atributos serializados
 
-When using a custom coder (e.g. `serialize :metadata, JSON`),
-assigning `nil` to a serialized attribute will save it to the database
-as `NULL` instead of passing the `nil` value through the coder (e.g. `"null"`
-when using the `JSON` coder).
+Ao usar um codificador personalizado (por exemplo, `serialize :metadata, JSON`), atribuir `nil` a um atributo serializado irá salvá-lo no banco de dados
+como `NULL` em vez de passar o valor `nil` através do codificador (por exemplo, `"null"` quando usando o codificador `JSON`).
 
-### Production log level
+### Nível de *log* em produção
 
-In Rails 5, the default log level for the production environment will be changed
-to `:debug` (from `:info`). To preserve the current default, add the following
-line to your `production.rb`:
+No Rails 5, o nível de *log* padrão para o ambiente de produção será alterado para `:debug` (de `:info`). Para preservar o padrão atual, adicione a seguinte linha para o seu `production.rb`:
 
 ```ruby
-# Set to `:info` to match the current default, or set to `:debug` to opt-into
-# the future default.
+# Defina como `:info` para corresponder ao padrão atual, ou defina como `:debug` para ativar o padrão futuro.
 config.log_level = :info
 ```
 
-### `after_bundle` in Rails templates
+### `after_bundle` em Rails *templates*
 
-If you have a Rails template that adds all the files in version control, it
-fails to add the generated binstubs because it gets executed before Bundler:
+Se você tem um *Rails template* que adiciona todos os arquivos no controle de versão, isso falhará ao adicionar os *binstubs* gerados porque ele é executado antes do Bundler:
 
 ```ruby
 # template.rb
@@ -939,8 +1466,7 @@ git add: "."
 git commit: %Q{ -m 'Initial commit' }
 ```
 
-You can now wrap the `git` calls in an `after_bundle` block. It will be run
-after the binstubs have been generated.
+Agora você pode envolver as chamadas `git` em um bloco `after_bundle`. Isso será executado depois que os *binstubs* foram gerados.
 
 ```ruby
 # template.rb
@@ -955,51 +1481,43 @@ after_bundle do
 end
 ```
 
-### Rails HTML Sanitizer
+### Rails *HTML Sanitizer*
 
-There's a new choice for sanitizing HTML fragments in your applications. The
-venerable html-scanner approach is now officially being deprecated in favor of
+Há uma nova opção para sanitizar fragmentos de HTML em suas aplicações. A venerável abordagem *html-scanner* agora está oficialmente sendo descontinuada em favor de
 [`Rails HTML Sanitizer`](https://github.com/rails/rails-html-sanitizer).
 
-This means the methods `sanitize`, `sanitize_css`, `strip_tags` and
-`strip_links` are backed by a new implementation.
+Isso significa que os métodos `sanitize`, `sanitize_css`, `strip_tags` e `strip_links` são apoiados por uma nova implementação.
 
-This new sanitizer uses [Loofah](https://github.com/flavorjones/loofah) internally. Loofah in turn uses Nokogiri, which
-wraps XML parsers written in both C and Java, so sanitization should be faster
-no matter which Ruby version you run.
+Este novo *sanitizer* usa internamente [Loofah](https://github.com/flavorjones/loofah). Loofah, por sua vez, usa Nokogiri, que
+envolve analisadores XML escritos em C e Java, portanto, a sanitização deve ser mais rápida não importa qual versão do Ruby você execute.
 
-The new version updates `sanitize`, so it can take a `Loofah::Scrubber` for
-powerful scrubbing.
-[See some examples of scrubbers here](https://github.com/flavorjones/loofah#loofahscrubber).
+A nova versão atualiza `sanitize`, então pode usar um `Loofah::Scrubber` para uma depuração poderosa.
+[Veja alguns exemplos de depuradores aqui](https://github.com/flavorjones/loofah#loofahscrubber).
 
-Two new scrubbers have also been added: `PermitScrubber` and `TargetScrubber`.
-Read the [gem's readme](https://github.com/rails/rails-html-sanitizer) for more information.
+Dois novos depuradores também foram adicionados: `PermitScrubber` e `TargetScrubber`.
+Leia o [*gem's readme*](https://github.com/rails/rails-html-sanitizer) para mais informações.
 
-The documentation for `PermitScrubber` and `TargetScrubber` explains how you
-can gain complete control over when and how elements should be stripped.
+A documentação para `PermitScrubber` e `TargetScrubber` explica como você pode obter controle total sobre quando e como os elementos devem ser removidos.
 
-If your application needs to use the old sanitizer implementation, include `rails-deprecated_sanitizer` in your `Gemfile`:
+Se sua aplicação precisa usar a implementação antiga do *sanitizer*, inclua `rails-deprecated_sanitizer` em seu `Gemfile`:
 
 ```ruby
 gem 'rails-deprecated_sanitizer'
 ```
 
-### Rails DOM Testing
+### Testando *Rails DOM*
 
-The [`TagAssertions` module](https://api.rubyonrails.org/v4.1/classes/ActionDispatch/Assertions/TagAssertions.html) (containing methods such as `assert_tag`), [has been deprecated](https://github.com/rails/rails/blob/6061472b8c310158a2a2e8e9a6b81a1aef6b60fe/actionpack/lib/action_dispatch/testing/assertions/dom.rb) in favor of the `assert_select` methods from the `SelectorAssertions` module, which has been extracted into the [rails-dom-testing gem](https://github.com/rails/rails-dom-testing).
+O [módulo `TagAssertions`](https://api.rubyonrails.org/v4.1/classes/ActionDispatch/Assertions/TagAssertions.html) (contendo métodos como `assert_tag`), [foi descontinuado](https://github.com/rails/rails/blob/6061472b8c310158a2a2e8e9a6b81a1aef6b60fe/actionpack/lib/action_dispatch/testing/assertions/dom.rb) em favor dos métodos `assert_select` do módulo `SelectorAssertions`, que foi extraído para a [*gem rails-dom-testing*](https://github.com/rails/rails-dom-testing).
 
+### Tokens de autenticidade mascarados
 
-### Masked Authenticity Tokens
+A fim de mitigar ataques SSL, `form_authenticity_token` agora é mascarado para que varie com cada solicitação (*request*). Assim, os *tokens* são validados desmascarando e depois descriptografando. Como resultado, quaisquer estratégias para verificar solicitações de formulários não-rails que dependiam de um *token* CSRF de sessão estática devem levar isso em consideração.
 
-In order to mitigate SSL attacks, `form_authenticity_token` is now masked so that it varies with each request.  Thus, tokens are validated by unmasking and then decrypting.  As a result, any strategies for verifying requests from non-rails forms that relied on a static session CSRF token have to take this into account.
+### *Action Mailer*
 
-### Action Mailer
-
-Previously, calling a mailer method on a mailer class will result in the
-corresponding instance method being executed directly. With the introduction of
-Active Job and `#deliver_later`, this is no longer true. In Rails 4.2, the
-invocation of the instance methods are deferred until either `deliver_now` or
-`deliver_later` is called. For example:
+Anteriormente, chamar um método *mailer* em uma classe *mailer* resultaria no método de instância correspondente sendo executado diretamente. Com a introdução de
+*Active Job* e `#deliver_later`, isso não é mais verdade. No Rails 4.2, a invocação dos métodos de instância é adiada até `deliver_now` ou
+`deliver_later` sejam chamados. Por exemplo:
 
 ```ruby
 class Notifier < ActionMailer::Base
@@ -1008,15 +1526,17 @@ class Notifier < ActionMailer::Base
     mail(to: user.email, ...)
   end
 end
-
-mail = Notifier.notify(user, ...) # Notifier#notify is not yet called at this point
-mail = mail.deliver_now           # Prints "Called"
 ```
 
-This should not result in any noticeable differences for most applications.
-However, if you need some non-mailer methods to be executed synchronously, and
-you were previously relying on the synchronous proxying behavior, you should
-define them as class methods on the mailer class directly:
+```ruby
+mail = Notifier.notify(user, ...) # Notifier#notify ainda não é chamado neste momento
+mail = mail.deliver_now           # Imprime "Called"
+```
+
+Isso não deve resultar em diferenças perceptíveis para a maioria das aplicações.
+No entanto, se você precisar que alguns métodos não-*mailer* sejam executados de forma síncrona, e
+você estava contando anteriormente com o comportamento de *proxy* síncrono, você deve
+definí-los como métodos de classe na classe *mailer* diretamente:
 
 ```ruby
 class Notifier < ActionMailer::Base
@@ -1026,21 +1546,21 @@ class Notifier < ActionMailer::Base
 end
 ```
 
-### Foreign Key Support
+### Suporte para chave estrangeira
 
-The migration DSL has been expanded to support foreign key definitions. If
-you've been using the Foreigner gem, you might want to consider removing it.
-Note that the foreign key support of Rails is a subset of Foreigner. This means
-that not every Foreigner definition can be fully replaced by its Rails
-migration DSL counterpart.
+A migração DSL foi expandida para suportar definições de chave estrangeira. Se
+você tem usado a *gem Foreigner*, você pode querer considerar removê-la.
+Observe que o suporte de chave estrangeira do Rails é um subconjunto de *Foreigner*. Isso significa
+que nem todas as definições *Foreigner* podem ser totalmente substituídas pela contraparte
+DSL de migração Rails.
 
-The migration procedure is as follows:
+O procedimento de migração é o seguinte:
 
-1. remove `gem "foreigner"` from the `Gemfile`.
-2. run `bundle install`.
-3. run `bin/rake db:schema:dump`.
-4. make sure that `db/schema.rb` contains every foreign key definition with
-the necessary options.
+1. remova `gem "foreigner"` do `Gemfile`.
+2. execute `bundle install`.
+3. execute `bin/rake db:schema:dump`.
+4. certifique-se de que `db/schema.rb` contém todas as definições de chave estrangeira com
+as opções necessárias.
 
 Upgrading from Rails 4.0 to Rails 4.1
 -------------------------------------
@@ -1077,7 +1597,7 @@ If you want to use Spring as your application preloader you need to:
 
 1. Add `gem 'spring', group: :development` to your `Gemfile`.
 2. Install spring using `bundle install`.
-3. Springify your binstubs with `bundle exec spring binstub --all`.
+3. Generate the Spring binstub with `bundle exec spring binstub`.
 
 NOTE: User defined rake tasks will run in the `development` environment by
 default. If you want them to run in other environments consult the
@@ -1102,10 +1622,10 @@ secrets, you need to:
     ```
 
 2. Use your existing `secret_key_base` from the `secret_token.rb` initializer to
-   set the SECRET_KEY_BASE environment variable for whichever users running the
-   Rails application in production mode. Alternatively, you can simply copy the existing
+   set the `SECRET_KEY_BASE` environment variable for whichever users running the
+   Rails application in production. Alternatively, you can simply copy the existing
    `secret_key_base` from the `secret_token.rb` initializer to `secrets.yml`
-   under the `production` section, replacing '<%= ENV["SECRET_KEY_BASE"] %>'.
+   under the `production` section, replacing `<%= ENV["SECRET_KEY_BASE"] %>`.
 
 3. Remove the `secret_token.rb` initializer.
 
@@ -1117,7 +1637,7 @@ secrets, you need to:
 
 If your test helper contains a call to
 `ActiveRecord::Migration.check_pending!` this can be removed. The check
-is now done automatically when you `require 'rails/test_help'`, although
+is now done automatically when you `require "rails/test_help"`, although
 leaving this line in your helper is not harmful in any way.
 
 ### Cookies serializer
@@ -1194,7 +1714,7 @@ If your application currently depends on MultiJSON directly, you have a few opti
 
 WARNING: Do not simply replace `MultiJson.dump` and `MultiJson.load` with
 `JSON.dump` and `JSON.load`. These JSON gem APIs are meant for serializing and
-deserializing arbitrary Ruby objects and are generally [unsafe](http://www.ruby-doc.org/stdlib-2.2.2/libdoc/json/rdoc/JSON.html#method-i-load).
+deserializing arbitrary Ruby objects and are generally [unsafe](https://ruby-doc.org/stdlib-2.2.2/libdoc/json/rdoc/JSON.html#method-i-load).
 
 #### JSON gem compatibility
 
@@ -1212,9 +1732,13 @@ class FooBar
     { foo: 'bar' }
   end
 end
+```
 
->> FooBar.new.to_json # => "{\"foo\":\"bar\"}"
->> JSON.generate(FooBar.new, quirks_mode: true) # => "\"#<FooBar:0x007fa80a481610>\""
+```irb
+irb> FooBar.new.to_json
+=> "{\"foo\":\"bar\"}"
+irb> JSON.generate(FooBar.new, quirks_mode: true)
+=> "\"#<FooBar:0x007fa80a481610>\""
 ```
 
 #### New JSON encoder
@@ -1237,7 +1761,7 @@ gem to your `Gemfile`.
 now returns millisecond precision by default. If you need to keep old behavior with no millisecond
 precision, set the following in an initializer:
 
-```
+```ruby
 ActiveSupport::JSON::Encoding.time_precision = 0
 ```
 
@@ -1298,9 +1822,10 @@ included in the newly introduced `ActiveRecord::FixtureSet.context_class`, in
 ```ruby
 module FixtureFileHelpers
   def file_sha(path)
-    Digest::SHA2.hexdigest(File.read(Rails.root.join('test/fixtures', path)))
+    OpenSSL::Digest::SHA256.hexdigest(File.read(Rails.root.join('test/fixtures', path)))
   end
 end
+
 ActiveRecord::FixtureSet.context_class.include FixtureFileHelpers
 ```
 
@@ -1447,19 +1972,19 @@ set_callback :save, :around, ->(r, &block) { stuff; result = block.call; stuff }
 set_callback :save, :around, ->(r, block) { stuff; result = block.call; stuff }
 ```
 
-Upgrading from Rails 3.2 to Rails 4.0
+Atualizando do Rails 3.2 para o Rails 4.0
 -------------------------------------
 
-If your application is currently on any version of Rails older than 3.2.x, you should upgrade to Rails 3.2 before attempting one to Rails 4.0.
+Se sua aplicação está em qualquer versão do Rails anterior a 3.2.x, você deve atualizar para o Rails 3.2 antes de tentar atualizar para o Rails 4.0.
 
-The following changes are meant for upgrading your application to Rails 4.0.
+As seguintes mudanças são necessárias a atualizar seu aplicativo para Rails 4.0.
 
 ### HTTP PATCH
 
-Rails 4 now uses `PATCH` as the primary HTTP verb for updates when a RESTful
-resource is declared in `config/routes.rb`. The `update` action is still used,
-and `PUT` requests will continue to be routed to the `update` action as well.
-So, if you're using only the standard RESTful routes, no changes need to be made:
+O Rails 4 agora usa `PATCH` como o verbo HTTP primário para atualizações quando um RESTful
+`resource` é declarado em `config/routes.rb`. A *action* `update` ainda é usada,
+e as solicitações `PUT` continuarão a ser roteadas para a *action* `update` também.
+Portanto, se você estiver usando apenas as rotas RESTful padrão, nenhuma alteração precisa ser feita:
 
 ```ruby
 resources :users
@@ -1472,16 +1997,16 @@ resources :users
 ```ruby
 class UsersController < ApplicationController
   def update
-    # No change needed; PATCH will be preferred, and PUT will still work.
+    # Nenhuma mudança necessária; PATCH será preferido e PUT ainda funcionará.
   end
 end
 ```
 
-However, you will need to make a change if you are using `form_for` to update
-a resource in conjunction with a custom route using the `PUT` HTTP method:
+No entanto, você precisará fazer uma mudança se estiver usando `form_for` para atualizar
+um recurso em conjunto com uma rota personalizada usando o verbo HTTP `PUT`:
 
 ```ruby
-resources :users, do
+resources :users do
   put :update_name, on: :member
 end
 ```
@@ -1493,17 +2018,13 @@ end
 ```ruby
 class UsersController < ApplicationController
   def update_name
-    # Change needed; form_for will try to use a non-existent PATCH route.
+    # Mudança necessária; form_for tentará usar uma rota PATCH inexistente.
   end
 end
 ```
 
-If the action is not being used in a public API and you are free to change the
-HTTP method, you can update your route to use `patch` instead of `put`:
-
-`PUT` requests to `/users/:id` in Rails 4 get routed to `update` as they are
-today. So, if you have an API that gets real PUT requests it is going to work.
-The router also routes `PATCH` requests to `/users/:id` to the `update` action.
+Se a *action* não estiver sendo usada em uma API pública e você estiver livre para alterar o
+verbo HTTP, você pode atualizar sua rota para usar `patch` em vez de `put`:
 
 ```ruby
 resources :users do
@@ -1511,304 +2032,314 @@ resources :users do
 end
 ```
 
-If the action is being used in a public API and you can't change to HTTP method
-being used, you can update your form to use the `PUT` method instead:
+Requisições `PUT` para `/users/:id` no Rails 4 são encaminhadas para `update` como estão
+hoje. Portanto, se você tiver uma API que recebe solicitações `PUT` reais, ela funcionará.
+O roteador também roteia solicitações `PATCH` para `/users/:id` para a *action* `update`.
+
+Se a *action* está sendo usada em uma API pública e você não pode mudar para o verbo HTTP
+usado, você pode atualizar seu formulário para usar o método `PUT` no lugar:
 
 ```erb
 <%= form_for [ :update_name, @user ], method: :put do |f| %>
 ```
 
-For more on PATCH and why this change was made, see [this post](https://weblog.rubyonrails.org/2012/2/26/edge-rails-patch-is-the-new-primary-http-method-for-updates/)
-on the Rails blog.
+Para mais informações sobre o PATCH e por que essa mudança foi feita, consulte [esta postagem](https://weblog.rubyonrails.org/2012/2/26/edge-rails-patch-is-the-new-primary-http-method -for-updates/)
+no blog do Rails.
 
-#### A note about media types
+#### Uma nota sobre os tipos de mídia
 
-The errata for the `PATCH` verb [specifies that a 'diff' media type should be
-used with `PATCH`](http://www.rfc-editor.org/errata_search.php?rfc=5789). One
-such format is [JSON Patch](https://tools.ietf.org/html/rfc6902). While Rails
-does not support JSON Patch natively, it's easy enough to add support:
+A errata para o verbo `PATCH` [especifica que um tipo de mídia 'diff' deve ser
+usado com `PATCH`](http://www.rfc-editor.org/errata_search.php?rfc=5789). Um
+desses formatos é [JSON Patch](https://tools.ietf.org/html/rfc6902). Enquanto o Rails
+não oferece suporte nativo ao JSON Patch, é fácil adicionar suporte:
 
-```
-# in your controller
+```ruby
+# em seu controller:
 def update
   respond_to do |format|
     format.json do
-      # perform a partial update
+      # executa uma atualização parcial
       @article.update params[:article]
     end
 
     format.json_patch do
-      # perform sophisticated change
+      # realizar mudanças sofisticadas
     end
   end
 end
+```
 
-# In config/initializers/json_patch.rb:
+```ruby
+# config/initializers/json_patch.rb
 Mime::Type.register 'application/json-patch+json', :json_patch
 ```
 
-As JSON Patch was only recently made into an RFC, there aren't a lot of great
-Ruby libraries yet. Aaron Patterson's
-[hana](https://github.com/tenderlove/hana) is one such gem, but doesn't have
-full support for the last few changes in the specification.
+Como o JSON Patch foi transformado recentemente em um RFC, não há muitas
+Bibliotecas Ruby ainda. A `gem` do Aaron Patterson
+[hana](https://github.com/tenderlove/hana) é uma dessas, mas não tem
+suporte total para as últimas mudanças na especificação.
 
 ### Gemfile
 
-Rails 4.0 removed the `assets` group from `Gemfile`. You'd need to remove that
-line from your `Gemfile` when upgrading. You should also update your application
-file (in `config/application.rb`):
+O Rails 4.0 removeu o grupo `assets` do `Gemfile`. Você precisaria remover essa
+linha de seu `Gemfile` ao atualizar. Você também deve atualizar seu arquivo da
+aplicação (em `config/application.rb`):
 
 ```ruby
-# Require the gems listed in Gemfile, including any gems
-# you've limited to :test, :development, or :production.
+# Requer as gems listadas no Gemfile, incluindo todas as gems que
+# você limitou a :test, :development ou :production.
 Bundler.require(*Rails.groups)
 ```
 
 ### vendor/plugins
 
-Rails 4.0 no longer supports loading plugins from `vendor/plugins`. You must replace any plugins by extracting them to gems and adding them to your `Gemfile`. If you choose not to make them gems, you can move them into, say, `lib/my_plugin/*` and add an appropriate initializer in `config/initializers/my_plugin.rb`.
+O Rails 4.0 não suporta mais o carregamento de *plugins* de `vendor/plugins`. Você deve substituir quaisquer *plugins*, extraindo-os para *gems* e adicionando-os ao seu `Gemfile`. Se você escolher não torná-los *gems*, você pode movê-los para, digamos, `lib/my_plugin/*` e adicionar um inicializador apropriado em `config/initializers/my_plugin.rb`.
 
-### Active Record
+### *Active Record*
 
-* Rails 4.0 has removed the identity map from Active Record, due to [some inconsistencies with associations](https://github.com/rails/rails/commit/302c912bf6bcd0fa200d964ec2dc4a44abe328a6). If you have manually enabled it in your application, you will have to remove the following config that has no effect anymore: `config.active_record.identity_map`.
+* O Rails 4.0 removeu o mapa de identidade do Active Record, devido a [algumas inconsistências com associações](https://github.com/rails/rails/commit/302c912bf6bcd0fa200d964ec2dc4a44abe328a6). Se você o habilitou manualmente em sua aplicação, você terá que remover a seguinte configuração que não tem mais efeito: `config.active_record.identity_map`.
 
-* The `delete` method in collection associations can now receive `Integer` or `String` arguments as record ids, besides records, pretty much like the `destroy` method does. Previously it raised `ActiveRecord::AssociationTypeMismatch` for such arguments. From Rails 4.0 on `delete` automatically tries to find the records matching the given ids before deleting them.
+* O método `delete` em associações de coleção agora pode receber argumentos` Integer` ou `String` como ids de registro, além de registros, muito parecido com o método `destroy`. Anteriormente, ele gerava `ActiveRecord::AssociationTypeMismatch` para tais argumentos. Do Rails 4.0 em `delete` automaticamente tenta encontrar os registros que combinam com os ids fornecidos antes de excluí-los.
 
-* In Rails 4.0 when a column or a table is renamed the related indexes are also renamed. If you have migrations which rename the indexes, they are no longer needed.
+* No Rails 4.0, quando uma coluna ou tabela é renomeada, os índices relacionados também são renomeados. Se você tiver migrações que renomeiam os índices, eles não serão mais necessários.
 
-* Rails 4.0 has changed `serialized_attributes` and `attr_readonly` to class methods only. You shouldn't use instance methods since it's now deprecated. You should change them to use class methods, e.g. `self.serialized_attributes` to `self.class.serialized_attributes`.
+* Rails 4.0 mudou `serialized_attributes` e `attr_readonly` apenas para métodos de classe. Você não deve usar os métodos de instância, pois agora está obsoleto. Você deve alterá-los para usar métodos de classe, por exemplo, `self.serialized_attributes` para `self.class.serialized_attributes`.
 
-* When using the default coder, assigning `nil` to a serialized attribute will save it
-to the database as `NULL` instead of passing the `nil` value through YAML (`"--- \n...\n"`).
+* Ao usar o codificador padrão, atribuir `nil` a um atributo serializado irá salvá-lo
+para o banco de dados como `NULL` em vez de passar o valor `nil` por meio de YAML (`"---\n...\n"`).
 
-* Rails 4.0 has removed `attr_accessible` and `attr_protected` feature in favor of Strong Parameters. You can use the [Protected Attributes gem](https://github.com/rails/protected_attributes) for a smooth upgrade path.
+* Rails 4.0 removeu os recursos `attr_accessible` e `attr_protected` em favor dos parâmetros fortes (*Strong Parameters*). Você pode usar a [gem Protected Attributes](https://github.com/rails/protected_attributes) para uma atualização mais suave.
 
-* If you are not using Protected Attributes, you can remove any options related to
-this gem such as `whitelist_attributes` or `mass_assignment_sanitizer` options.
+* Se não estiver usando *Protected Attributes*, você pode remover todas as opções relacionadas a
+esta *gem* como as opções `whitelist_attributes` ou `mass_assignment_sanitizer`.
 
-* Rails 4.0 requires that scopes use a callable object such as a Proc or lambda:
+* O Rails 4.0 requer que os escopos (*scopes*) usem um objeto que pode ser chamado, como Proc ou lambda:
 
-```ruby
-  scope :active, where(active: true)
+    ```ruby
+      scope :active, where(active: true)
 
-  # becomes
-  scope :active, -> { where active: true }
-```
+      # torna-se
+      scope :active, -> { where active: true }
+    ```
 
-* Rails 4.0 has deprecated `ActiveRecord::Fixtures` in favor of `ActiveRecord::FixtureSet`.
+* O Rails 4.0 tornou o `ActiveRecord::Fixtures` obsoleto em favor do `ActiveRecord::FixtureSet`.
 
-* Rails 4.0 has deprecated `ActiveRecord::TestCase` in favor of `ActiveSupport::TestCase`.
+* O Rails 4.0 tornou o `ActiveRecord::TestCase` obsoleto em favor do `ActiveSupport::TestCase`.
 
-* Rails 4.0 has deprecated the old-style hash based finder API. This means that
-  methods which previously accepted "finder options" no longer do.  For example, `Book.find(:all, conditions: { name: '1984' })` has been deprecated in favor of `Book.where(name: '1984')`
+* Rails 4.0 descontinuou a API de localização baseada em hash usando o estilo antigo. Isso significa que
+  métodos que anteriormente aceitavam "opções para localização" não servem mais. Por exemplo, `Book.find(:all, conditions: {name: '1984'})` foi substituído por `Book.where(name: '1984')`
 
-* All dynamic methods except for `find_by_...` and `find_by_...!` are deprecated.
-  Here's how you can handle the changes:
+* Todos os métodos dinâmicos, exceto `find_by_..` e `find_by_...!` Estão obsoletos.
+  Veja como você pode lidar com as mudanças:
 
-      * `find_all_by_...`           becomes `where(...)`.
-      * `find_last_by_...`          becomes `where(...).last`.
-      * `scoped_by_...`             becomes `where(...)`.
-      * `find_or_initialize_by_...` becomes `find_or_initialize_by(...)`.
-      * `find_or_create_by_...`     becomes `find_or_create_by(...)`.
+      * `find_all_by_...`           torna-se `where(...)`.
+      * `find_last_by_...`          torna-se `where(...).last`.
+      * `scoped_by_...`             torna-se `where(...)`.
+      * `find_or_initialize_by_...` torna-se `find_or_initialize_by(...)`.
+      * `find_or_create_by_...`     torna-se `find_or_create_by(...)`.
 
-* Note that `where(...)` returns a relation, not an array like the old finders. If you require an `Array`, use `where(...).to_a`.
+* Observe que `where(...)` retorna uma relação, não um array como os antigos localizadores. Se você precisar de um `Array`, use `where(...).to_a`.
 
-* These equivalent methods may not execute the same SQL as the previous implementation.
+* Esses métodos apesar de equivalentes podem não executar o mesmo SQL da implementação anterior.
 
-* To re-enable the old finders, you can use the [activerecord-deprecated_finders gem](https://github.com/rails/activerecord-deprecated_finders).
+* Para reativar os localizadores antigos, você pode usar a [gem activerecord-deprecated_finders](https://github.com/rails/activerecord-deprecated_finders).
 
-* Rails 4.0 has changed to default join table for `has_and_belongs_to_many` relations to strip the common prefix off the second table name. Any existing `has_and_belongs_to_many` relationship between models with a common prefix must be specified with the `join_table` option. For example:
+* O Rails 4.0 mudou para a tabela de junção (*join*) padrão para relações `has_and_belongs_to_many` para retirar o prefixo comum do nome da segunda tabela. Qualquer relacionamento `has_and_belongs_to_many` existente entre os *models* com um prefixo comum deve ser especificado com a opção `join_table`. Por exemplo:
 
-```ruby
-CatalogCategory < ActiveRecord::Base
-  has_and_belongs_to_many :catalog_products, join_table: 'catalog_categories_catalog_products'
-end
+    ```ruby
+    CatalogCategory < ActiveRecord::Base
+      has_and_belongs_to_many :catalog_products, join_table: 'catalog_categories_catalog_products'
+    end
 
-CatalogProduct < ActiveRecord::Base
-  has_and_belongs_to_many :catalog_categories, join_table: 'catalog_categories_catalog_products'
-end
-```
+    CatalogProduct < ActiveRecord::Base
+      has_and_belongs_to_many :catalog_categories, join_table: 'catalog_categories_catalog_products'
+    end
+    ```
 
-* Note that the prefix takes scopes into account as well, so relations between `Catalog::Category` and `Catalog::Product` or `Catalog::Category` and `CatalogProduct` need to be updated similarly.
+* Observe que o prefixo leva os escopos (*scopes*) em consideração também, portanto, as relações entre `Catalog::Category` e `Catalog::Product` ou `Catalog::Category` e `CatalogProduct` precisam ser atualizadas de forma semelhante.
 
-### Active Resource
+### *Active Resource*
 
-Rails 4.0 extracted Active Resource to its own gem. If you still need the feature you can add the [Active Resource gem](https://github.com/rails/activeresource) in your `Gemfile`.
+O Rails 4.0 extraiu o *Active Resource* para sua própria *gem*. Se você ainda precisa do recurso, pode adicionar a [gem *Active Resource*](https://github.com/rails/activeresource) em seu `Gemfile`.
 
-### Active Model
+### *Active Model*
 
-* Rails 4.0 has changed how errors attach with the `ActiveModel::Validations::ConfirmationValidator`. Now when confirmation validations fail, the error will be attached to `:#{attribute}_confirmation` instead of `attribute`.
+* O Rails 4.0 mudou a forma como os erros são anexados ao `ActiveModel::Validations::ConfirmationValidator`. Agora, quando as validações de confirmação falham, o erro será anexado a `:#{attribute}_confirmation` ao invés de `attribute`.
 
-* Rails 4.0 has changed `ActiveModel::Serializers::JSON.include_root_in_json` default value to `false`. Now, Active Model Serializers and Active Record objects have the same default behavior. This means that you can comment or remove the following option in the `config/initializers/wrap_parameters.rb` file:
+* Rails 4.0 mudou o valor padrão de `ActiveModel::Serializers::JSON.include_root_in_json` para `false`. Agora, os *Active Model Serializers* e os objetos *Active Record* têm o mesmo comportamento padrão. Isso significa que você pode comentar ou remover a seguinte opção no arquivo `config/initializers/wrap_parameters.rb`:
 
-```ruby
-# Disable root element in JSON by default.
-# ActiveSupport.on_load(:active_record) do
-#   self.include_root_in_json = false
-# end
-```
+    ```ruby
+    # Desative o elemento raiz em JSON por padrão.
+    # ActiveSupport.on_load(:active_record) do
+    #   self.include_root_in_json = false
+    # end
+    ```
 
-### Action Pack
+### *Action Pack*
 
-* Rails 4.0 introduces `ActiveSupport::KeyGenerator` and uses this as a base from which to generate and verify signed cookies (among other things). Existing signed cookies generated with Rails 3.x will be transparently upgraded if you leave your existing `secret_token` in place and add the new `secret_key_base`.
+*   Rails 4.0 introduz `ActiveSupport::KeyGenerator` e usa isso como uma base para gerar e verificar *cookies* assinados (entre outras coisas). Os *cookies* assinados existentes gerados com o Rails 3.x serão atualizados de forma transparente se você deixar seu `secret_token` existente e adicionar o novo `secret_key_base`.
 
-```ruby
-  # config/initializers/secret_token.rb
-  Myapp::Application.config.secret_token = 'existing secret token'
-  Myapp::Application.config.secret_key_base = 'new secret key base'
-```
+    ```ruby
+      # config/initializers/secret_token.rb
+      Myapp::Application.config.secret_token = 'existing secret token'
+      Myapp::Application.config.secret_key_base = 'new secret key base'
+    ```
 
-Please note that you should wait to set `secret_key_base` until you have 100% of your userbase on Rails 4.x and are reasonably sure you will not need to rollback to Rails 3.x. This is because cookies signed based on the new `secret_key_base` in Rails 4.x are not backwards compatible with Rails 3.x. You are free to leave your existing `secret_token` in place, not set the new `secret_key_base`, and ignore the deprecation warnings until you are reasonably sure that your upgrade is otherwise complete.
+    Observe que você deve esperar para definir `secret_key_base` até ter 100% de sua base de usuários no Rails 4.x e estar razoavelmente certo de que não precisará fazer *rollback* para voltar para o Rails 3.x. Isso ocorre porque os *cookies* assinados com base no novo `secret_key_base` no Rails 4.x não são compatíveis com versões anteriores do Rails 3.x. Você é livre para deixar seu `secret_token` existente no lugar, não definir o novo `secret_key_base` e ignorar os avisos de depreciação até que esteja razoavelmente certo de que sua atualização está completa.
 
-If you are relying on the ability for external applications or JavaScript to be able to read your Rails app's signed session cookies (or signed cookies in general) you should not set `secret_key_base` until you have decoupled these concerns.
+    Se você está contando com a capacidade de aplicações externas ou JavaScript de ler os *cookies* de sessão assinada da sua aplicação Rails (ou *cookies* assinados em geral), você não deve definir `secret_key_base` até que tenha não tenha mais essas preocupações.
 
-* Rails 4.0 encrypts the contents of cookie-based sessions if `secret_key_base` has been set. Rails 3.x signed, but did not encrypt, the contents of cookie-based session. Signed cookies are "secure" in that they are verified to have been generated by your app and are tamper-proof. However, the contents can be viewed by end users, and encrypting the contents eliminates this caveat/concern without a significant performance penalty.
+*   O Rails 4.0 criptografa o conteúdo de sessões baseadas em *cookies* se `secret_key_base` tiver sido definido. O Rails 3.x assinou, mas não criptografou, o conteúdo da sessão baseada em cookie. Os cookies assinados são "seguros" no sentido de que são verificados se foram gerados pela sua aplicação e são à prova de adulteração. No entanto, o conteúdo pode ser visualizado pelos usuários finais e criptografar o conteúdo elimina essa advertência/preocupação sem uma penalidade de desempenho significativa.
 
-Please read [Pull Request #9978](https://github.com/rails/rails/pull/9978) for details on the move to encrypted session cookies.
+    Leia [Pull Request #9978](https://github.com/rails/rails/pull/9978) para obter detalhes sobre a mudança para *cookies* de sessão criptografada.
 
-* Rails 4.0 removed the `ActionController::Base.asset_path` option. Use the assets pipeline feature.
+* O Rails 4.0 removeu a opção `ActionController::Base.asset_path`. Use o recurso da nova *asset pipeline*.
 
-* Rails 4.0 has deprecated `ActionController::Base.page_cache_extension` option. Use `ActionController::Base.default_static_extension` instead.
+* O Rails 4.0 tornou a opção `ActionController::Base.page_cache_extension` obsoleta. Use `ActionController::Base.default_static_extension` ao invés.
 
-* Rails 4.0 has removed Action and Page caching from Action Pack. You will need to add the `actionpack-action_caching` gem in order to use `caches_action` and the `actionpack-page_caching` to use `caches_page` in your controllers.
+* O Rails 4.0 removeu o *cache* de *Action* e *Page* do Action Pack. Você precisará adicionar a gem `actionpack-action_caching` para usar `caches_action` e `actionpack-page_caching` para usar `caches_page` em seus *controllers*.
 
-* Rails 4.0 has removed the XML parameters parser. You will need to add the `actionpack-xml_parser` gem if you require this feature.
+* O Rails 4.0 removeu o analisador de parâmetros XML. Você precisará adicionar a gem `actionpack-xml_parser` se precisar deste recurso.
 
-* Rails 4.0 changes the default `layout` lookup set using symbols or procs that return nil. To get the "no layout" behavior, return false instead of nil.
+* O Rails 4.0 muda o conjunto de pesquisa do `layout` padrão usando símbolos ou procs que retornam `nil`. Para obter o comportamento "sem layout", retorne false em vez de `nil`.
 
-* Rails 4.0 changes the default memcached client from `memcache-client` to `dalli`. To upgrade, simply add `gem 'dalli'` to your `Gemfile`.
+* O Rails 4.0 muda o cliente memcached padrão de `memcache-client` para `dalli`. Para atualizar, simplesmente adicione `gem 'dalli'` ao seu` Gemfile`.
 
-* Rails 4.0 deprecates the `dom_id` and `dom_class` methods in controllers (they are fine in views). You will need to include the `ActionView::RecordIdentifier` module in controllers requiring this feature.
+* O Rails 4.0 descontinuará em breve os métodos `dom_id` e `dom_class` em *controllers* (eles podem ser usados em *views*). Você precisará incluir o módulo `ActionView::RecordIdentifier` nos *controllers* que requerem este recurso.
 
-* Rails 4.0 deprecates the `:confirm` option for the `link_to` helper. You should
-instead rely on a data attribute (e.g. `data: { confirm: 'Are you sure?' }`).
-This deprecation also concerns the helpers based on this one (such as `link_to_if`
-or `link_to_unless`).
+* O Rails 4.0 descontinuará em breve a opção `:confirm` para o helper `link_to`. Você deve
+em vez disso, usar um atributo de dados (por exemplo, `data: {confirm: 'Are you sure?'}`).
+Esta depreciação também diz respeito aos *helpers* baseados neste (como `link_to_if`
+ou `link_to_unless`).
 
-* Rails 4.0 changed how `assert_generates`, `assert_recognizes`, and `assert_routing` work. Now all these assertions raise `Assertion` instead of `ActionController::RoutingError`.
+* O Rails 4.0 mudou como `assert_generates`, `assert_recognizes` e `assert_routing` funcionam. Agora todas essas asserções geram `Assertion` ao invés de` ActionController::RoutingError`.
 
-* Rails 4.0 raises an `ArgumentError` if clashing named routes are defined. This can be triggered by explicitly defined named routes or by the `resources` method. Here are two examples that clash with routes named `example_path`:
+*  O Rails 4.0 levanta um `ArgumentError` se rotas nomeadas conflitantes são definidas. Isso pode ser acionado por rotas nomeadas explicitamente definidas ou pelo método `resources`. Aqui estão dois exemplos que conflitam usando o nome `example_path`:
 
-```ruby
-  get 'one' => 'test#example', as: :example
-  get 'two' => 'test#example', as: :example
-```
+    ```ruby
+    get 'one' => 'test#example', as: :example
+    get 'two' => 'test#example', as: :example
+    ```
 
-```ruby
-  resources :examples
-  get 'clashing/:id' => 'test#example', as: :example
-```
+    ```ruby
+    resources :examples
+    get 'clashing/:id' => 'test#example', as: :example
+    ```
 
-In the first case, you can simply avoid using the same name for multiple
-routes. In the second, you can use the `only` or `except` options provided by
-the `resources` method to restrict the routes created as detailed in the
-[Routing Guide](routing.html#restricting-the-routes-created).
+    No primeiro caso, você pode simplesmente evitar usar o mesmo nome para várias
+    rotas. No segundo, você pode usar as opções `only` ou `except` fornecidas pelo
+    método `resources` para restringir as rotas criadas conforme detalhado no
+    [Guia de roteamento](routing.html #restting-the-routes-created).
 
-* Rails 4.0 also changed the way unicode character routes are drawn. Now you can draw unicode character routes directly. If you already draw such routes, you must change them, for example:
+*   O Rails 4.0 também mudou a forma como as rotas de caracteres Unicode são definidas. Agora você pode definir rotas de caracteres Unicode diretamente. Se você já usou tais rotas, deve alterá-las, por exemplo:
 
-```ruby
-get Rack::Utils.escape('こんにちは'), controller: 'welcome', action: 'index'
-```
+    ```ruby
+    get Rack::Utils.escape('こんにちは'), controller: 'welcome', action: 'index'
+    ```
 
-becomes
+    torna-se
 
-```ruby
-get 'こんにちは', controller: 'welcome', action: 'index'
-```
+    ```ruby
+    get 'こんにちは', controller: 'welcome', action: 'index'
+    ```
 
-* Rails 4.0 requires that routes using `match` must specify the request method. For example:
+*   Rails 4.0 requer que as rotas que usam `match` especifiquem o método de solicitação. Por exemplo:
 
-```ruby
-  # Rails 3.x
-  match '/' => 'root#index'
+    ```ruby
+      # Rails 3.x
+      match '/' => 'root#index'
 
-  # becomes
-  match '/' => 'root#index', via: :get
+      # torna-se
+      match '/' => 'root#index', via: :get
 
-  # or
-  get '/' => 'root#index'
-```
+      # ou
+      get '/' => 'root#index'
+    ```
 
-* Rails 4.0 has removed `ActionDispatch::BestStandardsSupport` middleware, `<!DOCTYPE html>` already triggers standards mode per https://msdn.microsoft.com/en-us/library/jj676915(v=vs.85).aspx and ChromeFrame header has been moved to `config.action_dispatch.default_headers`.
+*   O Rails 4.0 removeu o *middleware* `ActionDispatch::BestStandardsSupport`, `<!DOCTYPE html> `já aciona o modo de padrões de https://msdn.microsoft.com/en-us/library/jj676915(v=vs.85). Os cabeçalhos aspx e ChromeFrame foram movidos para `config.action_dispatch.default_headers`.
 
-Remember you must also remove any references to the middleware from your application code, for example:
+    Lembre-se de que você também deve remover todas as referências ao *middleware* do código da sua aplicação, por exemplo:
 
-```ruby
-# Raise exception
-config.middleware.insert_before(Rack::Lock, ActionDispatch::BestStandardsSupport)
-```
+    ```ruby
+    # Levanta exceção
+    config.middleware.insert_before(Rack::Lock, ActionDispatch::BestStandardsSupport)
+    ```
 
-Also check your environment settings for `config.action_dispatch.best_standards_support` and remove it if present.
+    Verifique também suas configurações de ambiente por `config.action_dispatch.best_standards_support` e remova-o se houver.
 
-* Rails 4.0 allows configuration of HTTP headers by setting `config.action_dispatch.default_headers`. The defaults are as follows:
+*   Rails 4.0 permite a configuração de cabeçalhos (*headers*) HTTP definindo `config.action_dispatch.default_headers`. Os padrões são os seguintes:
 
-```ruby
-  config.action_dispatch.default_headers = {
-    'X-Frame-Options' => 'SAMEORIGIN',
-    'X-XSS-Protection' => '1; mode=block'
-  }
-```
+    ```ruby
+      config.action_dispatch.default_headers = {
+        'X-Frame-Options' => 'SAMEORIGIN',
+        'X-XSS-Protection' => '1; mode=block'
+      }
+    ```
 
-Please note that if your application is dependent on loading certain pages in a `<frame>` or `<iframe>`, then you may need to explicitly set `X-Frame-Options` to `ALLOW-FROM ...` or `ALLOWALL`.
+    Observe que se sua aplicação depende do carregamento de certas páginas em um `<frame>` ou `<iframe>`, então você pode precisar definir explicitamente `X-Frame-Options` para `ALLOW-FROM ... `ou `ALLOWALL`.
 
-* In Rails 4.0, precompiling assets no longer automatically copies non-JS/CSS assets from `vendor/assets` and `lib/assets`. Rails application and engine developers should put these assets in `app/assets` or configure `config.assets.precompile`.
+* No Rails 4.0, os recursos de pré-compilação não copiam mais recursos não JS/CSS automaticamente de `vendor/assets` e `lib/assets`. As pessoas desenvolvedoras de aplicações e *engine* Rails devem colocar esses *assets* em `app/assets` ou configurar [`config.assets.precompile`][].
 
-* In Rails 4.0, `ActionController::UnknownFormat` is raised when the action doesn't handle the request format. By default, the exception is handled by responding with 406 Not Acceptable, but you can override that now. In Rails 3, 406 Not Acceptable was always returned. No overrides.
+* No Rails 4.0, o erro `ActionController::UnknownFormat` é gerado quando a *action* não manipula o formato da solicitação. Por padrão, a exceção é tratada respondendo com 406 Não Aceitável, mas você pode substituir isso agora. No Rails 3, 406 Não Aceitável sempre foi retornado. Sem substituições.
 
-* In Rails 4.0, a generic `ActionDispatch::ParamsParser::ParseError` exception is raised when `ParamsParser` fails to parse request params. You will want to rescue this exception instead of the low-level `MultiJson::DecodeError`, for example.
+* No Rails 4.0, uma exceção genérica `ActionDispatch::ParamsParser::ParseError` é levantada quando `ParamsParser` falha em analisar os parâmetros da solicitação. Você desejará resgatar esta exceção em vez do baixo nível `MultiJson::DecodeError`, por exemplo.
 
-* In Rails 4.0, `SCRIPT_NAME` is properly nested when engines are mounted on an app that's served from a URL prefix. You no longer have to set `default_url_options[:script_name]` to work around overwritten URL prefixes.
+* No Rails 4.0, `SCRIPT_NAME` é devidamente aninhado quando os *engines* são montados em uma aplicação e é servido a partir de um prefixo de URL. Você não precisa mais definir `default_url_options[:script_name]` para contornar os prefixos de URL sobrescritos.
 
-* Rails 4.0 deprecated `ActionController::Integration` in favor of `ActionDispatch::Integration`.
-* Rails 4.0 deprecated `ActionController::IntegrationTest` in favor of `ActionDispatch::IntegrationTest`.
-* Rails 4.0 deprecated `ActionController::PerformanceTest` in favor of `ActionDispatch::PerformanceTest`.
-* Rails 4.0 deprecated `ActionController::AbstractRequest` in favor of `ActionDispatch::Request`.
-* Rails 4.0 deprecated `ActionController::Request` in favor of `ActionDispatch::Request`.
-* Rails 4.0 deprecated `ActionController::AbstractResponse` in favor of `ActionDispatch::Response`.
-* Rails 4.0 deprecated `ActionController::Response` in favor of `ActionDispatch::Response`.
-* Rails 4.0 deprecated `ActionController::Routing` in favor of `ActionDispatch::Routing`.
+* Rails 4.0 torna obsoleto `ActionController::Integration` em favor de `ActionDispatch :: Integration`.
+* Rails 4.0 torna obsoleto `ActionController::IntegrationTest` em favor de `ActionDispatch::IntegrationTest`.
+* Rails 4.0 torna obsoleto `ActionController::PerformanceTest` em favor de `ActionDispatch::PerformanceTest`.
+* Rails 4.0 torna obsoleto `ActionController::AbstractRequest` em favor de `ActionDispatch::Request`.
+* Rails 4.0 torna obsoleto `ActionController::Request` em favor de `ActionDispatch::Request`.
+* Rails 4.0 torna obsoleto `ActionController::AbstractResponse` em favor de `ActionDispatch::Response`.
+* Rails 4.0 torna obsoleto `ActionController::Response` em favor de `ActionDispatch::Response`.
+* Rails 4.0 torna obsoleto `ActionController::Routing` em favor de `ActionDispatch::Routing`.
 
-### Active Support
+[`config.assets.precompile`]: configuring.html#config-assets-precompile
 
-Rails 4.0 removes the `j` alias for `ERB::Util#json_escape` since `j` is already used for `ActionView::Helpers::JavaScriptHelper#escape_javascript`.
+### *Active Support*
 
-#### Cache
+O Rails 4.0 remove o alias `j` para `ERB::Util#json_escape` visto que `j` já é usado para `ActionView::Helpers::JavaScriptHelper#escape_javascript`.
 
-The caching method changed between Rails 3.x and 4.0. You should [change the cache namespace](https://guides.rubyonrails.org/caching_with_rails.html#activesupport-cache-store) and roll out with a cold cache.
+#### *Cache*
 
-### Helpers Loading Order
+O método de *cache* mudou entre Rails 3.x e 4.0. Você deve [alterar o *namespace* do *cache*](https://guides.rubyonrails.org/v4.0/caching_with_rails.html#activesupport-cache-store) e implementar com um *cold cache*.
 
-The order in which helpers from more than one directory are loaded has changed in Rails 4.0. Previously, they were gathered and then sorted alphabetically. After upgrading to Rails 4.0, helpers will preserve the order of loaded directories and will be sorted alphabetically only within each directory. Unless you explicitly use the `helpers_path` parameter, this change will only impact the way of loading helpers from engines. If you rely on the ordering, you should check if correct methods are available after upgrade. If you would like to change the order in which engines are loaded, you can use `config.railties_order=` method.
+### Ordem de Carregamento de *Helpers*
 
-### Active Record Observer and Action Controller Sweeper
+A ordem na qual *helpers* de mais de um diretório são carregados mudou no Rails 4.0. Anteriormente, eles eram reunidos e classificados em ordem alfabética. Após atualizar para o Rails 4.0, os *helpers* irão preservar a ordem dos diretórios carregados e serão classificados em ordem alfabética apenas dentro de cada diretório. A menos que você use explicitamente o parâmetro `helpers_path`, essa mudança só afetará a maneira de carregar os helpers nas *engines*. Se você precisa de uma ordem, deve verificar se os métodos corretos estão disponíveis após a atualização. Se você gostaria de mudar a ordem em que as *engines* são carregados, você pode usar o método `config.railties_order=`.
 
-`ActiveRecord::Observer` and `ActionController::Caching::Sweeper` have been extracted to the `rails-observers` gem. You will need to add the `rails-observers` gem if you require these features.
+### *Active Record Observer* e *Action Controller Sweeper*
+
+`ActiveRecord::Observer` e` ActionController::Caching::Sweeper` foram extraídos para a gem `rails-observers`. Você precisará adicionar a *gem* `rails-observers` se precisar desses recursos.
 
 ### sprockets-rails
 
-* `assets:precompile:primary` and `assets:precompile:all` have been removed. Use `assets:precompile` instead.
-* The `config.assets.compress` option should be changed to `config.assets.js_compressor` like so for instance:
+* `assets:precompile:primary` e` assets:precompile:all` foram removidos. Em vez disso, use `assets:precompile`.
+* A opção `config.assets.compress` deve ser alterada para [`config.assets.js_compressor`][] como por exemplo:
 
-```ruby
-config.assets.js_compressor = :uglifier
-```
+    ```ruby
+    config.assets.js_compressor = :uglifier
+    ```
+
+[`config.assets.js_compressor`]: configuring.html#config-assets-js-compressor
 
 ### sass-rails
 
-* `asset-url` with two arguments is deprecated. For example: `asset-url("rails.png", image)` becomes `asset-url("rails.png")`.
+* `asset-url` com dois argumentos está deprecado. Por exemplo: `asset-url("rails.png", image)` torna-se `asset-url("rails.png")`.
 
-Upgrading from Rails 3.1 to Rails 3.2
+Atualizando do Rails 3.1 para o Rails 3.2
 -------------------------------------
 
-If your application is currently on any version of Rails older than 3.1.x, you
-should upgrade to Rails 3.1 before attempting an update to Rails 3.2.
+Se sua aplicação está atualmente em qualquer versão do Rails anterior a 3.1.x, você
+deve atualizar para o Rails 3.1 antes de tentar uma atualização para o Rails 3.2.
 
-The following changes are meant for upgrading your application to the latest
-3.2.x version of Rails.
+As seguintes mudanças são destinadas a atualizar sua aplicação para a mais recente
+versão 3.2.x do Rails.
 
 ### Gemfile
 
-Make the following changes to your `Gemfile`.
+Faça as seguintes alterações em seu `Gemfile`.
 
 ```ruby
 gem 'rails', '3.2.21'
@@ -1822,120 +2353,120 @@ end
 
 ### config/environments/development.rb
 
-There are a couple of new configuration settings that you should add to your development environment:
+Existem algumas novas definições de configuração que você deve adicionar ao seu ambiente de desenvolvimento:
 
 ```ruby
-# Raise exception on mass assignment protection for Active Record models
+# Levantar exceção na proteção de atribuição em massa para models Active Record
 config.active_record.mass_assignment_sanitizer = :strict
 
-# Log the query plan for queries taking more than this (works
-# with SQLite, MySQL, and PostgreSQL)
+# Registrar o log da query para consultas que ocupem mais do que isso (funciona
+# com SQLite, MySQL e PostgreSQL)
 config.active_record.auto_explain_threshold_in_seconds = 0.5
 ```
 
 ### config/environments/test.rb
 
-The `mass_assignment_sanitizer` configuration setting should also be added to `config/environments/test.rb`:
+A definição de configuração `mass_assignment_sanitizer` também deve ser adicionada a`config/environment/test.rb`:
 
 ```ruby
-# Raise exception on mass assignment protection for Active Record models
+# Levantar exceção na proteção de atribuição em massa para models Active Record
 config.active_record.mass_assignment_sanitizer = :strict
 ```
 
 ### vendor/plugins
 
-Rails 3.2 deprecates `vendor/plugins` and Rails 4.0 will remove them completely. While it's not strictly necessary as part of a Rails 3.2 upgrade, you can start replacing any plugins by extracting them to gems and adding them to your `Gemfile`. If you choose not to make them gems, you can move them into, say, `lib/my_plugin/*` and add an appropriate initializer in `config/initializers/my_plugin.rb`.
+O Rails 3.2 depreca `vendor/plugins` e o Rails 4.0 irá removê-los completamente. Embora não seja estritamente necessário como parte de uma atualização do Rails 3.2, você pode começar a substituir quaisquer *plugins*, extraindo-os para *gems* e adicionando-os ao seu `Gemfile`. Se você escolher não torná-los *gems*, você pode movê-los para, digamos, `lib/my_plugin/*` e adicionar um inicializador apropriado em `config/initializers/my_plugin.rb`.
 
 ### Active Record
 
-Option `:dependent => :restrict` has been removed from `belongs_to`. If you want to prevent deleting the object if there are any associated objects, you can set `:dependent => :destroy` and return `false` after checking for existence of association from any of the associated object's destroy callbacks.
+A opção `:dependent =>: restrict` foi removida de `belongs_to`. Se você quiser evitar a exclusão do objeto se houver algum objeto associado, você pode definir `:dependent => :destroy` e retornar `false` após verificar a existência de associação de qualquer retorno de chamada de destruição do objeto associado.
 
-Upgrading from Rails 3.0 to Rails 3.1
+Atualizando do Rails 3.0 para o Rails 3.1
 -------------------------------------
 
-If your application is currently on any version of Rails older than 3.0.x, you should upgrade to Rails 3.0 before attempting an update to Rails 3.1.
+Se sua aplicação estiver em qualquer versão do Rails anterior a 3.0.x, você deve atualizar para o Rails 3.0 antes de tentar uma atualização para o Rails 3.1.
 
-The following changes are meant for upgrading your application to Rails 3.1.12, the last 3.1.x version of Rails.
+As seguintes mudanças são destinadas para atualizar sua aplicação para o Rails 3.1.12, a última versão 3.1.x do Rails.
 
 ### Gemfile
 
-Make the following changes to your `Gemfile`.
+Faça as seguintes mudanças no seu `Gemfile`.
 
 ```ruby
 gem 'rails', '3.1.12'
 gem 'mysql2'
 
-# Needed for the new asset pipeline
+# Necessário para o novo pipeline de assets
 group :assets do
   gem 'sass-rails',   '~> 3.1.7'
   gem 'coffee-rails', '~> 3.1.1'
   gem 'uglifier',     '>= 1.0.3'
 end
 
-# jQuery is the default JavaScript library in Rails 3.1
+# jQuery é a biblioteca JavaScript padrão no Rails 3.1
 gem 'jquery-rails'
 ```
 
 ### config/application.rb
 
-The asset pipeline requires the following additions:
+A pipeline de *assets* requer as seguintes adições:
 
 ```ruby
 config.assets.enabled = true
 config.assets.version = '1.0'
 ```
 
-If your application is using an "/assets" route for a resource you may want to change the prefix used for assets to avoid conflicts:
+Se sua aplicação estiver usando uma rota "/assets" para um `resource`, você pode querer alterar o prefixo usado para *assets* para evitar conflitos:
 
 ```ruby
-# Defaults to '/assets'
+# O padrão é '/assets'
 config.assets.prefix = '/asset-files'
 ```
 
 ### config/environments/development.rb
 
-Remove the RJS setting `config.action_view.debug_rjs = true`.
+Remova a configuração RJS `config.action_view.debug_rjs = true`.
 
-Add these settings if you enable the asset pipeline:
+Adicione essas configurações se você habilitar a pipeline de *assets*:
 
 ```ruby
-# Do not compress assets
+# Não comprimir os assets
 config.assets.compress = false
 
-# Expands the lines which load the assets
+# Expande as linhas que carregam os assets
 config.assets.debug = true
 ```
 
 ### config/environments/production.rb
 
-Again, most of the changes below are for the asset pipeline. You can read more about these in the [Asset Pipeline](asset_pipeline.html) guide.
+Novamente, a maioria das mudanças abaixo são para a pipeline de *assets*. Você pode ler mais sobre isso no guia [Asset Pipeline](asset_pipeline.html).
 
 ```ruby
-# Compress JavaScripts and CSS
+# Comprime JavaScripts e CSS
 config.assets.compress = true
 
-# Don't fallback to assets pipeline if a precompiled asset is missed
+# Não use a compilação da pipeline de assets se um ativo pré-compilado for perdido
 config.assets.compile = false
 
-# Generate digests for assets URLs
+# Gera uma URLs especifica para assets
 config.assets.digest = true
 
-# Defaults to Rails.root.join("public/assets")
+# O padrão é Rails.root.join("public/assets")
 # config.assets.manifest = YOUR_PATH
 
-# Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+# Pré-compilar recursos adicionais (application.js, application.css e todos os não JS/CSS já foram adicionados)
 # config.assets.precompile += %w( admin.js admin.css )
 
-# Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
+# Force todo o acesso da aplicação por SSL, use Strict-Transport-Security e use cookies seguros.
 # config.force_ssl = true
 ```
 
 ### config/environments/test.rb
 
-You can help test performance with these additions to your test environment:
+Você pode ajudar a testar o desempenho com estas adições ao seu ambiente de teste:
 
 ```ruby
-# Configure static asset server for tests with Cache-Control for performance
+# Configure o servidor de ativos estáticos para testes com Cache-Control para melhor performance
 config.public_file_server.enabled = true
 config.public_file_server.headers = {
   'Cache-Control' => 'public, max-age=3600'
@@ -1944,19 +2475,19 @@ config.public_file_server.headers = {
 
 ### config/initializers/wrap_parameters.rb
 
-Add this file with the following contents, if you wish to wrap parameters into a nested hash. This is on by default in new applications.
+Adicione este arquivo com o seguinte conteúdo, se desejar agrupar os parâmetros em um *hash* aninhado. Isso está ativado por padrão em novas aplicações.
 
 ```ruby
-# Be sure to restart your server when you modify this file.
-# This file contains settings for ActionController::ParamsWrapper which
-# is enabled by default.
+# Certifique-se de reiniciar o servidor ao modificar este arquivo.
+# Este arquivo contém configurações para ActionController::ParamsWrapper que
+# está habilitado por padrão.
 
-# Enable parameter wrapping for JSON. You can disable this by setting :format to an empty array.
+# Habilite o agrupamento de parâmetros para JSON. Você pode desabilitar isso configurando: format para um array vazio.
 ActiveSupport.on_load(:action_controller) do
   wrap_parameters format: [:json]
 end
 
-# Disable root element in JSON by default.
+# Desative o elemento raiz em JSON por padrão.
 ActiveSupport.on_load(:active_record) do
   self.include_root_in_json = false
 end
@@ -1964,10 +2495,10 @@ end
 
 ### config/initializers/session_store.rb
 
-You need to change your session key to something new, or remove all sessions:
+Você precisa alterar sua chave de sessão para algo novo ou remover todas as sessões:
 
 ```ruby
-# in config/initializers/session_store.rb
+# em config/initializers/session_store.rb
 AppName::Application.config.session_store :cookie_store, key: 'SOMETHINGNEW'
 ```
 
@@ -1977,6 +2508,6 @@ or
 $ bin/rake db:sessions:clear
 ```
 
-### Remove :cache and :concat options in asset helpers references in views
+### Remover opções de :cache e :concat em referências de *helpers* para *assets* em *views*
 
-* With the Asset Pipeline the :cache and :concat options aren't used anymore, delete these options from your views.
+* Com a *Asset Pipeline*, as opções :cache e :concat não são mais usadas, exclua essas opções de suas *views*.

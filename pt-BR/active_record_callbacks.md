@@ -1,34 +1,38 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
 Active Record Callbacks
 =======================
 
-This guide teaches you how to hook into the life cycle of your Active Record
-objects.
+Este guia ensina como se conectar ao ciclo de vida de seus objetos _Active
+Record_.
 
-After reading this guide, you will know:
+Depois de ler esse guia, você saberá:
 
-* The life cycle of Active Record objects.
-* How to create callback methods that respond to events in the object life cycle.
-* How to create special classes that encapsulate common behavior for your callbacks.
+* O ciclo de vida de objetos _Active Record_.
+* Como criar métodos de _callback_ que respondem a eventos no ciclo de vida do
+  objeto.
+* Como criar classes especiais que encapsulam o comportamento comum para seus
+  _callbacks_.
 
 --------------------------------------------------------------------------------
 
-The Object Life Cycle
+O Ciclo de Vida do Objeto
 ---------------------
 
-During the normal operation of a Rails application, objects may be created, updated, and destroyed. Active Record provides hooks into this *object life cycle* so that you can control your application and its data.
+Durante a operação normal de uma aplicação Rails,
+objetos podem ser criados, atualizados e destruídos. O *Active Record* fornece *hooks* para este ciclo de vida do objeto para que você possa controlar sua aplicação e seus dados.
 
-Callbacks allow you to trigger logic before or after an alteration of an object's state.
+*Callbacks* permitem você desencadear a lógica antes ou depois de uma alteração do estado de um objeto.
 
-Callbacks Overview
+Visão geral de *Callbacks*
 ------------------
 
-Callbacks are methods that get called at certain moments of an object's life cycle. With callbacks it is possible to write code that will run whenever an Active Record object is created, saved, updated, deleted, validated, or loaded from the database.
+*Callbacks* são métodos que são chamados em certos momentos do ciclo de vida de um objeto. Com *callbacks* é possível escrever código que rodará sempre que um objeto *Active Record* é criado, salvo, atualizado, deletado, validado ou carregado de um banco de dados.
 
-### Callback Registration
+### Registro de *Callback* 
 
-In order to use the available callbacks, you need to register them. You can implement the callbacks as ordinary methods and use a macro-style class method to register them as callbacks:
+Para usar os *callbacks* disponíveis, você precisa registrá-los. Você pode implementar os *callbacks* como métodos comuns e usar o método *macro-style* de uma classe para registrá-los como *callbacks*:
 
 ```ruby
 class User < ApplicationRecord
@@ -45,7 +49,7 @@ class User < ApplicationRecord
 end
 ```
 
-The macro-style class methods can also receive a block. Consider using this style if the code inside your block is so short that it fits in a single line:
+Os métodos *macro-style* de uma classe podem também receber um bloco. Considere usar esse estilo se o código dentro do seu bloco é tão curto que cabe em uma linha: 
 
 ```ruby
 class User < ApplicationRecord
@@ -57,7 +61,7 @@ class User < ApplicationRecord
 end
 ```
 
-Callbacks can also be registered to only fire on certain life cycle events:
+*Callbacks* também podem ser registrados para rodar apenas em certos eventos do ciclo de vida:
 
 ```ruby
 class User < ApplicationRecord
@@ -77,57 +81,77 @@ class User < ApplicationRecord
 end
 ```
 
-It is considered good practice to declare callback methods as private. If left public, they can be called from outside of the model and violate the principle of object encapsulation.
+É considerado uma boa prática declarar métodos de *callback* como privados. Se deixados como públicos, podem ser chamados de fora do *model* e violar o princípio de encapsulamento de um objeto.
 
-Available Callbacks
+Callbacks Disponíveis
 -------------------
 
-Here is a list with all the available Active Record callbacks, listed in the same order in which they will get called during the respective operations:
+Aqui está uma lista com todos os *Active Record callbacks*, listados na mesma ordem na qual eles serão chamados durante as respectivas operações: 
 
-### Creating an Object
+### Criando um Objeto
 
-* `before_validation`
-* `after_validation`
-* `before_save`
-* `around_save`
-* `before_create`
-* `around_create`
-* `after_create`
-* `after_save`
-* `after_commit/after_rollback`
+* [`before_validation`][]
+* [`after_validation`][]
+* [`before_save`][]
+* [`around_save`][]
+* [`before_create`][]
+* [`around_create`][]
+* [`after_create`][]
+* [`after_save`][]
+* [`after_commit`][] / [`after_rollback`][]
 
-### Updating an Object
+[`after_create`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_create
+[`after_commit`]: https://api.rubyonrails.org/classes/ActiveRecord/Transactions/ClassMethods.html#method-i-after_commit
+[`after_rollback`]: https://api.rubyonrails.org/classes/ActiveRecord/Transactions/ClassMethods.html#method-i-after_rollback
+[`after_save`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_save
+[`after_validation`]: https://api.rubyonrails.org/classes/ActiveModel/Validations/Callbacks/ClassMethods.html#method-i-after_validation
+[`around_create`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-around_create
+[`around_save`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-around_save
+[`before_create`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-before_create
+[`before_save`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-before_save
+[`before_validation`]: https://api.rubyonrails.org/classes/ActiveModel/Validations/Callbacks/ClassMethods.html#method-i-before_validation
 
-* `before_validation`
-* `after_validation`
-* `before_save`
-* `around_save`
-* `before_update`
-* `around_update`
-* `after_update`
-* `after_save`
-* `after_commit/after_rollback`
+### Atualizando um Objeto
 
-### Destroying an Object
+* [`before_validation`][]
+* [`after_validation`][]
+* [`before_save`][]
+* [`around_save`][]
+* [`before_update`][]
+* [`around_update`][]
+* [`after_update`][]
+* [`after_save`][]
+* [`after_commit`][] / [`after_rollback`][]
 
-* `before_destroy`
-* `around_destroy`
-* `after_destroy`
-* `after_commit/after_rollback`
+[`after_update`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_update
+[`around_update`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-around_update
+[`before_update`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-before_update
 
-WARNING. `after_save` runs both on create and update, but always _after_ the more specific callbacks `after_create` and `after_update`, no matter the order in which the macro calls were executed.
+### Destruindo um Objeto 
 
-NOTE: `before_destroy` callbacks should be placed before `dependent: :destroy`
-associations (or use the `prepend: true` option), to ensure they execute before
-the records are deleted by `dependent: :destroy`.
+* [`before_destroy`][]
+* [`around_destroy`][]
+* [`after_destroy`][]
+* [`after_commit`][] / [`after_rollback`][]
 
-### `after_initialize` and `after_find`
+[`after_destroy`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_destroy
+[`around_destroy`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-around_destroy
+[`before_destroy`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-before_destroy
 
-The `after_initialize` callback will be called whenever an Active Record object is instantiated, either by directly using `new` or when a record is loaded from the database. It can be useful to avoid the need to directly override your Active Record `initialize` method.
+WARNING. `after_save` roda tanto na criação quanto na atualização, mas sempre *depois* de *callbacks* mais específicos `after_create` e `after_update`, não importa a ordem que uma chamada macro foi executada.
 
-The `after_find` callback will be called whenever Active Record loads a record from the database. `after_find` is called before `after_initialize` if both are defined.
+WARNING. Evite atualizar ou salvar atributos em *callbacks*. Por exemplo, não chame `update(attribute: "value")` em um *callback*. Isso pode alterar o estado do *model* e resultar em efeitos colaterais inesperados durante a confirmação. Em vez disso, você pode atribuir valores diretamente com segurança (por exemplo, `self.attribute = "value"`) em `before_create` / `before_update` ou *callbacks* anteriores.
 
-The `after_initialize` and `after_find` callbacks have no `before_*` counterparts, but they can be registered just like the other Active Record callbacks.
+NOTE: Os *callbacks* `before_destroy` devem ser posicionados antes de associações `dependent: :destroy` (ou use a opção `prepend: true`), para garantir que executem antes dos registros serem deletados pelo `dependent: :destroy`.
+
+### `after_initialize` e `after_find`
+
+O *callback* [`after_initialize`][] será chamado sempre que um objeto *Active Record* for instanciado, usando diretamente `new` ou quando um registro é carregado do banco de dados.
+Isto pode ser útil para evitar a necessidade de substituir diretamente seu método `initialize` do *Active Record*.
+
+O *callback* [`after_find`][] será chamado sempre que o *Active Record* carregar um registro do banco de dados. `after_find` é chamado antes de `after_initialize` se ambos estiverem definidos. 
+
+Os *callbacks* `after_initialize` e `after_find` não possuem complementos `before_*`, mas podem ser registrados como os outros *callbacks* de *Active Record*.
 
 ```ruby
 class User < ApplicationRecord
@@ -139,20 +163,25 @@ class User < ApplicationRecord
     puts "You have found an object!"
   end
 end
+```
 
->> User.new
+```irb
+irb> User.new
 You have initialized an object!
 => #<User id: nil>
 
->> User.first
+irb> User.first
 You have found an object!
 You have initialized an object!
 => #<User id: 1>
 ```
 
+[`after_find`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_find
+[`after_initialize`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_initialize
+
 ### `after_touch`
 
-The `after_touch` callback will be called whenever an Active Record object is touched.
+O *callback* [`after_touch`][] será chamado sempre que um objeto *Active Record* for alcançado.
 
 ```ruby
 class User < ApplicationRecord
@@ -160,16 +189,18 @@ class User < ApplicationRecord
     puts "You have touched an object"
   end
 end
+```
 
->> u = User.create(name: 'Kuldeep')
+```irb
+irb> u = User.create(name: 'Kuldeep')
 => #<User id: 1, name: "Kuldeep", created_at: "2013-11-25 12:17:49", updated_at: "2013-11-25 12:17:49">
 
->> u.touch
+irb> u.touch
 You have touched an object
 => true
 ```
 
-It can be used along with `belongs_to`:
+Pode ser usado junto de `belongs_to`:
 
 ```ruby
 class Employee < ApplicationRecord
@@ -188,27 +219,31 @@ class Company < ApplicationRecord
       puts 'Employee/Company was touched'
     end
 end
+```
 
->> @employee = Employee.last
+```irb
+irb> @employee = Employee.last
 => #<Employee id: 1, company_id: 1, created_at: "2013-11-25 17:04:22", updated_at: "2013-11-25 17:05:05">
 
-# triggers @employee.company.touch
->> @employee.touch
+irb> @employee.touch # também executa @employee.company.touch
 An Employee was touched
 Employee/Company was touched
 => true
 ```
 
-Running Callbacks
+[`after_touch`]: https://api.rubyonrails.org/classes/ActiveRecord/Callbacks/ClassMethods.html#method-i-after_touch
+
+Executando *Callbacks*
 -----------------
 
-The following methods trigger callbacks:
+Os métodos a seguir acionam *callbacks*:
 
 * `create`
 * `create!`
 * `destroy`
 * `destroy!`
 * `destroy_all`
+* `destroy_by`
 * `save`
 * `save!`
 * `save(validate: false)`
@@ -219,7 +254,7 @@ The following methods trigger callbacks:
 * `update!`
 * `valid?`
 
-Additionally, the `after_find` callback is triggered by the following finder methods:
+Adicionalmente, o *callback* `after_find` é acionado pelos seguintes métodos de localização:
 
 * `all`
 * `first`
@@ -230,45 +265,53 @@ Additionally, the `after_find` callback is triggered by the following finder met
 * `find_by_sql`
 * `last`
 
-The `after_initialize` callback is triggered every time a new object of the class is initialized.
+O *callback* `after_initialize`  é acionado toda vez que um novo objeto da classe é inicializado. 
 
-NOTE: The `find_by_*` and `find_by_*!` methods are dynamic finders generated automatically for every attribute. Learn more about them at the [Dynamic finders section](active_record_querying.html#dynamic-finders)
+NOTE: Os métodos `find_by_*` e `find_by_*!` são localizadores dinâmicos gerados automaticamente para cada atributo. Aprenda mais sobre eles na [seção de Localizadores Dinâmicos](active_record_querying.html#localizadores-dinamicos) 
 
-Skipping Callbacks
+Ignorando *Callbacks*
 ------------------
 
-Just as with validations, it is also possible to skip callbacks by using the following methods:
+Assim como nas validações, também é possível ignorar os *callbacks* usando os seguintes métodos:
 
 * `decrement!`
 * `decrement_counter`
 * `delete`
 * `delete_all`
+* `delete_by`
 * `increment!`
 * `increment_counter`
+* `insert`
+* `insert!`
+* `insert_all`
+* `insert_all!`
+* `touch_all`
 * `update_column`
 * `update_columns`
 * `update_all`
 * `update_counters`
+* `upsert`
+* `upsert_all`
 
-These methods should be used with caution, however, because important business rules and application logic may be kept in callbacks. Bypassing them without understanding the potential implications may lead to invalid data.
+Contudo, esses métodos devem ser usados com cautela, porque regras de negócio importantes e lógica da aplicação podem ser mantidos nos *callbacks*. Contorná-los sem entender as potenciais implicações pode levar a dados inválidos.
 
-Halting Execution
+Interrompendo uma Execução
 -----------------
 
-As you start registering new callbacks for your models, they will be queued for execution. This queue will include all your model's validations, the registered callbacks, and the database operation to be executed.
+Quando você começar a registrar novos *callbacks* para seus *models*, eles serão enfileirados para a execução. Esta fila incluirá todas as validações do seu *model*, os *callbacks* registrados e a operação do banco de dados a ser executada.
 
-The whole callback chain is wrapped in a transaction. If any callback raises an exception, the execution chain gets halted and a ROLLBACK is issued. To intentionally stop a chain use:
+Toda a cadeia do *callback* é empacotada em uma transação. Se algum *callback* lança uma exceção, a cadeia de execução é interrompida e um *ROLLBACK* é emitido. Para interromper intencionalmente uma cadeia, use:
 
 ```ruby
 throw :abort
 ```
 
-WARNING. Any exception that is not `ActiveRecord::Rollback` or `ActiveRecord::RecordInvalid` will be re-raised by Rails after the callback chain is halted. Raising an exception other than `ActiveRecord::Rollback` or `ActiveRecord::RecordInvalid` may break code that does not expect methods like `save` and `update` (which normally try to return `true` or `false`) to raise an exception.
+WARNING: Qualquer exceção que não seja `ActiveRecord::Rollback` ou `ActiveRecord::RecordInvalid` serão lançadas novamente pelo Rails após a cadeia do *callback* ser interrompida. Lançar uma outra exceção que não `ActiveRecord::Rollback` ou `ActiveRecord::RecordInvalid` pode quebrar um código que não espera por métodos como `save` ou `update` (os quais normalmente tentam retornar `true` ou `false`) para lançar uma exceção.
 
-Relational Callbacks
+*Callbacks* Relacionais
 --------------------
 
-Callbacks work through model relationships, and can even be defined by them. Suppose an example where a user has many articles. A user's articles should be destroyed if the user is destroyed. Let's add an `after_destroy` callback to the `User` model by way of its relationship to the `Article` model:
+*Callbacks* trabalham através de relacionamentos dos *models* e podem até ser definidos por eles. Suponha um exemplo onde um usuário tenha muitos artigos. Um artigo de um usuário deve ser apagado se o usuario for apagado. Vamos adicionar um *callback* `after_destroy` para o *model* `User` por meio de seu relacionamento com o *model* `Article`:
 
 ```ruby
 class User < ApplicationRecord
@@ -282,24 +325,40 @@ class Article < ApplicationRecord
     puts 'Article destroyed'
   end
 end
+```
 
->> user = User.first
+```irb
+irb> user = User.first
 => #<User id: 1>
->> user.articles.create!
+irb> user.articles.create!
 => #<Article id: 1, user_id: 1>
->> user.destroy
+irb> user.destroy
 Article destroyed
 => #<User id: 1>
 ```
 
-Conditional Callbacks
----------------------
+_Callbacks_ Condicionais
+------------------------
 
-As with validations, we can also make the calling of a callback method conditional on the satisfaction of a given predicate. We can do this using the `:if` and `:unless` options, which can take a symbol, a `Proc` or an `Array`. You may use the `:if` option when you want to specify under which conditions the callback **should** be called. If you want to specify the conditions under which the callback **should not** be called, then you may use the `:unless` option.
+Tal como acontece com as validações, também podemos tornar a chamada de um
+método de _callback_ condicional à satisfação de um determinado predicado.
+Podemos fazer isso utilizando as opções `:if` e `:except`, que podemo recever um
+símbolo, uma `Proc` ou um `Array`. Você pode utilizar a opção `:if` quando
+quiser especificar sob quais condições o _callback_ **deve** ser chamado. Se
+você deseja especificar as condições sob as quais o _callback_ **não** deve ser
+chamado, você pode utilizar a opção `:unless`.
 
-### Using `:if` and `:unless` with a `Symbol`
 
-You can associate the `:if` and `:unless` options with a symbol corresponding to the name of a predicate method that will get called right before the callback. When using the `:if` option, the callback won't be executed if the predicate method returns false; when using the `:unless` option, the callback won't be executed if the predicate method returns true. This is the most common option. Using this form of registration it is also possible to register several different predicates that should be called to check if the callback should be executed.
+### Utilizando `:if` e `:unless` com um `Symbol`
+
+Você pode associar as opções `:if` e `:unless` com um _symbol_ correspondente ao
+nome de um método predicado que será chamado logo antes do _callback_. Ao
+utilizar a opção `:if`, o _callback_ não será executado se o método predicado
+retornar `false` (falso); ao utilizar a opção `:unless`, o _callback_ não será executado
+se o método predicado retornar `true` (verdadeiro). Esta é a opção mais comum.
+Utilizando esta forma de registro também é possível registrar vários predicados
+diferentes que devem ser chamado para verificar se o _callback_ deve ser
+executado.
 
 ```ruby
 class Order < ApplicationRecord
@@ -307,9 +366,10 @@ class Order < ApplicationRecord
 end
 ```
 
-### Using `:if` and `:unless` with a `Proc`
+### Utilizando `:if` e `:unless` com uma `Proc`
 
-It is possible to associate `:if` and `:unless` with a `Proc` object. This option is best suited when writing short validation methods, usually one-liners:
+É possível associar `:if` e `:unless` com um objeto `Proc`. Esta opção é mais
+adequada ao escrever métodos curtos de validação, geralmente de uma linha:
 
 ```ruby
 class Order < ApplicationRecord
@@ -318,7 +378,8 @@ class Order < ApplicationRecord
 end
 ```
 
-As the proc is evaluated in the context of the object, it is also possible to write this as:
+Como a _proc_ é avaliada no contexto do objeto, também é possível escrever isso
+como:
 
 ```ruby
 class Order < ApplicationRecord
@@ -326,37 +387,39 @@ class Order < ApplicationRecord
 end
 ```
 
-### Multiple Conditions for Callbacks
+### Usando :if e :unless juntos
 
-When writing conditional callbacks, it is possible to mix both `:if` and `:unless` in the same callback declaration:
-
-```ruby
-class Comment < ApplicationRecord
-  after_create :send_email_to_author, if: :author_wants_emails?,
-    unless: Proc.new { |comment| comment.article.ignore_comments? }
-end
-```
-
-### Combining Callback Conditions
-
-When multiple conditions define whether or not a callback should happen, an `Array` can be used. Moreover, you can apply both `:if` and `:unless` to the same callback.
+_callbacks_ condicionais, podem misturar `:if` e `:unless` na
+mesma declaração do _callback_:
 
 ```ruby
 class Comment < ApplicationRecord
-  after_create :send_email_to_author,
-    if: [Proc.new { |c| c.user.allow_send_email? }, :author_wants_emails?],
-    unless: Proc.new { |c| c.article.ignore_comments? }
+  before_save :filter_content,
+    if: Proc.new { forum.parental_control? },
+    unless: Proc.new { author.trusted? }
 end
 ```
 
-The callback only runs when all the `:if` conditions and none of the `:unless` conditions are evaluated to `true`.
+### Multiplas Condições de _Callback_
 
-Callback Classes
+As opções `:if` e `:unless` também aceitam um *array de procs* ou nomes de métodos como *symbols*:
+
+```ruby
+class Comment < ApplicationRecord
+  before_save :filter_content,
+    if: [:subject_to_parental_control?, :untrusted_author?]
+end
+```
+
+O _callback_ só é executado quando todas as condições `:if` e nenhuma das
+condições `:unless` retornarem `true`.
+
+Classes *Callback*
 ----------------
 
-Sometimes the callback methods that you'll write will be useful enough to be reused by other models. Active Record makes it possible to create classes that encapsulate the callback methods, so it becomes very easy to reuse them.
+Em algumas situações, os métodos de *Callback* que iremos escrever serão úteis para serem reutilizados por outros *models*. O *Active Record* possibilita a criação de classes que encapsulam os métodos *callback* , para que eles possam ser reutilizados.
 
-Here's an example where we create a class with an `after_destroy` callback for a `PictureFile` model:
+Aqui está um exemplo onde criamos uma classe com um *callback* `after_destroy` para o *model* `PictureFile`:
 
 ```ruby
 class PictureFileCallbacks
@@ -368,7 +431,7 @@ class PictureFileCallbacks
 end
 ```
 
-When declared inside a class, as above, the callback methods will receive the model object as a parameter. We can now use the callback class in the model:
+Quando declaramos dentro da classe, como foi feito acima, os métodos *callback* irão receber o *model* como parâmetro. Agora poderemos usar a classe *callback* no *model*:
 
 ```ruby
 class PictureFile < ApplicationRecord
@@ -376,7 +439,7 @@ class PictureFile < ApplicationRecord
 end
 ```
 
-Note that we needed to instantiate a new `PictureFileCallbacks` object, since we declared our callback as an instance method. This is particularly useful if the callbacks make use of the state of the instantiated object. Often, however, it will make more sense to declare the callbacks as class methods:
+Perceba que precisamos instanciar um novo objeto chamado `PictureFileCallbacks`, já que declaramos nosso *callback* como um método de instância. Particularmente, isso é útil se os *callbacks* fazem uso do estado do objeto instanciado. Porém fará mais sentido declarar os *callbacks* como métodos de classe com mais frequência:
 
 ```ruby
 class PictureFileCallbacks
@@ -388,7 +451,7 @@ class PictureFileCallbacks
 end
 ```
 
-If the callback method is declared this way, it won't be necessary to instantiate a `PictureFileCallbacks` object.
+Se o método *callback* é declarado dessa forma, não será necessário instanciar o objeto `PictureFileCallbacks`
 
 ```ruby
 class PictureFile < ApplicationRecord
@@ -396,14 +459,14 @@ class PictureFile < ApplicationRecord
 end
 ```
 
-You can declare as many callbacks as you want inside your callback classes.
+Você pode declarar dentro de suas classes *callback* quantos *callback* achar necessário.
 
-Transaction Callbacks
+*Callbacks* de Transação
 ---------------------
 
-There are two additional callbacks that are triggered by the completion of a database transaction: `after_commit` and `after_rollback`. These callbacks are very similar to the `after_save` callback except that they don't execute until after database changes have either been committed or rolled back. They are most useful when your active record models need to interact with external systems which are not part of the database transaction.
+Existem dois *callbacks* adicionais que são disparados quando se completa uma transação de banco de dados: [`after_commit`][] e [`after_rollback`][]. Estes *callbacks* são muito parecidos com o *callback* `after_save`, exceto que eles não são executados até que as mudanças no banco de dados sejam confirmadas ou desfeitas. Eles são mais úteis quando seus *active record models* precisam de interagir com sistemas externos que não fazem parte da transação do banco de dados.
 
-Consider, for example, the previous example where the `PictureFile` model needs to delete a file after the corresponding record is destroyed. If anything raises an exception after the `after_destroy` callback is called and the transaction rolls back, the file will have been deleted and the model will be left in an inconsistent state. For example, suppose that `picture_file_2` in the code below is not valid and the `save!` method raises an error.
+Considere, por exemplo, o exemplo anterior onde o *model* `PictureFile` precisa de apagar um arquivo depois que um registro correspondente é destruído. Se algo lançar uma exceção depois que o *callback* `after_destroy` for chamado e a transação for desfeita, o arquivo terá sido deletado e o *model* será deixado em um estado inconsistente. Por exemplo, suponha que `picture_file_2` no código abaixo não é valido e o método `save!` lança um erro.
 
 ```ruby
 PictureFile.transaction do
@@ -412,7 +475,7 @@ PictureFile.transaction do
 end
 ```
 
-By using the `after_commit` callback we can account for this case.
+Usando o *callback* `after_commit` nós podemos responder por esse caso.
 
 ```ruby
 class PictureFile < ApplicationRecord
@@ -426,15 +489,15 @@ class PictureFile < ApplicationRecord
 end
 ```
 
-NOTE: The `:on` option specifies when a callback will be fired. If you
-don't supply the `:on` option the callback will fire for every action.
+NOTE: A opção `:on` especifica quando um *callback* vai ser disparado. Se você
+não fornecer a opção `:on` o *callback* será disparado para cada ação.
 
-Since using `after_commit` callback only on create, update, or delete is
-common, there are aliases for those operations:
+Já que usar o *callback* `after_commit` para criar, atualizar ou deletar é
+comum, existem *aliases* para as operações:
 
-* `after_create_commit`
-* `after_update_commit`
-* `after_destroy_commit`
+* [`after_create_commit`][]
+* [`after_update_commit`][]
+* [`after_destroy_commit`][]
 
 ```ruby
 class PictureFile < ApplicationRecord
@@ -448,11 +511,11 @@ class PictureFile < ApplicationRecord
 end
 ```
 
-WARNING. When a transaction completes, the `after_commit` or `after_rollback` callbacks are called for all models created, updated, or destroyed within that transaction. However, if an exception is raised within one of these callbacks, the exception will bubble up and any remaining `after_commit` or `after_rollback` methods will _not_ be executed. As such, if your callback code could raise an exception, you'll need to rescue it and handle it within the callback in order to allow other callbacks to run.
+WARNING. Quando uma transação é completada, os *callbacks* `after_commit` ou `after_rollback` são chamados para todos os *models* criados, atualizados ou destruidos em uma transação. No entanto, se uma exceção é lançada em um desses *callbacks*, a exceção vai interromper a execução e quaisquer métodos restantes de `after_commit` ou `after_rollback` _não_ serão executados. Assim sendo, se o código do seu *callback* pode lançar uma exceção, você precisará recuperá-la e tratá-la dentro do *callback* para que outros callbacks possam ser executados.
 
-WARNING. The code executed within `after_commit` or `after_rollback` callbacks is itself not enclosed within a transaction.
+WARNING. O código executado dentro dos *callbacks* de `after_commit` ou `after_rollback` não está incluido em uma transação.
 
-WARNING. Using both `after_create_commit` and `after_update_commit` in the same model will only allow the last callback defined to take effect, and will override all others.
+WARNING. Usando ambos `after_create_commit` e `after_update_commit` com o mesmo nome de método só permitirá que o último retorno de chamada definido tenha efeito, pois ambos são internamente *alias* para `after_commit` que substitui os retornos de chamada definidos anteriormente com o mesmo nome de método.
 
 ```ruby
 class User < ApplicationRecord
@@ -460,38 +523,43 @@ class User < ApplicationRecord
   after_update_commit :log_user_saved_to_db
 
   private
-  def log_user_saved_to_db
-    puts 'User was saved to database'
-  end
+    def log_user_saved_to_db
+        puts 'User was saved to database'
+    end
 end
-
-# prints nothing
->> @user = User.create
-
-# updating @user
->> @user.save
-=> User was saved to database
 ```
 
-There is also an alias for using the `after_commit` callback for both create and update together:
+```irb
+irb> @user = User.create # não imprime nada
 
-* `after_save_commit`
+irb> @user.save # atualizando @user
+User was saved to database
+```
+
+Existe também um *alias* para o usar o *callback* `after_commit`, juntamente, tanto para criar quanto para atualizar:
+
+* [`after_save_commit`][]
 
 ```ruby
 class User < ApplicationRecord
   after_save_commit :log_user_saved_to_db
 
   private
-  def log_user_saved_to_db
-    puts 'User was saved to database'
-  end
+    def log_user_saved_to_db
+        puts 'User was saved to database'
+    end
 end
-
-# creating a User
->> @user = User.create
-=> User was saved to database
-
-# updating @user
->> @user.save
-=> User was saved to database
 ```
+
+```irb
+irb> @user = User.create # criando um Usuário
+User was saved to database
+
+irb> @user.save # atualizando o Usuário @user
+User was saved to database
+```
+
+[`after_create_commit`]: https://api.rubyonrails.org/classes/ActiveRecord/Transactions/ClassMethods.html#method-i-after_create_commit
+[`after_destroy_commit`]: https://api.rubyonrails.org/classes/ActiveRecord/Transactions/ClassMethods.html#method-i-after_destroy_commit
+[`after_save_commit`]: https://api.rubyonrails.org/classes/ActiveRecord/Transactions/ClassMethods.html#method-i-after_save_commit
+[`after_update_commit`]: https://api.rubyonrails.org/classes/ActiveRecord/Transactions/ClassMethods.html#method-i-after_update_commit

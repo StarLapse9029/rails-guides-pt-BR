@@ -1,0 +1,26 @@
+diff --git i/guides/rails_guides/markdown.rb w/guides/rails_guides/markdown.rb
+index c0e456bf5f..c7144440f8 100644
+--- i/guides/rails_guides/markdown.rb
++++ w/guides/rails_guides/markdown.rb
+@@ -109,7 +109,7 @@ def generate_structure
+                   hierarchy = hierarchy[0, 3] + [node]
+                 end
+ 
+-                node[:id] = dom_id(hierarchy) unless node[:id]
++                node[:id] = dom_id(hierarchy).parameterize unless node[:id]
+                 node.inner_html = "#{node_index(hierarchy)} #{node.inner_html}"
+               end
+             end
+diff --git i/guides/rails_guides/markdown/renderer.rb w/guides/rails_guides/markdown/renderer.rb
+index b1667b25a8..47dd6bd538 100644
+--- i/guides/rails_guides/markdown/renderer.rb
++++ w/guides/rails_guides/markdown/renderer.rb
+@@ -17,7 +17,7 @@ def block_code(code, language)
+         <<~HTML
+           <div class="code_container">
+           <pre><code class="highlight #{lexer_language(language)}">#{formatted_code}</code></pre>
+-          <button class="clipboard-button" data-clipboard-text="#{clipboard_content(code, language)}">Copy</button>
++          <button class="clipboard-button" data-clipboard-text="#{clipboard_content(code, language)}">Copiar</button>
+           </div>
+         HTML
+       end

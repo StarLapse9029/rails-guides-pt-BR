@@ -1,3 +1,4 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
 Active Storage Overview
@@ -19,33 +20,52 @@ After reading this guide, you will know:
 
 --------------------------------------------------------------------------------
 
-What is Active Storage?
+O que é *Active Storage*?
 -----------------------
 
-Active Storage facilitates uploading files to a cloud storage service like
-Amazon S3, Google Cloud Storage, or Microsoft Azure Storage and attaching those
-files to Active Record objects. It comes with a local disk-based service for
-development and testing and supports mirroring files to subordinate services for
-backups and migrations.
+O *Active Storage* facilita o *upload* de arquivos para um serviço de armazenamento como
+*Amazon S3*, *Google Cloud Storage*, ou *Microsoft Azure Storage* e anexa esses
+arquivos para objetos *Active Record*. Ele vem com um serviço local baseado em disco para
+desenvolvimento e teste e oferece suporte a espelhamento de arquivos em serviços destinados para
+*backups* e *migrations*.
 
-Using Active Storage, an application can transform image uploads with
-[ImageMagick](https://www.imagemagick.org), generate image representations of
-non-image uploads like PDFs and videos, and extract metadata from arbitrary
-files.
+Usando o *Active Storage*, uma aplicação pode transformar *uploads* de imagens ou gerar
+representações de *uploads* que não são imagens, como PDFs e vídeos, e extrair metadados de
+arquivos arbitrários.
 
-## Setup
+### Requirements
 
-Active Storage uses two tables in your application’s database named
-`active_storage_blobs` and `active_storage_attachments`. After creating a new
-application (or upgrading your application to Rails 5.2), run
-`rails active_storage:install` to generate a migration that creates these
-tables. Use `rails db:migrate` to run the migration.
+Vários recursos do *Active Storage* dependem de softwares de terceiros que o Rails
+não instala e devem ser instalados separadamente:
 
-WARNING: `active_storage_attachments` is a polymorphic join table that stores your model's class name. If your model's class name changes, you will need to run a migration on this table to update the underlying `record_type` to your model's new class name.
+* [libvips](https://github.com/libvips/libvips) v8.6+ ou [ImageMagick](https://imagemagick.org/index.php) para análise de imagens e modificações
+* [ffmpeg](http://ffmpeg.org/) v3.4+ para preview de vídeo e ffprobe para análise de vídeo/áudio
+* [poppler](https://poppler.freedesktop.org/) ou [muPDF](https://mupdf.com/) para pre-visualização de PDF
 
-Declare Active Storage services in `config/storage.yml`. For each service your
-application uses, provide a name and the requisite configuration. The example
-below declares three services named `local`, `test`, and `amazon`:
+Análise e transformações de imagem também requerem a *gem* `image_processing`. Descomente-a em seu `Gemfile` ou adicione-a se necessário:
+
+```ruby
+gem "image_processing", ">= 1.2"
+```
+
+TIP: Comparado a libvips, a ImageMagick é mais conhecida e mais amplamente disponível. No entanto, libvips pode ser [até 10x mais rápido e consumir 1/10 da memória](https://github.com/libvips/libvips/wiki/Speed-and-memory-use). Para arquivos JPEG, isso pode ser melhorado substituindo `libjpeg-dev` por `libjpeg-turbo-dev`, que é [2-7x mais rápido](https://libjpeg-turbo.org/About/Performance).
+
+WARNING: Antes de instalar e usar software de terceiros, certifique-se de compreender as implicações de licenciamento de fazê-lo. O MuPDF, em particular, é licenciado sob AGPL e requer uma licença comercial para alguns usos.
+
+## Configuração
+
+O *Active Storage* usa três tabelas no banco de dados da sua aplicação chamadas
+`active_storage_blobs`, `active_storage_variant_records` e `active_storage_attachments`. Depois de criar uma nova aplicação (ou atualizar sua aplicação para Rails 5.2), execute
+`bin/rails active_storage:install` para gerar uma *migration* que cria essas
+tabelas. Use `bin/rails db:migrate` para executar a *migration*.
+
+WARNING: `active_storage_attachments` é uma tabela de junção (*join table*) polimórfica que armazena o nome da classe do seu *model*. Se o nome da classe do seu *model* mudar, você precisará executar uma *migration* nesta tabela para atualizar o `record_type` implícito para o novo nome da classe do seu *model*.
+
+WARNING: Se você estiver usando UUIDs em vez de inteiros como a chave primária em seus *models*, você precisará alterar o tipo de coluna de `active_storage_attachments.record_id` e ` active_storage_variant_records.id` na migração.
+
+Declare os serviços do *Active Storage* em `config/storage.yml`. Para cada serviço que sua
+aplicação usa, forneça um nome e a configuração necessária. O exemplo
+abaixo declara três serviços chamados `local`, `test` e `amazon`:
 
 ```yaml
 local:
@@ -76,7 +96,7 @@ development environment, you would add the following to
 config.active_storage.service = :local
 ```
 
-To use the Amazon S3 service in production, you add the following to
+Para usar o serviço S3 em produção, você adiciona o seguinte ao
 `config/environments/production.rb`:
 
 ```ruby
@@ -84,7 +104,7 @@ To use the Amazon S3 service in production, you add the following to
 config.active_storage.service = :amazon
 ```
 
-To use the test service when testing, you add the following to
+Para usar o serviço *test* durante o teste, você adiciona o seguinte ao
 `config/environments/test.rb`:
 
 ```ruby
@@ -92,12 +112,35 @@ To use the test service when testing, you add the following to
 config.active_storage.service = :test
 ```
 
-Continue reading for more information on the built-in service adapters (e.g.
-`Disk` and `S3`) and the configuration they require.
+Continue lendo para obter mais informações sobre os adaptadores de serviço integrados (por exemplo,
+`Disk` e `S3`) e configurações que ele exigem.
 
-### Disk Service
+NOTE: Os arquivos de configuração específicos do ambiente terão precedência:
+em produção, por exemplo, o arquivo `config/storage/production.yml` (se existente)
+terá precedência sobre o arquivo `config/storage.yml`.
 
-Declare a Disk service in `config/storage.yml`:
+É recomendado usar `Rails.env` nos nomes dos buckets para reduzir ainda mais o risco de destruição acidental de dados de produção.
+
+```yaml
+amazon:
+  service: S3
+  # ...
+  bucket: your_own_bucket-<%= Rails.env %>
+
+google:
+  service: GCS
+  # ...
+  bucket: your_own_bucket-<%= Rails.env %>
+
+azure:
+  service: AzureStorage
+  # ...
+  container: your_container_name-<%= Rails.env %>
+```
+
+### Serviço Disk
+
+Declare um serviço Disk em `config/storage.yml`:
 
 ```yaml
 local:
@@ -105,9 +148,9 @@ local:
   root: <%= Rails.root.join("storage") %>
 ```
 
-### Amazon S3 Service
+### Serviço S3 (Amazon S3 e APIs compatíveis com S3)
 
-Declare an S3 service in `config/storage.yml`:
+Para conectar ao Amazon S3, declare um serviço S3 em `config/storage.yml`:
 
 ```yaml
 amazon:
@@ -118,24 +161,55 @@ amazon:
   bucket: ""
 ```
 
-Add the [`aws-sdk-s3`](https://github.com/aws/aws-sdk-ruby) gem to your `Gemfile`:
+Opcionalmente, você pode fornecer opções de cliente e upload:
+
+```yaml
+amazon:
+  service: S3
+  access_key_id: ""
+  secret_access_key: ""
+  region: ""
+  bucket: ""
+  http_open_timeout: 0
+  http_read_timeout: 0
+  retry_limit: 0
+  upload:
+    server_side_encryption: "" # 'aws:kms' ou 'AES256'
+```
+
+TIP: Defina tempos limites de HTTP *timeout* e limites de nova tentativa para sua aplicação.
+Em certos cenários de falha, a configuração do cliente AWS padrão pode fazer
+com que as conexões sejam retidas por vários minutos e levar à enfileiramento de requisições.
+
+Adicione a gem [`aws-sdk-s3`](https://github.com/aws/aws-sdk-ruby) no seu `Gemfile`:
 
 ```ruby
 gem "aws-sdk-s3", require: false
 ```
 
-NOTE: The core features of Active Storage require the following permissions: `s3:ListBucket`, `s3:PutObject`, `s3:GetObject`, and `s3:DeleteObject`. If you have additional upload options configured such as setting ACLs then additional permissions may be required.
+NOTE: Os principais recursos do *Active Storage* requerem as seguintes permissões: `s3:ListBucket`, `s3:PutObject`, `s3:GetObject`, e `s3:DeleteObject`. [Acesso público](#acesso-publico) requer também `s3:PutObjectAcl`. Se você tiver opções de *upload* adicionais configuradas como configurações de ACLs, então permissões adicionais podem ser necessárias.
 
-NOTE: If you want to use environment variables, standard SDK configuration files, profiles,
-IAM instance profiles or task roles, you can omit the `access_key_id`, `secret_access_key`,
-and `region` keys in the example above. The Amazon S3 Service supports all of the
-authentication options described in the [AWS SDK documentation]
-(https://docs.aws.amazon.com/sdk-for-ruby/v3/developer-guide/setup-config.html).
+NOTE: Se você quiser usar variáveis de ambiente, arquivos de configuração padrão do SDK, perfis,
+perfis de instância do IAM ou funções de tarefa, você pode omitir as chaves `access_key_id`, `secret_access_key`,
+e `region` no exemplo acima. O serviço S3 suporta todas as opções de
+autenticação descritas na [documentação AWS SDK](https://docs.aws.amazon.com/sdk-for-ruby/v3/developer-guide/setup-config.html).
 
+Para se conectar a uma API de armazenamento de objetos compatíveis com S3, como DigitalOcean Spaces, forneça o `endpoint`:
 
-### Microsoft Azure Storage Service
+```yaml
+digitalocean:
+  service: S3
+  endpoint: https://nyc3.digitaloceanspaces.com
+  access_key_id: ...
+  secret_access_key: ...
+  # ...e outras opções
+```
 
-Declare an Azure Storage service in `config/storage.yml`:
+Existem muitas outras opções disponíveis. Você pode verificá-los na documentação do [AWS S3 Client](https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/S3/Client.html#initialize-instance_method).
+
+### Serviço Armazenamento da Microsoft Azure
+
+Declare um serviço Azure Storage em `config/storage.yml`:
 
 ```yaml
 azure:
@@ -145,15 +219,15 @@ azure:
   container: ""
 ```
 
-Add the [`azure-storage`](https://github.com/Azure/azure-storage-ruby) gem to your `Gemfile`:
+Adicione a gem [`azure-storage-blob`](https://github.com/Azure/azure-storage-ruby) no seu `Gemfile`:
 
 ```ruby
-gem "azure-storage", require: false
+gem "azure-storage-blob", require: false
 ```
 
-### Google Cloud Storage Service
+### Serviço Google Cloud Storage
 
-Declare a Google Cloud Storage service in `config/storage.yml`:
+Declare um serviço Google Cloud Storage service in `config/storage.yml`:
 
 ```yaml
 google:
@@ -163,7 +237,7 @@ google:
   bucket: ""
 ```
 
-Optionally provide a Hash of credentials instead of a keyfile path:
+Opcionalmente forneça uma _Hash_ de credenciais em vez de um caminho para o arquivo de chave:
 
 ```yaml
 google:
@@ -183,21 +257,55 @@ google:
   bucket: ""
 ```
 
-Add the [`google-cloud-storage`](https://github.com/GoogleCloudPlatform/google-cloud-ruby/tree/master/google-cloud-storage) gem to your `Gemfile`:
+Opcionalmente, forneça metadados Cache-Control para serem definidos nos recursos enviados:
+
+```yaml
+google:
+  service: GCS
+  ...
+  cache_control: "public, max-age=3600"
+```
+
+Opcionalmente, use [IAM](https://cloud.google.com/storage/docs/access-control/signed-urls#signing-iam) em vez das `credentials` ao assinar URLs. Isso é útil se você estiver autenticando suas aplicações do GKE com o Workload Identity. Consulte [esta postagem do blog do Google Cloud](https://cloud.google.com/blog/products/containers-kubernetes/introducing-workload-identity-better-authentication -for-your-gke-applications) para obter mais informações.
+
+```yaml
+google:
+  service: GCS
+  ...
+  iam: true
+```
+
+Opcionalmente, use um GSA específico ao assinar URLs. Ao usar o IAM, o [servidor de metadados](https://cloud.google.com/compute/docs/storing-retrieving-metadata) será contatado para obter o e-mail do GSA, mas esse servidor de metadados nem sempre está presente (por exemplo, em ambientes locais ou testes) e você pode querer usar um GSA não padrão.
+
+```yaml
+google:
+  service: GCS
+  ...
+  iam: true
+  gsa_email: "foobar@baz.iam.gserviceaccount.com"
+```
+
+Adicione a gem [`google-cloud-storage`](https://github.com/GoogleCloudPlatform/google-cloud-ruby/tree/master/google-cloud-storage) no seu `Gemfile`:
 
 ```ruby
 gem "google-cloud-storage", "~> 1.11", require: false
 ```
 
-### Mirror Service
+### Serviço Espelho
 
-You can keep multiple services in sync by defining a mirror service. When a file
-is uploaded or deleted, it's done across all the mirrored services. Mirrored
-services can be used to facilitate a migration between services in production.
-You can start mirroring to the new service, copy existing files from the old
-service to the new, then go all-in on the new service. Define each of the
-services you'd like to use as described above and reference them from a mirrored
-service.
+Você pode manter múltiplos serviços sincronizados definindo um serviço espelho.
+Quando um arquivo é carregado ou deletado, isso é feito em todos serviços espelhados.
+
+Serviços espelhados podem ser usados para facilitar a migração entre serviços em produção.
+Você pode começar a espelhar para o novo serviço, copiar os arquivos existentes do antigo
+serviço para o novo, e então muda para o novo serviço.
+
+NOTE: O espelhamento não é atômico. É possível que um upload seja bem-sucedido no
+serviço principal e falha em qualquer um dos serviços subordinados. Antes de ir
+totalmente para um novo serviço, verifique se todos os arquivos foram copiados.
+
+Defina cada um dos serviços que você gostaria de usar conforme descrito acima e faça referência para um serviço
+espelhado.
 
 ```yaml
 s3_west_coast:
@@ -221,20 +329,49 @@ production:
     - s3_west_coast
 ```
 
-NOTE: Files are served from the primary service.
+Embora todos os serviços secundários recebam uploads, os downloads são sempre
+tratados pelo serviço principal.
 
-NOTE: This is not compatible with the [direct uploads](#direct-uploads) feature.
+Os serviços de espelho são compatíveis com uploads diretos. Novos arquivos são
+diretamente carregados para o serviço principal. Quando um arquivo enviado é
+anexado a um registro, um *job* em segundo plano é enfileirado para copiá-lo para os
+serviços secundários.
 
-Attaching Files to Records
+### Acesso público
+
+Por padrão, o *Active Storage* assume acesso privado aos serviços. Isso significa gerar URLs assinadas e de uso único para os blobs. Se você preferir tornar os blobs acessíveis publicamente, especifique `public: true` em `config/storage.yml` na sua aplicação:
+
+```yaml
+gcs: &gcs
+  service: GCS
+  project: ""
+
+private_gcs:
+  <<: *gcs
+  credentials: <%= Rails.root.join("path/to/private_keyfile.json") %>
+  bucket: ""
+
+public_gcs:
+  <<: *gcs
+  credentials: <%= Rails.root.join("path/to/public_keyfile.json") %>
+  bucket: ""
+  public: true
+```
+
+Tenha certeza que seus *buckets* estão configurados para acesso público. Veja a documentação sobre como ativar permissão de leitura pública para os serviços [Amazon S3](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/block-public-access-bucket.html), [Google Cloud Storage](https://cloud.google.com/storage/docs/access-control/making-data-public#buckets), e [Microsoft Azure](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-manage-access-to-resources#set-container-public-access-level-in-the-azure-portal). A Amazon S3 requer também que você tenha permissão `s3:PutObjectAcl`.
+
+Ao converter uma aplicação existente para usar `public: true`, certifique-se de atualizar cada arquivo individual no *bucket* para ser lido publicamente antes de alternar.
+
+Anexar Arquivos a Registros
 --------------------------
 
 ### `has_one_attached`
 
-The `has_one_attached` macro sets up a one-to-one mapping between records and
-files. Each record can have one file attached to it.
+O macro [`has_one_attached`][] configura um mapeamento um-para-um entre registros e
+arquivos. Cada registro pode ter um arquivo anexado a ele.
 
-For example, suppose your application has a `User` model. If you want each user to
-have an avatar, define the `User` model like this:
+Por exemplo, imagine que sua aplicação tenha um *model* `User`. Se você quiser que cada usuário
+tenha uma avatar, defina o *model* `User` da seguinte forma:
 
 ```ruby
 class User < ApplicationRecord
@@ -242,7 +379,13 @@ class User < ApplicationRecord
 end
 ```
 
-You can create a user with an avatar:
+ou se você estiver usando Rails 6.0+, você pode executar um comando gerador de *model* como este:
+
+```ruby
+bin/rails generate model User avatar:attachment
+```
+
+Você pode criar um usuário com um avatar:
 
 ```erb
 <%= form.file_field :avatar %>
@@ -263,25 +406,55 @@ class SignupController < ApplicationController
 end
 ```
 
-Call `avatar.attach` to attach an avatar to an existing user:
+Chamar [`avatar.attach`][Attached::One#attach] para anexar um avatar a um usuário existente:
 
 ```ruby
 user.avatar.attach(params[:avatar])
 ```
 
-Call `avatar.attached?` to determine whether a particular user has an avatar:
+Chamar [`avatar.attached?`][Attached::One#attached?] para determinar se um usuário em particular tem um avatar:
 
 ```ruby
 user.avatar.attached?
 ```
 
+Em alguns casos, você pode querer substituir um serviço padrão para um anexo específico.
+Você pode configurar serviços específicos por anexo usando a opção `service`:
+
+```ruby
+class User < ApplicationRecord
+  has_one_attached :avatar, service: :s3
+end
+```
+
+Você pode configurar variantes específicas por objeto carregado chamando o método `variant` no objeto gerado:
+
+```ruby
+class User < ApplicationRecord
+  has_one_attached :avatar do |attachable|
+    attachable.variant :thumb, resize_to_limit: [100, 100]
+  end
+end
+```
+
+Chame `avatar.variant(:thumb)` para obter uma variante thumb de um avatar:
+
+```erb
+<%= image_tag user.avatar.variant(:thumb) %>
+```
+
+[`has_one_attached`]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/Model.html#method-i-has_one_attached
+[Attached::One#attach]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/One.html#method-i-attach
+[Attached::One#attached?]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/One.html#method-i-attached-3F
+
+
 ### `has_many_attached`
 
-The `has_many_attached` macro sets up a one-to-many relationship between records
-and files. Each record can have many files attached to it.
+O macro [`has_many_attached`][] configura um relacionamento um-para-muitos entre os registros
+e arquivos. Cada registro pode ter muitos arquivos anexados a ele.
 
-For example, suppose your application has a `Message` model. If you want each
-message to have many images, define the `Message` model like this:
+Por exemplo, imagine que sua aplicação tem um *model* `Message`. Se você quiser que cada
+mensagem tenha muitas imagens, defina o *model* `Message` da seguinte forma:
 
 ```ruby
 class Message < ApplicationRecord
@@ -289,7 +462,13 @@ class Message < ApplicationRecord
 end
 ```
 
-You can create a message with images:
+ou se você estiver usando Rails 6.0+, você pode executar um comando gerador de *model* como este:
+
+```ruby
+bin/rails generate model Message images:attachments
+```
+
+Você pode criar uma mensagem com images:
 
 ```ruby
 class MessagesController < ApplicationController
@@ -305,43 +484,65 @@ class MessagesController < ApplicationController
 end
 ```
 
-Call `images.attach` to add new images to an existing message:
+Chamar [`images.attach`][Attached::Many#attach] para adicionar novas imagens para uma mensagem existente:
 
 ```ruby
 @message.images.attach(params[:images])
 ```
 
-Call `images.attached?` to determine whether a particular message has any images:
+Chamar [`images.attached?`][Attached::Many#attached?] para determinar se uma mensagem em particular alguma imagem:
 
 ```ruby
 @message.images.attached?
 ```
 
-### Attaching File/IO Objects
-
-Sometimes you need to attach a file that doesn’t arrive via an HTTP request.
-For example, you may want to attach a file you generated on disk or downloaded
-from a user-submitted URL. You may also want to attach a fixture file in a
-model test. To do that, provide a Hash containing at least an open IO object
-and a filename:
+Substituir o serviço padrão é feito da mesma maneira que `has_one_attached`, usando a opção `service`:
 
 ```ruby
-@message.image.attach(io: File.open('/path/to/file'), filename: 'file.pdf')
+class Message < ApplicationRecord
+  has_many_attached :images, service: :s3
+end
 ```
 
-When possible, provide a content type as well. Active Storage attempts to
-determine a file’s content type from its data. It falls back to the content
-type you provide if it can’t do that.
+A configuração de variantes específicas é feita da mesma forma que `has_one_attached`, chamando o método `variant` no objeto gerado:
 
 ```ruby
-@message.image.attach(io: File.open('/path/to/file'), filename: 'file.pdf', content_type: 'application/pdf')
+class Message < ApplicationRecord
+  has_many_attached :images do |attachable|
+    attachable.variant :thumb, resize_to_limit: [100, 100]
+  end
+end
 ```
 
-You can bypass the content type inference from the data by passing in
-`identify: false` along with the `content_type`.
+[`has_many_attached`]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/Model.html#method-i-has_many_attached
+[Attached::Many#attach]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/Many.html#method-i-attach
+[Attached::Many#attached?]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/Many.html#method-i-attached-3F
+
+### Anexando Objetos *File/IO*
+
+Às vezes você precisa anexar um arquivo que não chega por meio de uma requisição HTTP.
+Por exemplo, você pode querer anexar um arquivo que você gerou no disco ou baixou
+de uma URL enviada pelo usuário. Você também pode querer anexar um arquivo de fixação em um
+*model* de test. Para fazer isso, forneça uma *Hash* contendo pelo menos um objeto *open IO*
+e um *filename*:
 
 ```ruby
-@message.image.attach(
+@message.images.attach(io: File.open('/path/to/file'), filename: 'file.pdf')
+```
+
+Quando possível, forneça um tipo de conteúdo também. O *Active Storage* tenta
+determinar o tipo de conteúdo de um arquivo a partir de seus dados. Depende do tipo
+de conteúdo que você fornece se não for possível.
+
+```ruby
+@message.images.attach(io: File.open('/path/to/file'), filename: 'file.pdf', content_type: 'application/pdf')
+```
+
+Você pode ignorar a inferência do tipo de conteúdo a partir dos dados passando
+`identify: false` junto com o `content_type`.
+
+```ruby
+@message.images.attach(
   io: File.open('/path/to/file'),
   filename: 'file.pdf',
   content_type: 'application/pdf',
@@ -349,37 +550,55 @@ You can bypass the content type inference from the data by passing in
 )
 ```
 
-If you don’t provide a content type and Active Storage can’t determine the
-file’s content type automatically, it defaults to application/octet-stream.
+Se você não fornecer um tipo de conteúdo e o *Active Storage* não puder determinar o
+tipo de conteúdo do arquivo automaticamente, o padrão é *application/octet-stream*.
 
 
-Removing Files
+Removendo arquivos
 --------------
 
-To remove an attachment from a model, call `purge` on the attachment. Removal
-can be done in the background if your application is setup to use Active Job.
-Purging deletes the blob and the file from the storage service.
+Para remover um arquivo anexado de um _model_, use o método [`purge`][Attached::One#purge] no anexo.
+Se a aplicação está configurada para usar *Active Job*, a remoção pode ser feita de maneira assíncrona
+chamando [`purge_later`][Attached::One#purge_later]. `Purge` remove o _blob_ (O arquivo em sua versão binaria salvo no banco de
+dados) e o arquivo do seu serviço de armazenamento.
 
 ```ruby
-# Synchronously destroy the avatar and actual resource files.
+# Maneira usada para remover um avatar e seus arquivos de maneira síncrona.
 user.avatar.purge
 
-# Destroy the associated models and actual resource files async, via Active Job.
+# Maneira usada para remover um avatar e seus arquivos de maneira assíncrona.
 user.avatar.purge_later
 ```
 
-Linking to Files
-----------------
+[Attached::One#purge]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/One.html#method-i-purge
+[Attached::One#purge_later]: https://api.rubyonrails.org/classes/ActiveStorage/Attached/One.html#method-i-purge_later
 
-Generate a permanent URL for the blob that points to the application. Upon
-access, a redirect to the actual service endpoint is returned. This indirection
-decouples the public URL from the actual one, and allows, for example, mirroring
-attachments in different services for high-availability. The redirection has an
-HTTP expiration of 5 min.
+Serving Files
+-------------
+
+Active Storage supports two ways to serve files: redirecting and proxying.
+
+WARNING: All Active Storage controllers are publicly accessible by default. The
+generated URLs are hard to guess, but permanent by design. If your files
+require a higher level of protection consider implementing
+[Authenticated Controllers](#authenticated-controllers).
+
+### Redirect Mode
+
+To generate a permanent URL for a blob, you can pass the blob to the
+[`url_for`][ActionView::RoutingUrlFor#url_for] view helper. This generates a
+URL with the blob's [`signed_id`][ActiveStorage::Blob#signed_id]
+that is routed to the blob's [`RedirectController`][`ActiveStorage::Blobs::RedirectController`]
 
 ```ruby
 url_for(user.avatar)
+# => /rails/active_storage/blobs/:signed_id/my-avatar.png
 ```
+
+The `RedirectController` redirects to the actual service endpoint. This
+indirection decouples the service URL from the actual one, and allows, for
+example, mirroring attachments in different services for high-availability. The
+redirection has an HTTP expiration of 5 minutes.
 
 To create a download link, use the `rails_blob_{path|url}` helper. Using this
 helper allows you to set the disposition.
@@ -388,140 +607,433 @@ helper allows you to set the disposition.
 rails_blob_path(user.avatar, disposition: "attachment")
 ```
 
-If you need to create a link from outside of controller/view context (Background
-jobs, Cronjobs, etc.), you can access the rails_blob_path like this:
+WARNING: To prevent XSS attacks, Active Storage forces the Content-Disposition header
+to "attachment" for some kind of files. To change this behaviour see the
+available configuration options in [Configuring Rails Applications](configuring.html#configuring-active-storage).
 
-```
+If you need to create a link from outside of controller/view context (Background
+jobs, Cronjobs, etc.), you can access the `rails_blob_path` like this:
+
+```ruby
 Rails.application.routes.url_helpers.rails_blob_path(user.avatar, only_path: true)
 ```
 
-Downloading Files
+[ActionView::RoutingUrlFor#url_for]: https://api.rubyonrails.org/classes/ActionView/RoutingUrlFor.html#method-i-url_for
+[ActiveStorage::Blob#signed_id]: https://api.rubyonrails.org/classes/ActiveStorage/Blob.html#method-i-signed_id
+
+### Proxy Mode
+
+Optionally, files can be proxied instead. This means that your application servers will download file data from the storage service in response to requests. This can be useful for serving files from a CDN.
+
+You can configure Active Storage to use proxying by default:
+
+```ruby
+# config/initializers/active_storage.rb
+Rails.application.config.active_storage.resolve_model_to_route = :rails_storage_proxy
+```
+
+Or if you want to explicitly proxy specific attachments there are URL helpers you can use in the form of `rails_storage_proxy_path` and `rails_storage_proxy_url`.
+
+```erb
+<%= image_tag rails_storage_proxy_path(@user.avatar) %>
+```
+
+#### Putting a CDN in Front of Active Storage
+
+Additionally, in order to use a CDN for Active Storage attachments, you will need to generate URLs with proxy mode so that they are served by your app and the CDN will cache the attachment without any extra configuration. This works out of the box because the default Active Storage proxy controller sets an HTTP header indicating to the CDN to cache the response.
+
+You should also make sure that the generated URLs use the CDN host instead of your app host. There are multiple ways to achieve this, but in general it involves tweaking your `config/routes.rb` file so that you can generate the proper URLs for the attachments and their variations. As an example, you could add this:
+
+```ruby
+# config/routes.rb
+direct :cdn_image do |model, options|
+  if model.respond_to?(:signed_id)
+    route_for(
+      :rails_service_blob_proxy,
+      model.signed_id,
+      model.filename,
+      options.merge(host: ENV['CDN_HOST'])
+    )
+  else
+    signed_blob_id = model.blob.signed_id
+    variation_key  = model.variation.key
+    filename       = model.blob.filename
+
+    route_for(
+      :rails_blob_representation_proxy,
+      signed_blob_id,
+      variation_key,
+      filename,
+      options.merge(host: ENV['CDN_HOST'])
+    )
+  end
+end
+```
+
+and then generate routes like this:
+
+```erb
+<%= cdn_image_url(user.avatar.variant(resize_to_limit: [128, 128])) %>
+```
+
+### Authenticated Controllers
+
+All Active Storage controllers are publicly accessible by default. The generated
+URLs use a plain [`signed_id`][ActiveStorage::Blob#signed_id], making them hard to
+guess but permanent. Anyone that knows the blob URL will be able to access it,
+even if a `before_action` in your `ApplicationController` would otherwise
+require a login. If your files require a higher level of protection, you can
+implement your own authenticated controllers, based on the
+[`ActiveStorage::Blobs::RedirectController`][],
+[`ActiveStorage::Blobs::ProxyController`][],
+[`ActiveStorage::Representations::RedirectController`][] and
+[`ActiveStorage::Representations::ProxyController`][]
+
+To only allow an account to access their own logo you could do the following:
+
+```ruby
+# config/routes.rb
+resource :account do
+  resource :logo
+end
+```
+
+```ruby
+# app/controllers/logos_controller.rb
+class LogosController < ApplicationController
+  # Through ApplicationController:
+  # include Authenticate, SetCurrentAccount
+
+  def show
+    redirect_to Current.account.logo.url
+  end
+end
+```
+
+```erb
+<%= image_tag account_logo_path %>
+```
+
+And then you might want to disable the Active Storage default routes with:
+
+```ruby
+config.active_storage.draw_routes = false
+```
+
+to prevent files being accessed with the publicly accessible URLs.
+
+[`ActiveStorage::Blobs::RedirectController`]: https://api.rubyonrails.org/classes/ActiveStorage/Blobs/RedirectController.html
+[`ActiveStorage::Blobs::ProxyController`]: https://api.rubyonrails.org/classes/ActiveStorage/Blobs/ProxyController.html
+[`ActiveStorage::Representations::RedirectController`]: https://api.rubyonrails.org/classes/ActiveStorage/Representations/RedirectController.html
+[`ActiveStorage::Representations::ProxyController`]: https://api.rubyonrails.org/classes/ActiveStorage/Representations/ProxyController.html
+
+Baixando arquivos
 -----------------
 
-Sometimes you need to process a blob after it’s uploaded—for example, to convert
-it to a different format. Use `ActiveStorage::Blob#download` to read a blob’s
-binary data into memory:
+Algumas vezes você vai precisar processar um _blob_ depois dele ter sido
+_uploaded_ (Transferir um arquivo da maquina do cliente para o servidor da sua
+aplicação) para, por exemplo, converte-lo para um formato diferente. Use o
+[`download`][Blob#download] para ler o conteúdo binário do _blob_ na
+memória:
 
 ```ruby
 binary = user.avatar.download
 ```
 
-You might want to download a blob to a file on disk so an external program (e.g.
-a virus scanner or media transcoder) can operate on it. Use
-`ActiveStorage::Blob#open` to download a blob to a tempfile on disk:
+Caso deseje baixar o _blob_ para um arquivo no disco para um programa externo
+(Um antivírus, por exemplo) possa operar nele. Use o método [`open`][Blob#open]
+para baixar o _blob_ para um arquivo temporário no disco:
 
 ```ruby
 message.video.open do |file|
-  system '/path/to/virus/scanner', file.path
+  system '/caminho/para/o/antivirus', file.path
   # ...
 end
 ```
 
-Transforming Images
--------------------
+É importante saber que o arquivo ainda não está disponível no *callback* `after_create`, mas apenas no `after_create_commit`.
 
-To create a variation of the image, call `variant` on the `Blob`. You can pass
-any transformation to the method supported by the processor. The default
-processor is [MiniMagick](https://github.com/minimagick/minimagick), but you
-can also use [Vips](https://www.rubydoc.info/gems/ruby-vips/Vips/Image).
+[Blob#download]: https://api.rubyonrails.org/classes/ActiveStorage/Blob.html#method-i-download
+[Blob#open]: https://api.rubyonrails.org/classes/ActiveStorage/Blob.html#method-i-open
 
-To enable variants, add the `image_processing` gem to your `Gemfile`:
+Analyzing Files
+---------------
 
-```ruby
-gem 'image_processing', '~> 1.2'
+Active Storage analyzes files once they've been uploaded by queuing a job in Active Job. Analyzed files will store additional information in the metadata hash, including `analyzed: true`. You can check whether a blob has been analyzed by calling [`analyzed?`][] on it.
+
+Image analysis provides `width` and `height` attributes. Video analysis provides these, as well as `duration`, `angle`, `display_aspect_ratio`, and `video` and `audio` booleans to indicate the presence of those channels. Audio analysis provides `duration` and `bit_rate` attributes.
+
+[`analyzed?`]: https://api.rubyonrails.org/classes/ActiveStorage/Blob/Analyzable.html#method-i-analyzed-3F
+
+Displaying Images, Videos, and PDFs
+---------------
+
+Active Storage supports representing a variety of files. You can call
+[`representation`][] on an attachment to display an image variant, or a
+preview of a video or PDF. Before calling `representation`, check if the
+attachment can be represented by calling [`representable?`]. Some file formats
+can't be previewed by Active Storage out of the box (e.g. Word documents); if
+`representable?` returns false you may want to [link to](#serving-files)
+the file instead.
+
+```erb
+<ul>
+  <% @message.files.each do |file| %>
+    <li>
+      <% if file.representable? %>
+        <%= image_tag file.representation(resize_to_limit: [100, 100]) %>
+      <% else %>
+        <%= link_to rails_blob_path(file, disposition: "attachment") do %>
+          <%= image_tag "placeholder.png", alt: "Download file" %>
+        <% end %>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
 ```
 
-When the browser hits the variant URL, Active Storage will lazily transform the
-original blob into the specified format and redirect to its new service
+Internally, `representation` calls `variant` for images, and `preview` for
+previewable files. You can also call these methods directly.
+
+[`representable?`]: https://api.rubyonrails.org/classes/ActiveStorage/Blob/Representable.html#method-i-representable-3F
+[`representation`]: https://api.rubyonrails.org/classes/ActiveStorage/Blob/Representable.html#method-i-representation
+
+### Lazy vs Immediate Loading
+
+By default, Active Storage will process representations lazily. This code:
+
+```ruby
+image_tag file.representation(resize_to_limit: [100, 100])
+```
+
+Will generate an `<img>` tag with the `src` pointing to the
+[`ActiveStorage::Representations::RedirectController`][]. The browser will
+make a request to that controller, which will return a `302` redirect to the
+file on the remote service (or in [proxy mode](#proxy-mode), return the file
+contents). Loading the file lazily allows features like
+[single use URLs](#public-access) to work without slowing down your initial page loads.
+
+This works fine for most cases.
+
+If you want to generate URLs for images immediately, you can call `.processed.url`:
+
+```ruby
+image_tag file.representation(resize_to_limit: [100, 100]).processed.url
+```
+
+The Active Storage variant tracker improves performance of this, by storing a
+record in the database if the requested representation has been processed before.
+Thus, the above code will only make an API call to the remote service (e.g. S3)
+once, and once a variant is stored, will use that. The variant tracker runs
+automatically, but can be disabled through `config.active_storage.track_variants`.
+
+If you're rendering lots of images on a page, the above example could result
+in N+1 queries loading all the variant records. To avoid these N+1 queries,
+use the named scopes on [`ActiveStorage::Attachment`][].
+
+```ruby
+message.images.with_all_variant_records.each do |file|
+  image_tag file.representation(resize_to_limit: [100, 100]).processed.url
+end
+```
+
+[`config.active_storage.track_variants`]: configuring.html#config-active-storage-track-variants
+[`ActiveStorage::Representations::RedirectController`]: https://api.rubyonrails.org/classes/ActiveStorage/Representations/RedirectController.html
+[`ActiveStorage::Attachment`]: https://api.rubyonrails.org/classes/ActiveStorage/Attachment.html
+
+### Transforming Images
+
+Transforming images allows you to display the image at your choice of dimensions.
+To create a variation of an image, call [`variant`][] on the attachment. You
+can pass any transformation supported by the variant processor to the method.
+When the browser hits the variant URL, Active Storage will lazily transform
+the original blob into the specified format and redirect to its new service
 location.
 
 ```erb
 <%= image_tag user.avatar.variant(resize_to_limit: [100, 100]) %>
 ```
 
-To switch to the Vips processor, you would add the following to
-`config/application.rb`:
+If a variant is requested, Active Storage will automatically apply
+transformations depending on the image's format:
 
-```ruby
-# Use Vips for processing variants.
-config.active_storage.variant_processor = :vips
+1. Content types that are variable (as dictated by [`config.active_storage.variable_content_types`][])
+  and not considered web images (as dictated by [`config.active_storage.web_image_content_types`][]),
+  will be converted to PNG.
+
+2. If `quality` is not specified, the variant processor's default quality for the format will be used.
+
+Active Storage can use either [Vips][] or MiniMagick as the variant processor.
+The default depends on your `config.load_defaults` target version, and the
+processor can be changed by setting [`config.active_storage.variant_processor`][].
+
+The two processors are not fully compatible, so when migrating an existing application
+between MiniMagick and Vips, some changes have to be made if using options that are format
+specific:
+
+```rhtml
+<!-- MiniMagick -->
+<%= image_tag user.avatar.variant(resize_to_limit: [100, 100], format: :jpeg, sampling_factor: "4:2:0", strip: true, interlace: "JPEG", colorspace: "sRGB", quality: 80) %>
+
+<!-- Vips -->
+<%= image_tag user.avatar.variant(resize_to_limit: [100, 100], format: :jpeg, saver: { subsample_mode: "on", strip: true, interlace: true, quality: 80 }) %>
 ```
 
-Previewing Files
-----------------
+[`config.active_storage.variable_content_types`]: configuring.html#config-active-storage-variable-content-types
+[`variant`]: https://api.rubyonrails.org/classes/ActiveStorage/Blob/Representable.html#method-i-variant
+[Vips]: https://www.rubydoc.info/gems/ruby-vips/Vips/Image
 
-Some non-image files can be previewed: that is, they can be presented as images.
-For example, a video file can be previewed by extracting its first frame. Out of
-the box, Active Storage supports previewing videos and PDF documents.
+### Pré-visualização de arquivos
+
+Alguns arquivos que não são imagens podem ser pré-visualizados: isto é, eles podem
+ser apresentados como imagens. Por exemplo, um arquivo de vídeo pode ser pré-visualizado
+através da extração de seu primeiro *frame*. O *Active Storage* por padrão já oferece
+suporte para a pré-visualização de vídeos e documentos PDF. Para criar um link e
+gerar um preview use o método [`preview`][]:
 
 ```erb
-<ul>
-  <% @message.files.each do |file| %>
-    <li>
-      <%= image_tag file.preview(resize_to_limit: [100, 100]) %>
-    </li>
-  <% end %>
-</ul>
+<%= image_tag message.video.preview(resize_to_limit: [100, 100]) %>
 ```
 
-WARNING: Extracting previews requires third-party applications, FFmpeg for
-video and muPDF for PDFs, and on macOS also XQuartz and Poppler.
-These libraries are not provided by Rails. You must install them yourself to
-use the built-in previewers. Before you install and use third-party software,
-make sure you understand the licensing implications of doing so.
+Para adicionar suporte para outros formatos, adicione seu próprio visualizador. Veja a documentação de
+[`ActiveStorage::Preview`][] para mais informações.
 
+[`preview`]: https://api.rubyonrails.org/classes/ActiveStorage/Blob/Representable.html#method-i-preview
+[`ActiveStorage::Preview`]: https://api.rubyonrails.org/classes/ActiveStorage/Preview.html
 
-Direct Uploads
+*Uploads* Diretos
 --------------
 
-Active Storage, with its included JavaScript library, supports uploading
-directly from the client to the cloud.
+O *Active Storage* com a sua biblioteca JavaScript incluída suporta *uploads* direto do cliente (*front-end*) para a nuvem.
 
-### Direct upload installation
+### Uso
 
-1. Include `activestorage.js` in your application's JavaScript bundle.
+1. Inclua o `activestorage.js` na sua aplicação.
 
-    Using the asset pipeline:
+    Usando o *asset pipeline*:
 
     ```js
     //= require activestorage
-
     ```
 
-    Using the npm package:
+    Usando o pacote npm:
 
     ```js
-    require("@rails/activestorage").start()
+    import * as ActiveStorage from "@rails/activestorage"
+    ActiveStorage.start()
     ```
 
-2. Annotate file inputs with the direct upload URL.
+2. Adicione `direct_upload: true` no seu [`file_field`](form_helpers.html#enviando-arquivos).
 
     ```erb
     <%= form.file_field :attachments, multiple: true, direct_upload: true %>
     ```
-3. That's it! Uploads begin upon form submission.
 
-### Direct upload JavaScript events
+    Se você não está usando um [FormBuilder](form_helpers.html#customizando-os-construtores-de-formularios) adicione o `direct_upload: true` diretamente:
 
-| Event name | Event target | Event data (`event.detail`) | Description |
+    ```erb
+    <input type="file" data-direct-upload-url="<%= rails_direct_uploads_url %>" />
+    ```
+
+3. Configure o serviço de armazenamento de terceiros do CORS para permitir requisições de *upload* direto.
+
+4. E é isso! Os *uploads* começam após o envio do formulário.
+
+### Configuração do *Cross-Origin Resource Sharing* (CORS)
+
+Para que o *upload* direto a partir de terceiros funcione você vai precisar configurar o seu serviço de nuvem para aceitar requisições de múltiplas origens. Consulte a documentação sobre CORS do seu serviço:
+
+* [S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html#how-do-i-enable-cors)
+* [Google Cloud Storage](https://cloud.google.com/storage/docs/configuring-cors)
+* [Azure Storage](https://docs.microsoft.com/en-us/rest/api/storageservices/cross-origin-resource-sharing--cors--support-for-the-azure-storage-services)
+
+Tome cuidado em permitir:
+
+* Todas as origens pela qual a sua aplicação é acessada.
+* O método de requisição `PUT`
+* Os seguintes cabeçalhos de requisição:
+  * `Origin`
+  * `Content-Type`
+  * `Content-MD5`
+  * `Content-Disposition` (exceto para o Azure Storage)
+  * `x-ms-blob-content-disposition` (somente para o Azure Storage)
+  * `x-ms-blob-type` (somente para o Azure Storage)
+  * `Cache-Control` (para GCS, somente se `cache_control` estiver definido)
+
+Se você for utilizar seu disco como armazenamento e ele compartilhar a mesma origem da sua aplicação não é necessário configurar o CORS.
+
+#### Exemplo: Configuração do CORS para o S3
+
+```json
+[
+  {
+    "AllowedHeaders": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "PUT"
+    ],
+    "AllowedOrigins": [
+      "https://www.example.com"
+    ],
+    "ExposeHeaders": [
+      "Origin",
+      "Content-Type",
+      "Content-MD5",
+      "Content-Disposition"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+#### Exemplo: Configuração do CORS para o Google Cloud Storage
+
+```json
+[
+  {
+    "origin": ["https://www.example.com"],
+    "method": ["PUT"],
+    "responseHeader": ["Origin", "Content-Type", "Content-MD5", "Content-Disposition"],
+    "maxAgeSeconds": 3600
+  }
+]
+```
+
+#### Exemplo: Configuração do CORS para o Azure Storage
+
+```xml
+<Cors>
+  <CorsRule>
+    <AllowedOrigins>https://www.example.com</AllowedOrigins>
+    <AllowedMethods>PUT</AllowedMethods>
+    <AllowedHeaders>Origin, Content-Type, Content-MD5, x-ms-blob-content-disposition, x-ms-blob-type</AllowedHeaders>
+    <MaxAgeInSeconds>3600</MaxAgeInSeconds>
+  </CorsRule>
+</Cors>
+```
+
+### Eventos de *Upload* Direto do JavaScript
+
+| Nome do evento | Alvo do evento | Dados do evento (`event.detail`) | Descrição |
 | --- | --- | --- | --- |
-| `direct-uploads:start` | `<form>` | None | A form containing files for direct upload fields was submitted. |
-| `direct-upload:initialize` | `<input>` | `{id, file}` | Dispatched for every file after form submission. |
-| `direct-upload:start` | `<input>` | `{id, file}` | A direct upload is starting. |
-| `direct-upload:before-blob-request` | `<input>` | `{id, file, xhr}` | Before making a request to your application for direct upload metadata. |
-| `direct-upload:before-storage-request` | `<input>` | `{id, file, xhr}` | Before making a request to store a file. |
-| `direct-upload:progress` | `<input>` | `{id, file, progress}` | As requests to store files progress. |
-| `direct-upload:error` | `<input>` | `{id, file, error}` | An error occurred. An `alert` will display unless this event is canceled. |
-| `direct-upload:end` | `<input>` | `{id, file}` | A direct upload has ended. |
-| `direct-uploads:end` | `<form>` | None | All direct uploads have ended. |
+| `direct-uploads:start` | `<form>` | Nenhum | Um formulário contendo campos para *upload* direto foi submetido. |
+| `direct-upload:initialize` | `<input>` | `{id, file}` | Disparado para cada arquivo após a submissão do formulário. |
+| `direct-upload:start` | `<input>` | `{id, file}` | O *upload* direto está iniciando. |
+| `direct-upload:before-blob-request` | `<input>` | `{id, file, xhr}` | Antes de fazer uma requisição de *upload* direto de metadados para a sua aplicação. |
+| `direct-upload:before-storage-request` | `<input>` | `{id, file, xhr}` | Antes de fazer uma requisição para armazenar um arquivo. |
+| `direct-upload:progress` | `<input>` | `{id, file, progress}` | O progresso da requisição para armazenar um arquivo. |
+| `direct-upload:error` | `<input>` | `{id, file, error}` | Um erro ocorreu. Um `alert` deve ser exibido, a menos que esse evento seja cancelado. |
+| `direct-upload:end` | `<input>` | `{id, file}` | Um *upload* direto foi finalizado. |
+| `direct-uploads:end` | `<form>` | Nenhum | Todos os *uploads* diretos foram finalizados. |
 
-### Example
+### Exemplo
 
-You can use these events to show the progress of an upload.
+Você pode usar esses eventos para exibir o progresso de um *upload*.
 
 ![direct-uploads](https://user-images.githubusercontent.com/5355/28694528-16e69d0c-72f8-11e7-91a7-c0b8cfc90391.gif)
 
-To show the uploaded files in a form:
+Para mostrar os arquivos enviados em um formulário:
 
 ```js
 // direct_uploads.js
@@ -532,9 +1044,10 @@ addEventListener("direct-upload:initialize", event => {
   target.insertAdjacentHTML("beforebegin", `
     <div id="direct-upload-${id}" class="direct-upload direct-upload--pending">
       <div id="direct-upload-progress-${id}" class="direct-upload__progress" style="width: 0%"></div>
-      <span class="direct-upload__filename">${file.name}</span>
+      <span class="direct-upload__filename"></span>
     </div>
   `)
+  target.previousElementSibling.querySelector(`.direct-upload__filename`).textContent = file.name
 })
 
 addEventListener("direct-upload:start", event => {
@@ -564,7 +1077,7 @@ addEventListener("direct-upload:end", event => {
 })
 ```
 
-Add styles:
+Adicionar estilos:
 
 ```css
 /* direct_uploads.css */
@@ -608,47 +1121,43 @@ input[type=file][data-direct-upload-url][disabled] {
 }
 ```
 
-### Integrating with Libraries or Frameworks
+### Integrando com Bibliotecas ou *Frameworks*
 
-If you want to use the Direct Upload feature from a JavaScript framework, or
-you want to integrate custom drag and drop solutions, you can use the
-`DirectUpload` class for this purpose. Upon receiving a file from your library
-of choice, instantiate a DirectUpload and call its create method. Create takes
-a callback to invoke when the upload completes.
+Se você quer utilizar a funcionalidade de *upload* direto a partir de um *framework* JavaScript, ou se você quiser integrar uma funcionalidade de *drag and drop* (arrastar e soltar), você poderá utilizar a classe `DirectUpload` para fazer a integração. Ao receber um arquivo da sua biblioteca de escolha, instancie um `DirectUpload` e chame o seu método de criação. O método de criação recebe uma *callback* para ser executada quando o *upload* é concluído.
 
 ```js
 import { DirectUpload } from "@rails/activestorage"
 
 const input = document.querySelector('input[type=file]')
 
-// Bind to file drop - use the ondrop on a parent element or use a
-//  library like Dropzone
+// Vincular ao arquivo solto - use o onDrop em um elemento pai ou use uma
+//  biblioteca com o Dropzone
 const onDrop = (event) => {
   event.preventDefault()
   const files = event.dataTransfer.files;
   Array.from(files).forEach(file => uploadFile(file))
 }
 
-// Bind to normal file selection
+// Vincular à seleção de arquivo normal
 input.addEventListener('change', (event) => {
   Array.from(input.files).forEach(file => uploadFile(file))
-  // you might clear the selected files from the input
+  // você pode limpar os arquivos selecionados da entrada
   input.value = null
 })
 
 const uploadFile = (file) => {
-  // your form needs the file_field direct_upload: true, which
-  //  provides data-direct-upload-url
+  // seu formulário precisa do file_field direct_upload: true, que
+  //  fornece o data-direct-upload-url
   const url = input.dataset.directUploadUrl
   const upload = new DirectUpload(file, url)
 
   upload.create((error, blob) => {
     if (error) {
-      // Handle the error
+      // Trata o erro
     } else {
-      // Add an appropriately-named hidden input to the form with a
-      //  value of blob.signed_id so that the blob ids will be
-      //  transmitted in the normal upload flow
+      // Adiciona uma entrada oculta apropriadamente nomeada ao formulário com o
+      //  valor blob.signed_id, assim os blob ids podem ser
+      //  transmitidos no fluxo normal de upload
       const hiddenField = document.createElement('input')
       hiddenField.setAttribute("type", "hidden");
       hiddenField.setAttribute("value", blob.signed_id);
@@ -659,10 +1168,10 @@ const uploadFile = (file) => {
 }
 ```
 
-If you need to track the progress of the file upload, you can pass a third
-parameter to the `DirectUpload` constructor. During the upload, DirectUpload
-will call the object's `directUploadWillStoreFileWithXHR` method. You can then
-bind your own progress handler on the XHR.
+Se você precisa acompanhar o progresso de *upload* do arquivo, você pode passar um terceiro
+parâmetro para o construtor do `DirectUpload`. Durante o *upload*, o DirectUpload
+irá chamar o método `directUploadWillStoreFileWithXHR` do objeto. Você poderá então
+vincular o seu manipulador de progresso no XHR.
 
 ```js
 import { DirectUpload } from "@rails/activestorage"
@@ -675,10 +1184,10 @@ class Uploader {
   upload(file) {
     this.upload.create((error, blob) => {
       if (error) {
-        // Handle the error
+        // Trata o erro
       } else {
-        // Add an appropriately-named hidden input to the form
-        // with a value of blob.signed_id
+        // Adiciona uma entrada oculta apropriadamente nomeada no formulário
+        // com o valor blob.signed_id
       }
     })
   }
@@ -689,84 +1198,207 @@ class Uploader {
   }
 
   directUploadDidProgress(event) {
-    // Use event.loaded and event.total to update the progress bar
+    // Usa o event.loaded e o event.total para atualizar a barra de progresso
   }
 }
 ```
 
-Discarding Files Stored During System Tests
+NOTA: O uso de [Uploads Diretos](#direct-uploads) às vezes pode resultar em um arquivo que é carregado, mas nunca anexado a um registro. Considere [limpar uploads não anexados](#purging-unattached-uploads).
+
+Testando
 -------------------------------------------
 
-System tests clean up test data by rolling back a transaction. Because destroy
-is never called on an object, the attached files are never cleaned up. If you
-want to clear the files, you can do it in an `after_teardown` callback. Doing it
-here ensures that all connections created during the test are complete and
-you won't receive an error from Active Storage saying it can't find a file.
+Use [`fixture_file_upload`][] para testar o *upload* de um arquivo em um teste de integração ou *controller*.
+O Rails lida com arquivos como qualquer outro parâmetro.
+
+```ruby
+class SignupController < ActionDispatch::IntegrationTest
+  test "can sign up" do
+    post signup_path, params: {
+      name: "David",
+      avatar: fixture_file_upload("david.png", "image/png")
+    }
+
+    user = User.order(:created_at).last
+    assert user.avatar.attached?
+  end
+end
+```
+
+[`fixture_file_upload`]: https://api.rubyonrails.org/classes/ActionDispatch/TestProcess/FixtureFile.html
+
+### Descartando Arquivos Criados Durante os Testes
+
+#### System Tests
+
+Os testes de sistema limpam os dados de testes revertendo uma transação. Como o
+`destroy` nunca é chamado em um objeto, os arquivos anexados nunca são limpos. Se
+quiser limpar os arquivos, podemos usar um *callback* `after_teardown`.
+Fazendo isso garantimos que todas as conexões criadas durante o teste sejam
+concluídas sem que recebamos um erro do *Active Storage* informando que não
+foi possível encontrar um arquivo.
 
 ```ruby
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
-  driven_by :selenium, using: :chrome, screen_size: [1400, 1400]
-
-  def remove_uploaded_files
-    FileUtils.rm_rf("#{Rails.root}/storage_test")
-  end
-
+  # ...
   def after_teardown
     super
-    remove_uploaded_files
+    FileUtils.rm_rf(ActiveStorage::Blob.service.root)
   end
+  # ...
 end
 ```
 
-If your system tests verify the deletion of a model with attachments and you're
-using Active Job, set your test environment to use the inline queue adapter so
-the purge job is executed immediately rather at an unknown time in the future.
-
-You may also want to use a separate service definition for the test environment
-so your tests don't delete the files you create during development.
+Se você estiver usando [testes paralelos][] e o `DiskService`, você deve configurar cada processo para usar sua própria
+pasta para o *Active Storage*. Dessa forma, o retorno de chamada `teardown` só excluirá arquivos do processo do teste relevante.
 
 ```ruby
-# Use inline job processing to make things happen immediately
+class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # ...
+  parallelize_setup do |i|
+    ActiveStorage::Blob.service.root = "#{ActiveStorage::Blob.service.root}-#{i}"
+  end
+  # ...
+end
+```
+
+Se os testes de sistema verificarem a exclusão de um *model* com anexos e
+estivermos usando o *Active Job*, configure seu ambiente de testes para usar
+o adaptador de fila para que o trabalho de limpeza seja executado imediatamente,
+em vez de em um momento desconhecido no futuro.
+
+```ruby
+# Usa o processamento de trabalho em linha para fazer as coisas
+# acontecerem imediatamente
 config.active_job.queue_adapter = :inline
-
-# Separate file storage in the test environment
-config.active_storage.service = :local_test
 ```
 
-Discarding Files Stored During Integration Tests
--------------------------------------------
+[parallel tests]: testing.html#parallel-testing
 
-Similarly to System Tests, files uploaded during Integration Tests will not be
-automatically cleaned up. If you want to clear the files, you can do it in an
-`after_teardown` callback. Doing it here ensures that all connections created
-during the test are complete and you won't receive an error from Active Storage
-saying it can't find a file.
+#### Testes de Integração
+
+Similar aos testes de sistema, arquivos enviados durante testes de integração
+não serão automaticamente descartados. Se você deseja limpar esses arquivos, você
+pode fazer isso usando o *callback* `teardown`.
 
 ```ruby
-module RemoveUploadedFiles
+class ActionDispatch::IntegrationTest
   def after_teardown
     super
-    remove_uploaded_files
-  end
-
-  private
-
-  def remove_uploaded_files
-    FileUtils.rm_rf(Rails.root.join('tmp', 'storage'))
-  end
-end
-
-module ActionDispatch
-  class IntegrationTest
-    prepend RemoveUploadedFiles
+    FileUtils.rm_rf(ActiveStorage::Blob.service.root)
   end
 end
 ```
 
-Implementing Support for Other Cloud Services
+Se você estiver usando [testes paralelos][] e o serviço em disco, deverá configurar cada processo para usar sua própria
+pasta para o *Active Storage*. Dessa forma, o retorno de chamada `teardown` só excluirá arquivos do processo do teste relevante.
+
+```ruby
+class ActionDispatch::IntegrationTest
+  parallelize_setup do |i|
+    ActiveStorage::Blob.service.root = "#{ActiveStorage::Blob.service.root}-#{i}"
+  end
+end
+```
+
+[parallel tests]: testing.html#parallel-testing
+
+### Adicionando Arquivos em Fixtures
+
+Você pode adicionar anexos às suas [fixtures][]. Primeiro, você desejará criar um serviço de armazenamento separado:
+
+```yml
+# config/storage.yml
+
+test_fixtures:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage_fixtures") %>
+```
+
+Isso informa ao *Active Storage* para onde "carregar" os arquivos de fixture, então deve ser um diretório temporário. Ao fazê-lo
+um diretório diferente do seu serviço `test` regular, você pode separar os arquivos de fixtures dos arquivos carregados durante um teste.
+
+Em seguida, crie arquivos de fixture para as classes *Active Storage*:
+
+```yml
+# active_storage/attachments.yml
+david_avatar:
+  name: avatar
+  record: david (User)
+  blob: david_avatar_blob
+```
+
+```yml
+# active_storage/blobs.yml
+david_avatar_blob: <%= ActiveStorage::FixtureSet.blob filename: "david.png", service_name: "test_fixtures" %>
+```
+
+Em seguida, coloque um arquivo em seu diretório de fixtures (o caminho padrão é `test/fixtures/files`) com o nome de arquivo correspondente.
+Veja a documentação [`ActiveStorage::FixtureSet`][] para mais informações.
+
+Depois que tudo estiver configurado, você poderá acessar os anexos em seus testes:
+
+```ruby
+class UserTest < ActiveSupport::TestCase
+  def test_avatar
+    avatar = users(:david).avatar
+
+    assert avatar.attached?
+    assert_not_nil avatar.download
+    assert_equal 1000, avatar.byte_size
+  end
+end
+```
+
+#### Limpando as Fixtures
+
+Enquanto os arquivos enviados nos testes são limpos [no final de cada teste](#discarding-files-created-durante-tests),
+você só precisa limpar os arquivos de fixtures uma vez: quando todos os seus testes forem concluídos.
+
+Se você estiver usando testes paralelos, chame `parallelize_teardown`:
+
+```ruby
+class ActiveSupport::TestCase
+  # ...
+  parallelize_teardown do |i|
+    FileUtils.rm_rf(ActiveStorage::Blob.services.fetch(:test_fixtures).root)
+  end
+  # ...
+end
+```
+
+Se você não estiver executando testes paralelos, use `Minitest.after_run` ou equivalente para seu teste
+framework (por exemplo, `after(:suite)` para RSpec):
+
+```ruby
+# test_helper.rb
+
+Minitest.after_run do
+  FileUtils.rm_rf(ActiveStorage::Blob.services.fetch(:test_fixtures).root)
+end
+```
+
+[fixtures]: testing.html#the-low-down-on-fixtures
+[`ActiveStorage::FixtureSet`]: https://api.rubyonrails.org/classes/ActiveStorage/FixtureSet.html
+
+Implementando Suporte a Outros Serviços *Cloud*
 ---------------------------------------------
 
-If you need to support a cloud service other than these, you will need to
-implement the Service. Each service extends
-[`ActiveStorage::Service`](https://github.com/rails/rails/blob/master/activestorage/lib/active_storage/service.rb)
-by implementing the methods necessary to upload and download files to the cloud.
+
+Se for necessário dar suporte a algum outro serviço *cloud* além desses, você precisa implementá-lo. Cada serviço estende [`ActiveStorage::Service`](https://api.rubyonrails.org/classes/ActiveStorage/Service.html) implementando os métodos necessários para fazer o *upload* e *download* de arquivos para a nuvem.
+
+Purging Unattached Uploads
+--------------------------
+
+There are cases where a file is uploaded but never attached to a record. This can happen when using [Direct Uploads](#direct-uploads). You can query for unattached records using the [unattached scope](https://github.com/rails/rails/blob/8ef5bd9ced351162b673904a0b77c7034ca2bc20/activestorage/app/models/active_storage/blob.rb#L49). Below is an example using a [custom rake task](command_line.html#custom-rake-tasks).
+
+```ruby
+namespace :active_storage do
+  desc "Purges unattached Active Storage blobs. Run regularly."
+  task purge_unattached: :environment do
+    ActiveStorage::Blob.unattached.where(created_at: ..2.days.ago).find_each(&:purge_later)
+  end
+end
+```
+
+WARNING: The query generated by `ActiveStorage::Blob.unattached` can be slow and potentially disruptive on applications with larger databases.

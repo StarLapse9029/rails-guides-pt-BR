@@ -45,7 +45,7 @@ The Executor consists of two callbacks: `to_run` and `to_complete`. The Run
 callback is called before the application code, and the Complete callback is
 called after.
 
-### Default callbacks
+### Default Callbacks
 
 In a default Rails application, the Executor callbacks are used to:
 
@@ -60,7 +60,7 @@ directly wrapping code with methods like
 `ActiveRecord::Base.connection_pool.with_connection`. The Executor replaces
 these with a single more abstract interface.
 
-### Wrapping application code
+### Wrapping Application Code
 
 If you're writing a library or component that will invoke application code, you
 should wrap it with a call to the executor:
@@ -72,7 +72,7 @@ end
 ```
 
 TIP: If you repeatedly invoke application code from a long-running process, you
-may want to wrap using the Reloader instead.
+may want to wrap using the [Reloader](#reloader) instead.
 
 Each thread should be wrapped before it runs application code, so if your
 application manually delegates work to other threads, such as via `Thread.new`
@@ -108,9 +108,10 @@ end
 
 ### Concurrency
 
-The Executor will put the current thread into `running` mode in the Load
-Interlock. This operation will block temporarily if another thread is currently
-either autoloading a constant or unloading/reloading the application.
+The Executor will put the current thread into `running` mode in the [Load
+Interlock](#load-interlock). This operation will block temporarily if another
+thread is currently either autoloading a constant or unloading/reloading
+the application.
 
 Reloader
 --------
@@ -176,7 +177,7 @@ The Rails framework components use these tools to manage their own concurrency
 needs too.
 
 `ActionDispatch::Executor` and `ActionDispatch::Reloader` are Rack middlewares
-that wraps the request with a supplied Executor or Reloader, respectively. They
+that wrap requests with a supplied Executor or Reloader, respectively. They
 are automatically included in the default application stack. The Reloader will
 ensure any arriving HTTP request is served with a freshly-loaded copy of the
 application if any code changes have occurred.
@@ -186,7 +187,7 @@ code to execute each job as it comes off the queue.
 
 Action Cable uses the Executor instead: because a Cable connection is linked to
 a specific instance of a class, it's not possible to reload for every arriving
-websocket message. Only the message handler is wrapped, though; a long-running
+WebSocket message. Only the message handler is wrapped, though; a long-running
 Cable connection does not prevent a reload that's triggered by a new incoming
 request or job. Instead, Action Cable uses the Reloader's `before_class_unload`
 callback to disconnect all its connections. When the client automatically
@@ -288,7 +289,7 @@ Another example, using Concurrent Ruby:
 ```ruby
 Rails.application.executor.wrap do
   futures = 3.times.collect do |i|
-    Concurrent::Future.execute do
+    Concurrent::Promises.future do
       Rails.application.executor.wrap do
         # do work here
       end
@@ -300,7 +301,6 @@ Rails.application.executor.wrap do
   end
 end
 ```
-
 
 ### ActionDispatch::DebugLocks
 
@@ -321,4 +321,3 @@ backtrace.
 Generally a deadlock will be caused by the interlock conflicting with some other
 external lock or blocking I/O call. Once you find it, you can wrap it with
 `permit_concurrent_loads`.
-

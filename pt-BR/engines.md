@@ -1,107 +1,106 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
-Getting Started with Engines
+Introdução às *Engines*
 ============================
 
-In this guide you will learn about engines and how they can be used to provide
-additional functionality to their host applications through a clean and very
-easy-to-use interface.
+Neste guia você irá aprender sobre *engines* e como elas podem ser utilizadas para prover funcionalidades adicionais para suas aplicações hospedeiras através de uma interface bem limpa e fácil de usar.
 
-After reading this guide, you will know:
+Após ler este guia, você saberá:
 
-* What makes an engine.
-* How to generate an engine.
-* How to build features for the engine.
-* How to hook the engine into an application.
-* How to override engine functionality in the application.
-* Avoid loading Rails frameworks with Load and Configuration Hooks
+* O que compõe uma *engine*.
+* Como gerar uma *engine*.
+* Como construir as funcionalidades para a *engine*.
+* Como conectar a *engine* em uma aplicação.
+* Como substituir a funcionalidade de uma *engine* na aplicação.
+* Como evitar carregar frameworks Rails com *Load* e *Hooks* de Configuração.
 
 --------------------------------------------------------------------------------
 
-What are engines?
+O que são *Engines*?
 -----------------
 
-Engines can be considered miniature applications that provide functionality to
-their host applications. A Rails application is actually just a "supercharged"
-engine, with the `Rails::Application` class inheriting a lot of its behavior
-from `Rails::Engine`.
+*Engines* podem ser consideradas aplicações em miniatura que fornecem funcionalidades
+para a aplicação hospedeira. Uma aplicação Rails é na verdade apenas uma *engine*
+"sobrecarregada", com a classe `Rails::Application` herdando muitos de seus comportamentos
+a partir da classe `Rails::Engine`.
 
-Therefore, engines and applications can be thought of as almost the same thing,
-just with subtle differences, as you'll see throughout this guide. Engines and
-applications also share a common structure.
+Portanto, *engines* e aplicações podem ser tratadas quase como a mesma coisa,
+apenas com algumas diferenças sutis, como você verá ao longo deste guia. *Engines*
+e aplicações também compartilham uma estrutura em comum.
 
-Engines are also closely related to plugins. The two share a common `lib`
-directory structure, and are both generated using the `rails plugin new`
-generator. The difference is that an engine is considered a "full plugin" by
-Rails (as indicated by the `--full` option that's passed to the generator
-command). We'll actually be using the `--mountable` option here, which includes
-all the features of `--full`, and then some. This guide will refer to these
-"full plugins" simply as "engines" throughout. An engine **can** be a plugin,
-and a plugin **can** be an engine.
+*Engines* também são intimamente relacionadas a *plugins*. Os dois compartilham uma
+estrutura de diretório `lib` e ambos são gerados usando o gerador `rails plugin new`.
+A diferença é que uma *engine* é considerada um "*plugin* completo" pelo Rails
+(como é indicado pela opção `--full` que é passada ao comando gerador). Entretanto,
+nós iremos usar a opção `--mountable` aqui, que inclui todas as funcionalidades
+da `--full`, e mais algumas. Este guia referenciará estes "*plugins* completos"
+apenas como "*engines*" em todo o decorrer. Uma *engine* **pode** ser um *plugin*,
+e um *plugin* **pode** ser uma *engine*.
 
-The engine that will be created in this guide will be called "blorgh". This
-engine will provide blogging functionality to its host applications, allowing
-for new articles and comments to be created. At the beginning of this guide, you
-will be working solely within the engine itself, but in later sections you'll
-see how to hook it into an application.
+A *engine* que será criada neste guia será chamada "blorgh". Essa *engine* proverá
+a funcionalidade de *blogging* para sua aplicação hospedeira, permitindo a criação
+de novos artigos e comentários. No começo deste guia, você irá trabalhar somente
+com a *engine* em si, mas nas seções mais a frente, você verá como conectá-la em
+uma aplicação.
 
-Engines can also be isolated from their host applications. This means that an
-application is able to have a path provided by a routing helper such as
-`articles_path` and use an engine that also provides a path also called
-`articles_path`, and the two would not clash. Along with this, controllers, models
-and table names are also namespaced. You'll see how to do this later in this
-guide.
+*Engines* também podem ser isoladas de sua aplicação hospedeira. Isso significa que
+uma aplicação é capaz de ter um caminho provido por um *helper* de roteamento,
+como o `articles_path` e usar uma *engine* que também provê um caminho chamado
+`articles_path`, e os dois não sofreram conflito. Junto com isso, *controllers*,
+*models* e nomes de tabela também são separados por *namespace*. Você verá como
+fazer isso mais tarde neste guia.
 
-It's important to keep in mind at all times that the application should
-**always** take precedence over its engines. An application is the object that
-has final say in what goes on in its environment. The engine should
-only be enhancing it, rather than changing it drastically.
+É importante ter em mente que a aplicação **sempre** terá precedência
+sobre suas *engines*. Uma aplicação é o objeto que terá a palavra final sobre o
+que estará presente no ambiente. A *engine* estará somente a aprimorando, ao invés
+de mudá-la drasticamente.
 
-To see demonstrations of other engines, check out
-[Devise](https://github.com/plataformatec/devise), an engine that provides
-authentication for its parent applications, or
-[Thredded](https://github.com/thredded/thredded), an engine that provides forum
-functionality. There's also [Spree](https://github.com/spree/spree) which
-provides an e-commerce platform, and
-[Refinery CMS](https://github.com/refinery/refinerycms), a CMS engine.
+Para ver demonstrações de outras *engines*,
+veja [Devise](https://github.com/plataformatec/devise), uma *engine* que provê
+autenticação para suas aplicações hospedeiras, ou
+[Thredded](https://github.com/thredded/thredded), uma *engine* que provê
+funcionalidades de fórum, também há
+[Spree](https://github.com/spree/spree), que provê uma plataforma de *e-commerce*,
+e [Refinery CMS](https://github.com/refinery/refinerycms), uma *engine* de CMS.
 
-Finally, engines would not have been possible without the work of James Adam,
-Piotr Sarnacki, the Rails Core Team, and a number of other people. If you ever
-meet them, don't forget to say thanks!
+Por fim, *engines* não seriam possíveis sem o trabalho de James Adam,
+Piotr Sarnacki, a equipe principal do Rails e várias outras pessoas. Se algum dia
+você se encontrar com eles, não se esqueça de dizer "obrigado(a)"!
 
-Generating an engine
+Gerando uma *Engine*
 --------------------
 
-To generate an engine, you will need to run the plugin generator and pass it
-options as appropriate to the need. For the "blorgh" example, you will need to
-create a "mountable" engine, running this command in a terminal:
+Para gerar uma *engine*, você precisará rodar o gerador de *plugin* e passar a ele
+opções conforme for necessário. Para o exemplo do "blorgh", você precisará criar
+uma *engine* "montável" (_mountable_), executando o seguinte comando em um terminal:
 
 ```bash
 $ rails plugin new blorgh --mountable
 ```
 
-The full list of options for the plugin generator may be seen by typing:
+A lista com todas as opções disponíveis no gerador de *plugin* pode ser vista digitando:
 
 ```bash
 $ rails plugin --help
 ```
 
-The `--mountable` option tells the generator that you want to create a
-"mountable" and namespace-isolated engine. This generator will provide the same
-skeleton structure as would the `--full` option. The `--full` option tells the
-generator that you want to create an engine, including a skeleton structure
-that provides the following:
+A opção `--mountable` indica ao gerador que você quer criar uma *engine*
+"montável" e com *namespace* isolado. Esse gerador fornecerá a mesma estrutura de
+esqueleto que a opção `--full`. A opção `--full` indica ao
+gerador que você quer criar uma *engine*, incluindo uma estrutura de esqueleto
+que fornece o seguinte:
 
-  * An `app` directory tree
-  * A `config/routes.rb` file:
+  * Uma árvore de diretório `app`
+  * Um arquivo `config/routes.rb`:
 
     ```ruby
     Rails.application.routes.draw do
     end
     ```
 
-  * A file at `lib/blorgh/engine.rb`, which is identical in function to a
-    standard Rails application's `config/application.rb` file:
+  * Um arquivo em `lib/blorgh/engine.rb`, que é idêntico em função quando se compara
+    ao arquivo `config/application.rb` presente em aplicações Rails padrões:
 
     ```ruby
     module Blorgh
@@ -110,20 +109,20 @@ that provides the following:
     end
     ```
 
-The `--mountable` option will add to the `--full` option:
+A opção `--mountable` adicionará à opção `--full`:
 
-  * Asset manifest files (`application.js` and `application.css`)
-  * A namespaced `ApplicationController` stub
-  * A namespaced `ApplicationHelper` stub
-  * A layout view template for the engine
-  * Namespace isolation to `config/routes.rb`:
+  * Arquivos de manifesto de recursos (`blorgh_manifest.js` and `application.css`)
+  * Um *stub* `ApplicationController` com *namespace*
+  * Um *stup* `ApplicationHelper` com *namespace*
+  * Um *template* de *layout* para as *views* da *engine*
+  * Isolação de *namespace* em `config/routes.rb`:
 
     ```ruby
     Blorgh::Engine.routes.draw do
     end
     ```
 
-  * Namespace isolation to `lib/blorgh/engine.rb`:
+  * Isolação de *namespace* em `lib/blorgh/engine.rb`:
 
     ```ruby
     module Blorgh
@@ -133,32 +132,31 @@ The `--mountable` option will add to the `--full` option:
     end
     ```
 
-Additionally, the `--mountable` option tells the generator to mount the engine
-inside the dummy testing application located at `test/dummy` by adding the
-following to the dummy application's routes file at
-`test/dummy/config/routes.rb`:
+De forma adicional, a opção `--mountable` indica ao gerador para montar a
+*engine* dentro da aplicação de teste fictícia localizada em `test/dummy` ao
+adicionar o seguinte as rotas da aplicação fictícia em `test/dummy/config/routes.rb`:
 
 ```ruby
 mount Blorgh::Engine => "/blorgh"
 ```
 
-### Inside an Engine
+### Dentro de uma *engine*
 
-#### Critical Files
+#### Arquivos Críticos
 
-At the root of this brand new engine's directory lives a `blorgh.gemspec` file.
-When you include the engine into an application later on, you will do so with
-this line in the Rails application's `Gemfile`:
+No diretório raiz dessa nova *engine* há um arquivo `blorgh.gemspec`.
+Quando você incluir a *engine* em uma aplicação mais tarde, você fará isso
+colocando esta linha no `Gemfile` de sua aplicação Rails:
 
 ```ruby
 gem 'blorgh', path: 'engines/blorgh'
 ```
 
-Don't forget to run `bundle install` as usual. By specifying it as a gem within
-the `Gemfile`, Bundler will load it as such, parsing this `blorgh.gemspec` file
-and requiring a file within the `lib` directory called `lib/blorgh.rb`. This
-file requires the `blorgh/engine.rb` file (located at `lib/blorgh/engine.rb`)
-and defines a base module called `Blorgh`.
+Não esqueça de executar `bundle install` como de costume. Ao especificá-la como
+uma *gem* dentro do `Gemfile`, o Bundler irá carregá-la de acordo, analisando esse
+arquivo `blorgh.gemspec` e requerindo um arquivo dentro do diretório `lib` chamado
+`lib/blorgh.rb`. Esse arquivo requere o arquivo `blorgh/engine.rb` (localizado em
+`lib/blorgh/engine.rb`) e define um módulo base chamado `Blorgh`.
 
 ```ruby
 require "blorgh/engine"
@@ -172,7 +170,7 @@ for their engine. It's a relatively good idea, so if you want to offer
 configuration options, the file where your engine's `module` is defined is
 perfect for that. Place the methods inside the module and you'll be good to go.
 
-Within `lib/blorgh/engine.rb` is the base class for the engine:
+Dentro de `lib/blorgh/engine.rb` está a classe base da *engine*
 
 ```ruby
 module Blorgh
@@ -182,137 +180,118 @@ module Blorgh
 end
 ```
 
-By inheriting from the `Rails::Engine` class, this gem notifies Rails that
-there's an engine at the specified path, and will correctly mount the engine
-inside the application, performing tasks such as adding the `app` directory of
-the engine to the load path for models, mailers, controllers, and views.
+Ao herdar da classe `Rails::Engine`, essa *gem* notifica ao Rails que existe
+uma *engine* no caminho especificado e montará corretamente a *engine* dentro
+da aplicação, executando tarefas como adicionar o diretório `app` da *engine* ao
+caminho de carregamento (*load path*) para *models*, *mailers*, *controllers* e *views*.
 
-The `isolate_namespace` method here deserves special notice. This call is
-responsible for isolating the controllers, models, routes, and other things into
-their own namespace, away from similar components inside the application.
-Without this, there is a possibility that the engine's components could "leak"
-into the application, causing unwanted disruption, or that important engine
-components could be overridden by similarly named things within the application.
-One of the examples of such conflicts is helpers. Without calling
-`isolate_namespace`, the engine's helpers would be included in an application's
-controllers.
+O método `isolate_namespace` merece uma nota especial. Essa chamada é responsável
+por isolar os *controllers*, *models*, rotas e outras coisas em seu próprio *namespace*,
+separado de componentes similares dentro da aplicação.
+Sem isso, haveria a possibilidade dos componentes da *engine* "vazarem" dentro
+da aplicação, causando uma disrupção indesejada, ou que componentes importantes
+da *engine* fossem sobrescritos por coisas com nomes similares existentes na aplicação.
+Um exemplo de conflitos como esses são os *helpers*. Sem chamar `isolate_namespace`,
+os *helpers* da *engine* seriam incluídos nos *controllers* da aplicação.
 
 NOTE: It is **highly** recommended that the `isolate_namespace` line be left
 within the `Engine` class definition. Without it, classes generated in an engine
 **may** conflict with an application.
 
-What this isolation of the namespace means is that a model generated by a call
-to `rails g model`, such as `rails g model article`, won't be called `Article`, but
-instead be namespaced and called `Blorgh::Article`. In addition, the table for the
-model is namespaced, becoming `blorgh_articles`, rather than simply `articles`.
-Similar to the model namespacing, a controller called `ArticlesController` becomes
-`Blorgh::ArticlesController` and the views for that controller will not be at
-`app/views/articles`, but `app/views/blorgh/articles` instead. Mailers are namespaced
-as well.
+O que esse isolamento de *namespace* significa é que um _model_ gerado por uma chamada
+ao `bin/rails generate model`, como `bin/rails generate model article`, não será
+chamada `Article`, mas sim dentro de um *namespace*, chamado de `Blorgh::Article`.
+Além disso, a tabela para o *model* também usará o *namespace*, tornando-se `blorgh_articles`,
+ao invés de simplesmente `articles`.
+Similar ao *namespacing* do *model*, um *controller* chamado `ArticlesController`
+se torna `Blorgh::ArticlesController` e as *views* desse *controller* não estarão
+em `app/views/articles`, mas sim em `app/views/blorgh/articles`. *Mailers*, *jobs*
+e *helpers* também são incluídos no *namespace*.
 
-Finally, routes will also be isolated within the engine. This is one of the most
-important parts about namespacing, and is discussed later in the
-[Routes](#routes) section of this guide.
+Por fim, as rotas também serão isoladas dentro da *engine*. Essa é uma das
+partes mais importantes sobre *namespacing*, e é discutida mais tarde na seção
+[Rotas](#routes) deste guia.
 
-#### `app` Directory
+#### Diretório `app`
 
-Inside the `app` directory are the standard `assets`, `controllers`, `helpers`,
-`jobs`, `mailers`, `models`, and `views` directories that you should be familiar with
-from an application. We'll look more into models in a future section, when we're writing the engine.
+Dentro do diretório `app` estão os diretórios padrões `assets`, `controllers`, `helpers`,
+`jobs`, `mailers`, `models`, e `views` de uma aplicação que você deve estar familiarizado.
+Nós veremos mais sobre *models* em uma seção futura, quando estivermos escrevendo a *engine*.
 
-Within the `app/assets` directory, there are the `images`, `javascripts` and
-`stylesheets` directories which, again, you should be familiar with due to their
-similarity to an application. One difference here, however, is that each
-directory contains a sub-directory with the engine name. Because this engine is
-going to be namespaced, its assets should be too.
+Dentro do diretório `app/assets`, estão os diretórios `images` e `stylesheets` que,
+novamente, já deve ser familiar a você devido sua similaridade com uma aplicação.
+Uma diferença aqui, entretanto, é que cada diretório contém um sub-diretório com o nome
+da *engine*. Como essa *engine* utiliza um *namespace*, seus *assets* também devem usar.
 
-Within the `app/controllers` directory there is a `blorgh` directory that
-contains a file called `application_controller.rb`. This file will provide any
-common functionality for the controllers of the engine. The `blorgh` directory
-is where the other controllers for the engine will go. By placing them within
-this namespaced directory, you prevent them from possibly clashing with
-identically-named controllers within other engines or even within the
-application.
+Dentro do diretório `app/controllers` há um diretório `blorgh` que contém um
+arquivo chamado `application_controller.rb`. Esse arquivo fornecerá funcionalidades
+comuns aos *controllers* da *engine*. O diretório `blorgh` é onde os outros *controllers*
+da *engine* estarão. Ao colocá-los neste diretório com *namespace*, você estará evitando
+que eles possam conflitar com *controllers* com nomes idênticos  de *controllers* existentes
+em outras *engines* ou da própria aplicação.
 
 NOTE: The `ApplicationController` class inside an engine is named just like a
 Rails application in order to make it easier for you to convert your
 applications into engines.
 
-NOTE: Because of the way that Ruby does constant lookup you may run into a situation
-where your engine controller is inheriting from the main application controller and
-not your engine's application controller. Ruby is able to resolve the `ApplicationController` constant, and therefore the autoloading mechanism is not triggered. See the section [When Constants Aren't Missed](autoloading_and_reloading_constants.html#when-constants-aren-t-missed) of the [Autoloading and Reloading Constants](autoloading_and_reloading_constants.html) guide for further details. The best way to prevent this from
-happening is to use `require_dependency` to ensure that the engine's application
-controller is loaded. For example:
+NOTE: If the parent application runs in `classic` mode, you may run into a
+situation where your engine controller is inheriting from the main application
+controller and not your engine's application controller. The best way to prevent
+this is to switch to `zeitwerk` mode in the parent application. Otherwise, use
+`require_dependency` to ensure that the engine's application controller is
+loaded. For example:
 
-``` ruby
-# app/controllers/blorgh/articles_controller.rb:
+```ruby
+# ONLY NEEDED IN `classic` MODE.
 require_dependency "blorgh/application_controller"
 
 module Blorgh
   class ArticlesController < ApplicationController
-    ...
+    # ...
   end
 end
 ```
 
-WARNING: Don't use `require` because it will break the automatic reloading of classes
-in the development environment - using `require_dependency` ensures that classes are
-loaded and unloaded in the correct manner.
+WARNING: Don't use `require` because it will break the automatic reloading of
+classes in the development environment - using `require_dependency` ensures that
+classes are loaded and unloaded in the correct manner.
 
-Within the `app/helpers` directory there is a `blorgh` directory that
-contains a file called `application_helper.rb`. This file will provide any
-common functionality for the helpers of the engine. The `blorgh` directory
-is where the other helpers for the engine will go. By placing them within
-this namespaced directory, you prevent them from possibly clashing with
-identically-named route helpers within other engines or even within the
-application.
+Assim como para `app/controllers`, você encontrará um subdiretório `blorgh` dentro
+dos diretórios `app/helpers`, `app/jobs`, `app/mailers` e `app/models` contendo
+o arquivo associado `application_*.rb` para reunir funcionalidades comuns. Ao
+colocar seus arquivos nesse subdiretório e utilizar o *namespace* nos seus objetos,
+você evita que eles possam conflitar com elementos de nome idênticos  ao de outras
+*engines* ou até mesmo da própria aplicação.
 
-Within the `app/jobs` directory there is a `blorgh` directory that
-contains a file called `application_job.rb`. This file will provide any
-common functionality for the jobs of the engine. The `blorgh` directory
-is where the other jobs for the engine will go. By placing them within
-this namespaced directory, you prevent them from possibly clashing with
-identically-named jobs within other engines or even within the
-application.
+Por último, o diretório `app/views` contém uma pasta `layouts`, que contém um
+arquivo em `blorgh/application.html.erb`. Esse arquivo permite que você especifique
+um *layout* para a *engine*. Se a *engine* for utilizada sozinha, então você deve
+adicionar as personalizações necessárias para seu arquivo de `layout` ao invés do
+arquivo `app/views/layouts/application.html.erb` da aplicação.
 
-Within the `app/mailers` directory there is a `blorgh` directory that
-contains a file called `application_mailer.rb`. This file will provide any
-common functionality for the mailers of the engine. The `blorgh` directory
-is where the other mailers for the engine will go. By placing them within
-this namespaced directory, you prevent them from possibly clashing with
-identically-named mailers within other engines or even within the
-application.
+Se você não quer forçar um *layout* para os usuários da *engine*, então você pode
+deletar esse arquivo e referenciar um *layout* diferente nos *controllers* da sua
+*engine*.
 
-Lastly, the `app/views` directory contains a `layouts` folder, which contains a
-file at `blorgh/application.html.erb`. This file allows you to specify a layout
-for the engine. If this engine is to be used as a stand-alone engine, then you
-would add any customization to its layout in this file, rather than the
-application's `app/views/layouts/application.html.erb` file.
+#### Diretório `bin`
 
-If you don't want to force a layout on to users of the engine, then you can
-delete this file and reference a different layout in the controllers of your
-engine.
-
-#### `bin` Directory
-
-This directory contains one file, `bin/rails`, which enables you to use the
-`rails` sub-commands and generators just like you would within an application.
-This means that you will be able to generate new controllers and models for this
-engine very easily by running commands like this:
+Esse diretório contém um arquivo, `bin/rails`, que possibilita o uso dos sub-comandos
+e geradores do Rails assim como você utilizaria em uma aplicação. Isso significa que
+você terá a habilidade de gerar novos *controllers* e *models* para essa *engine* de
+forma bem simples ao rodar comandos como este:
 
 ```bash
-$ bin/rails g model
+$ bin/rails generate model
 ```
 
-Keep in mind, of course, that anything generated with these commands inside of
-an engine that has `isolate_namespace` in the `Engine` class will be namespaced.
+Tenha em mente, é claro, que tudo gerado com esses comandos dentro de uma *engine*
+que contém o `isolate_namespace` na classe `Engine` conterá um *namespace*.
 
-#### `test` Directory
+#### Diretório `test`
 
-The `test` directory is where tests for the engine will go. To test the engine,
-there is a cut-down version of a Rails application embedded within it at
-`test/dummy`. This application will mount the engine in the
-`test/dummy/config/routes.rb` file:
+O diretório `test` é onde os testes para a *engine* estarão. Para testar a *engine*,
+há uma versão reduzida de uma aplicação Rails embutida nela em `test/dummy`. Essa
+aplicação irá montar a *engine* no arquivo `test/dummy/config/routes.rb`:
 
 ```ruby
 Rails.application.routes.draw do
@@ -320,34 +299,35 @@ Rails.application.routes.draw do
 end
 ```
 
-This line mounts the engine at the path `/blorgh`, which will make it accessible
-through the application only at that path.
+Essa linha monta a *engine* no caminho `/blorgh`, que a tornará acessível através
+da aplicação somente neste caminho.
 
-Inside the test directory there is the `test/integration` directory, where
-integration tests for the engine should be placed. Other directories can be
-created in the `test` directory as well. For example, you may wish to create a
-`test/models` directory for your model tests.
+Dentro do diretório de teste há o diretório `test/integration`, onde os testes
+de integração devem ser colocados. Outros diretórios também podem ser criados
+no diretório `test`. Por exemplo, você pode querer criar um diretório `test/models`
+para os testes de *models*.
 
-Providing engine functionality
+Fornecendo Funcionalidades a *Engine*
 ------------------------------
 
-The engine that this guide covers provides submitting articles and commenting
-functionality and follows a similar thread to the [Getting Started
-Guide](getting_started.html), with some new twists.
+A *engine* que este guia cobre fornece funcionalidades de submeter artigos e
+comentários e segue na mesma linha do [Guia Começando com Rails](getting_started.html), com algumas
+novas alterações.
 
 NOTE: For this section, make sure to run the commands in the root of the
 `blorgh` engine's directory.
 
-### Generating an Article Resource
+### Gerando um Recurso de Artigo
 
-The first thing to generate for a blog engine is the `Article` model and related
-controller. To quickly generate this, you can use the Rails scaffold generator.
+A primeira coisa a se gerar para uma *engine* de blog é o *model* `Article` e o
+*controller* relacionado. Para gerar isso rapidamente, você pode utilizar o
+gerador de *scaffold* do Rails.
 
 ```bash
-$ rails generate scaffold article title:string text:text
+$ bin/rails generate scaffold article title:string text:text
 ```
 
-This command will output this information:
+Esse comando gerará a seguinte saída:
 
 ```
 invoke  active_record
@@ -373,29 +353,23 @@ create      test/system/blorgh/articles_test.rb
 invoke    helper
 create      app/helpers/blorgh/articles_helper.rb
 invoke      test_unit
-invoke  assets
-invoke    css
-create      app/assets/stylesheets/blorgh/articles.css
-invoke  css
-create    app/assets/stylesheets/scaffold.css
 ```
 
-The first thing that the scaffold generator does is invoke the `active_record`
-generator, which generates a migration and a model for the resource. Note here,
-however, that the migration is called `create_blorgh_articles` rather than the
-usual `create_articles`. This is due to the `isolate_namespace` method called in
-the `Blorgh::Engine` class's definition. The model here is also namespaced,
-being placed at `app/models/blorgh/article.rb` rather than `app/models/article.rb` due
-to the `isolate_namespace` call within the `Engine` class.
+A primeira coisa que o gerador de *scaffold* faz é invocar o gerador `active_record`,
+que gera uma migração e um `model` para o recurso. Note que, porém, a migração é
+chamada `create_blorgh_articles` ao invés de `create_articles`. Isso se deve a
+chamada do método `isolate_namespace` na definição da classe `Blorgh::Engine`. O *model*
+aqui também está sob um *namespace*, colocado em `app/models/blorgh/article.rb` ao invés
+de `app/models/article.rb` devido à chamada do método `isolate_namespace` dentro da
+classe `Engine`.
 
-Next, the `test_unit` generator is invoked for this model, generating a model
-test at `test/models/blorgh/article_test.rb` (rather than
-`test/models/article_test.rb`) and a fixture at `test/fixtures/blorgh/articles.yml`
-(rather than `test/fixtures/articles.yml`).
+A seguir, é invocado o gerador `test_unit` para este *model*, gerando um teste de *model*
+em `test/models/blorgh/article_test.rb` (ao invés de `test/models/article_test.rb`) e uma
+*fixture* em `test/fixtures/blorgh/articles.yml` (ao invés de `test/fixtures/articles.yml`).
 
-After that, a line for the resource is inserted into the `config/routes.rb` file
-for the engine. This line is simply `resources :articles`, turning the
-`config/routes.rb` file for the engine into this:
+Depois disso, uma linha para o recurso é inserida no arquivo `config/routes.rb` para
+aquela *engine*. Essa linha é simplesmente `resources :articles`, transformando o
+arquivo `config/routes.rb` da *engine* nisto:
 
 ```ruby
 Blorgh::Engine.routes.draw do
@@ -403,26 +377,26 @@ Blorgh::Engine.routes.draw do
 end
 ```
 
-Note here that the routes are drawn upon the `Blorgh::Engine` object rather than
-the `YourApp::Application` class. This is so that the engine routes are confined
-to the engine itself and can be mounted at a specific point as shown in the
-[test directory](#test-directory) section. It also causes the engine's routes to
-be isolated from those routes that are within the application. The
-[Routes](#routes) section of this guide describes it in detail.
+Note que as rotas são escritas sobre o objeto `Blorgh::Engine` ao invés da classe
+`YourApp::Application`. Isso acontece, pois assim as rotas da *engine* permanecem
+confinadas na própria *engine* e podem ser montadas em um ponto específico como
+mostrado na seção [diretório de teste](#test-directory). Isso também faz com que
+as rotas da *engine* estejam isoladas das rotas da própria aplicação. A seção
+[Rotas](#routes) deste guia, descreve isso em detalhes.
 
-Next, the `scaffold_controller` generator is invoked, generating a controller
-called `Blorgh::ArticlesController` (at
-`app/controllers/blorgh/articles_controller.rb`) and its related views at
-`app/views/blorgh/articles`. This generator also generates tests for the
-controller (`test/controllers/blorgh/articles_controller_test.rb` and `test/system/blorgh/articles_test.rb`) and a helper (`app/helpers/blorgh/articles_helper.rb`).
+A seguir, é invocado o gerador `scaffold_controller`, gerando um *controller* chamado
+`Blorgh::ArticlesController` (em `app/controllers/blorgh/articles_controller.rb`) e
+suas *views* relacionadas em `app/views/blorgh/articles`. Esse gerador também gera testes
+para o *controller* (`test/controllers/blorgh/articles_controller_test.rb` e
+`test/system/blorgh/articles_test.rb`) e um *helper* (`app/helpers/blorgh/articles_helper.rb`).
 
-Everything this generator has created is neatly namespaced. The controller's
-class is defined within the `Blorgh` module:
+Tudo que esse gerador cria está sob um *namespace*. A classe do *controller* é
+definida dentro de um módulo `Blorgh`:
 
 ```ruby
 module Blorgh
   class ArticlesController < ApplicationController
-    ...
+    # ...
   end
 end
 ```
@@ -430,67 +404,63 @@ end
 NOTE: The `ArticlesController` class inherits from
 `Blorgh::ApplicationController`, not the application's `ApplicationController`.
 
-The helper inside `app/helpers/blorgh/articles_helper.rb` is also namespaced:
+O *helper* dentro de `app/helpers/blorgh/articles_helper.rb` também está sob um *namespace*.
 
 ```ruby
 module Blorgh
   module ArticlesHelper
-    ...
+    # ...
   end
 end
 ```
 
-This helps prevent conflicts with any other engine or application that may have
-an article resource as well.
+Isso ajuda a prevenir conflitos com qualquer outra *engine* ou aplicação que também
+tenha um recurso de artigo.
 
-Finally, the assets for this resource are generated in one file: `app/assets/stylesheets/blorgh/articles.css`. You'll see how to use these a little later.
+Você pode ver o que a *engine* tem até agora executando `bin/rails db:migrate` na raiz
+de sua *engine* para executar as migrações geradas pelo gerador de *scaffold*, e então
+executar `bin/rails server` em `test/dummy`. Quando você abrir `http://localhost:3000/blorgh/articles`,
+você verá o *scaffold* padrão que foi gerado.  Clique em volta! Você acaba de gerar as
+primeiras funções de sua primeira *engine*.
 
-You can see what the engine has so far by running `rails db:migrate` at the root
-of our engine to run the migration generated by the scaffold generator, and then
-running `rails server` in `test/dummy`. When you open
-`http://localhost:3000/blorgh/articles` you will see the default scaffold that has
-been generated. Click around! You've just generated your first engine's first
-functions.
+Se você preferir testar utilizando o *console*, `bin/rails console` também funcionará
+como uma aplicação Rails. Lembre-se: o model `Article` utiliza um *namespace*, então para
+referenciá-lo, você deve chamá-lo como `Blorgh::Article`.
 
-If you'd rather play around in the console, `rails console` will also work just
-like a Rails application. Remember: the `Article` model is namespaced, so to
-reference it you must call it as `Blorgh::Article`.
-
-```ruby
->> Blorgh::Article.find(1)
+```irb
+irb> Blorgh::Article.find(1)
 => #<Blorgh::Article id: 1 ...>
 ```
 
-One final thing is that the `articles` resource for this engine should be the root
-of the engine. Whenever someone goes to the root path where the engine is
-mounted, they should be shown a list of articles. This can be made to happen if
-this line is inserted into the `config/routes.rb` file inside the engine:
+Uma última coisa é que o recurso `articles` para essa *engine* deve estar na
+raiz da *engine*. Sempre que alguém for ao caminho raiz onde a *engine* está montada,
+eles devem ver uma lista de artigos. Isso pode ser feito se essa linha for inserida
+ao arquivo `config/routes.rb` dentro da *engine*:
 
 ```ruby
 root to: "articles#index"
 ```
 
-Now people will only need to go to the root of the engine to see all the articles,
-rather than visiting `/articles`. This means that instead of
-`http://localhost:3000/blorgh/articles`, you only need to go to
-`http://localhost:3000/blorgh` now.
+Agora, as pessoas só precisarão ir à raiz da *engine* para ver os artigos, ao invés
+de visitar `/articles`. Isso significa que ao invés de `http://localhost:3000/blorgh/articles`,
+você agora só precisa ir até `http://localhost:3000/blorgh`.
 
-### Generating a Comments Resource
+### Gerando um Recurso de Comentários
 
-Now that the engine can create new articles, it only makes sense to add
-commenting functionality as well. To do this, you'll need to generate a comment
-model, a comment controller, and then modify the articles scaffold to display
-comments and allow people to create new ones.
+Agora que a *engine* pode criar novos artigos, faz sentido adicionar a funcionalidade
+de comentários também. Para fazer isso, você precisará gerar um *model* de comentário,
+um *controller* de comentários, e então modificar o *scaffold* de artigos para
+exibir os comentários e permitir que pessoas possam criar novos comentários.
 
-From the application root, run the model generator. Tell it to generate a
-`Comment` model, with the related table having two columns: an `article_id` integer
-and `text` text column.
+Da raiz da *engine*, execute o gerador de *model*. Indique a geração de um
+*model* `Comment`, com a sua tabela contendo duas colunas: um inteiro `article_id`
+e uma coluna de texto `text`.
 
 ```bash
-$ rails generate model Comment article_id:integer text:text
+$ bin/rails generate model Comment article_id:integer text:text
 ```
 
-This will output the following:
+Isso produzirá a seguinte saída:
 
 ```
 invoke  active_record
@@ -501,32 +471,32 @@ create      test/models/blorgh/comment_test.rb
 create      test/fixtures/blorgh/comments.yml
 ```
 
-This generator call will generate just the necessary model files it needs,
-namespacing the files under a `blorgh` directory and creating a model class
-called `Blorgh::Comment`. Now run the migration to create our blorgh_comments
-table:
+Esse gerador gerará somente os arquivos de *model* que ele precisa, colocando
+os arquivo dentro de um diretório `blorgh` e criando uma classe de *model*
+chamada `Blorgh::Comment`. Agora execute a migração para criar nossa tabela
+`blorgh_comments`.
 
 ```bash
-$ rails db:migrate
+$ bin/rails db:migrate
 ```
 
-To show the comments on an article, edit `app/views/blorgh/articles/show.html.erb` and
-add this line before the "Edit" link:
+Para exibir os comentários em um artigo, edite `app/views/blorgh/articles/show.html.erb`
+e adicione essas linhas antes do link "Edit".
 
 ```html+erb
 <h3>Comments</h3>
 <%= render @article.comments %>
 ```
 
-This line will require there to be a `has_many` association for comments defined
-on the `Blorgh::Article` model, which there isn't right now. To define one, open
-`app/models/blorgh/article.rb` and add this line into the model:
+Essa linha requer que exista uma associação `has_many` com os comentários definida
+no *model* `Blorgh::Article`, o que não existe até o momento. Para defini-la, abra
+`app/models/blorgh/article.rb` e adicione essa linha no *model*.
 
 ```ruby
 has_many :comments
 ```
 
-Turning the model into this:
+Transformando o *model* nisso:
 
 ```ruby
 module Blorgh
@@ -541,21 +511,21 @@ NOTE: Because the `has_many` is defined inside a class that is inside the
 model for these objects, so there's no need to specify that using the
 `:class_name` option here.
 
-Next, there needs to be a form so that comments can be created on an article. To
-add this, put this line underneath the call to `render @article.comments` in
-`app/views/blorgh/articles/show.html.erb`:
+A seguir, é necessário que tenhamos um formulário para que os comentários sejam
+criados dentro de um artigo. Para adicionar isso, coloque essa linha logo após
+`render @article.comments` em `app/views/blorgh/articles/show.html.erb`.
 
 ```erb
 <%= render "blorgh/comments/form" %>
 ```
 
-Next, the partial that this line will render needs to exist. Create a new
-directory at `app/views/blorgh/comments` and in it a new file called
-`_form.html.erb` which has this content to create the required partial:
+A seguir, a *partial* que essa linha renderizará precisa existir. Crie um novo
+diretório `app/views/blorgh/comments` e dentro dele, um novo arquivo chamado
+`_form.html.erb` que contem esse conteúdo para criar a *partial* requerida:
 
 ```html+erb
 <h3>New comment</h3>
-<%= form_with(model: [@article, @article.comments.build], local: true) do |form| %>
+<%= form_with model: [@article, @article.comments.build] do |form| %>
   <p>
     <%= form.label :text %><br>
     <%= form.text_area :text %>
@@ -564,10 +534,10 @@ directory at `app/views/blorgh/comments` and in it a new file called
 <% end %>
 ```
 
-When this form is submitted, it is going to attempt to perform a `POST` request
-to a route of `/articles/:article_id/comments` within the engine. This route doesn't
-exist at the moment, but can be created by changing the `resources :articles` line
-inside `config/routes.rb` into these lines:
+Quando esse formulário é submetido, ele tentará performar uma requisição do tipo
+`POST` a uma rota `/articles/:article_id/comments` da *engine*. Essa ainda não existe
+atualmente, mas pode ser criada mudando a linha `resources :articles` dentro de
+`config/routes.rb` para estas linhas:
 
 ```ruby
 resources :articles do
@@ -575,16 +545,16 @@ resources :articles do
 end
 ```
 
-This creates a nested route for the comments, which is what the form requires.
+Isso cria uma rota aninhada para os comentários, que o formulário requer.
 
-The route now exists, but the controller that this route goes to does not. To
-create it, run this command from the application root:
+Essa rota agora existe, mas o *controller* para onde está rota leva, não existe.
+Para criá-lo, execute este comando na raiz da *engine*.
 
 ```bash
-$ rails g controller comments
+$ bin/rails generate controller comments
 ```
 
-This will generate the following things:
+Isso gerará o seguinte:
 
 ```
 create  app/controllers/blorgh/comments_controller.rb
@@ -595,15 +565,12 @@ create    test/controllers/blorgh/comments_controller_test.rb
 invoke  helper
 create    app/helpers/blorgh/comments_helper.rb
 invoke    test_unit
-invoke  assets
-invoke    css
-create      app/assets/stylesheets/blorgh/comments.css
 ```
 
-The form will be making a `POST` request to `/articles/:article_id/comments`, which
-will correspond with the `create` action in `Blorgh::CommentsController`. This
-action needs to be created, which can be done by putting the following lines
-inside the class definition in `app/controllers/blorgh/comments_controller.rb`:
+O formulário está executando uma requisição do tipo `POST` para `/articles/:article_id/comments`
+que corresponderá a ação `create` em `Blorgh::CommentsController`. Essa ação precisa ser
+criada, o que pode ser feito colocando as seguintes linhas dentro da definição da classe
+em `app/controllers/blorgh/comments_controller.rb`:
 
 ```ruby
 def create
@@ -619,9 +586,9 @@ private
   end
 ```
 
-This is the final step required to get the new comment form working. Displaying
-the comments, however, is not quite right yet. If you were to create a comment
-right now, you would see this error:
+Isso é o último passo requerido para obter o formulário de novo comentário funcionando.
+Exibir os comentários, entretanto, ainda não está funcionando. Se você criar um comentário
+agora, você verá o seguinte erro:
 
 ```
 Missing partial blorgh/comments/_comment with {:handlers=>[:erb, :builder],
@@ -630,27 +597,27 @@ Missing partial blorgh/comments/_comment with {:handlers=>[:erb, :builder],
 "/Users/ryan/Sites/side_projects/blorgh/app/views"
 ```
 
-The engine is unable to find the partial required for rendering the comments.
-Rails looks first in the application's (`test/dummy`) `app/views` directory and
-then in the engine's `app/views` directory. When it can't find it, it will throw
-this error. The engine knows to look for `blorgh/comments/_comment` because the
-model object it is receiving is from the `Blorgh::Comment` class.
+Essa *engine* não é capaz de encontrar a *partial* requerida para renderizar os comentários.
+O Rails procura primeiro no diretório `app/views` da aplicação (`test/dummy`) e
+depois no diretório `app/views` da *engine*. Quando ele não consegue encontrar, ele
+irá disparar esse erro. A *engine* sabe procurar por `blorgh/comments/_comment` porque
+o objeto do *model* a está recebendo da classe `Blorgh::Comment`.
 
-This partial will be responsible for rendering just the comment text, for now.
-Create a new file at `app/views/blorgh/comments/_comment.html.erb` and put this
-line inside it:
+Essa *partial* será responsável apenas por renderizar o texto do comentário, por agora.
+Crie um novo arquivo em `app/views/blorgh/comments/_comment.html.erb` e coloque essa
+linha dentro dele:
 
 ```erb
 <%= comment_counter + 1 %>. <%= comment.text %>
 ```
 
-The `comment_counter` local variable is given to us by the `<%= render
-@article.comments %>` call, which will define it automatically and increment the
-counter as it iterates through each comment. It's used in this example to
-display a small number next to each comment when it's created.
+A variável local `comment_counter` nos é provida pela chamada `<%= render
+@article.comments %>`, que irá defini-la automaticamente e incrementar o contador
+enquanto faz a iteração através de cada comentário. Ela é usada nesse exemplo para
+exibir um pequeno número ao lado de cada comentário quando ele é criado.
 
-That completes the comment function of the blogging engine. Now it's time to use
-it within an application.
+Isso finaliza a funcionalidade de comentário da *engine* de *blogging*. Agora é
+hora de utilizá-la em uma aplicação.
 
 Hooking Into an Application
 ---------------------------
@@ -699,7 +666,7 @@ mount Blorgh::Engine, at: "/blog"
 ```
 
 This line will mount the engine at `/blog` in the application. Making it
-accessible at `http://localhost:3000/blog` when the application runs with `rails
+accessible at `http://localhost:3000/blog` when the application runs with `bin/rails
 server`.
 
 NOTE: Other engines, such as Devise, handle this a little differently by making
@@ -707,7 +674,7 @@ you specify custom helpers (such as `devise_for`) in the routes. These helpers
 do exactly the same thing, mounting pieces of the engines's functionality at a
 pre-defined path which may be customizable.
 
-### Engine setup
+### Engine Setup
 
 The engine contains migrations for the `blorgh_articles` and `blorgh_comments`
 table which need to be created in the application's database so that the
@@ -715,14 +682,14 @@ engine's models can query them correctly. To copy these migrations into the
 application run the following command from the application's root:
 
 ```bash
-$ rails blorgh:install:migrations
+$ bin/rails blorgh:install:migrations
 ```
 
 If you have multiple engines that need migrations copied over, use
 `railties:install:migrations` instead:
 
 ```bash
-$ rails railties:install:migrations
+$ bin/rails railties:install:migrations
 ```
 
 This command, when run for the first time, will copy over all the migrations
@@ -730,7 +697,7 @@ from the engine. When run the next time, it will only copy over migrations that
 haven't been copied over already. The first run for this command will output
 something such as this:
 
-```bash
+```
 Copied migration [timestamp_1]_create_blorgh_articles.blorgh.rb from blorgh
 Copied migration [timestamp_2]_create_blorgh_comments.blorgh.rb from blorgh
 ```
@@ -740,7 +707,7 @@ timestamp (`[timestamp_2]`) will be the current time plus a second. The reason
 for this is so that the migrations for the engine are run after any existing
 migrations in the application.
 
-To run these migrations within the context of the application, simply run `rails
+To run these migrations within the context of the application, simply run `bin/rails
 db:migrate`. When accessing the engine through `http://localhost:3000/blog`, the
 articles will be empty. This is because the table created inside the application is
 different from the one created within the engine. Go ahead, play around with the
@@ -751,14 +718,14 @@ If you would like to run migrations only from one engine, you can do it by
 specifying `SCOPE`:
 
 ```bash
-rails db:migrate SCOPE=blorgh
+$ bin/rails db:migrate SCOPE=blorgh
 ```
 
 This may be useful if you want to revert engine's migrations before removing it.
 To revert all migrations from blorgh engine you can run code such as:
 
 ```bash
-rails db:migrate SCOPE=blorgh VERSION=0
+$ bin/rails db:migrate SCOPE=blorgh VERSION=0
 ```
 
 ### Using a Class Provided by the Application
@@ -782,10 +749,10 @@ configurable further on). It can be generated using this command inside the
 application:
 
 ```bash
-rails g model user name:string
+$ bin/rails generate model user name:string
 ```
 
-The `rails db:migrate` command needs to be run here to ensure that our
+The `bin/rails db:migrate` command needs to be run here to ensure that our
 application has the `users` table for future use.
 
 Also, to keep it simple, the articles form will have a new text field called
@@ -805,7 +772,7 @@ added above the `title` field with this code:
 </div>
 ```
 
-Next, we need to update our `Blorgh::ArticleController#article_params` method to
+Next, we need to update our `Blorgh::ArticlesController#article_params` method to
 permit the new form parameter:
 
 ```ruby
@@ -845,7 +812,7 @@ of associating the records in the `blorgh_articles` table with the records in th
 To generate this new column, run this command within the engine:
 
 ```bash
-$ rails g migration add_author_id_to_blorgh_articles author_id:integer
+$ bin/rails generate migration add_author_id_to_blorgh_articles author_id:integer
 ```
 
 NOTE: Due to the migration's name and the column specification after it, Rails
@@ -857,7 +824,7 @@ This migration will need to be run on the application. To do that, it must first
 be copied using this command:
 
 ```bash
-$ rails blorgh:install:migrations
+$ bin/rails blorgh:install:migrations
 ```
 
 Notice that only _one_ migration was copied over here. This is because the first
@@ -872,7 +839,7 @@ Copied migration [timestamp]_add_author_id_to_blorgh_articles.blorgh.rb from blo
 Run the migration using:
 
 ```bash
-$ rails db:migrate
+$ bin/rails db:migrate
 ```
 
 Now with all the pieces in place, an action will take place that will associate
@@ -1031,26 +998,26 @@ application. The same thing goes if you want to use a standard initializer.
 For locales, simply place the locale files in the `config/locales` directory,
 just like you would in an application.
 
-Testing an engine
+Testando uma *Engine*
 -----------------
 
-When an engine is generated, there is a smaller dummy application created inside
-it at `test/dummy`. This application is used as a mounting point for the engine,
-to make testing the engine extremely simple. You may extend this application by
-generating controllers, models, or views from within the directory, and then use
-those to test your engine.
+Quando uma *engine* é gerada, há uma pequena aplicação fictícia (dummy)
+criada dentro dela em `test/dummy`. Essa aplicação é utilizada como ponto de
+montagem para a *engine*, para tornar os testes de uma *engine* extremamente
+simples. Você pode ampliar essa aplicação gerando *controllers*, *models* ou
+*views* de dentro do diretório, e então usá-los para testar sua *engine*.
 
-The `test` directory should be treated like a typical Rails testing environment,
-allowing for unit, functional, and integration tests.
+O diretório `test` sempre deverá ser tratado como um ambiente de teste típico
+do Rails, permitindo testes unitários, funcionais e de integração.
 
-### Functional Tests
+### Testes funcionais
 
-A matter worth taking into consideration when writing functional tests is that
-the tests are going to be running on an application - the `test/dummy`
-application - rather than your engine. This is due to the setup of the testing
-environment; an engine needs an application as a host for testing its main
-functionality, especially controllers. This means that if you were to make a
-typical `GET` to a controller in a controller's functional test like this:
+É importante levar em consideração ao escrever testes funcionais, que os testes
+serão executados em uma aplicação - a aplicação `test/dummy` - e não a sua *engine*.
+Isso se deve a preparação do ambiente de testes; uma *engine* precisa de uma
+aplicação hospedeira para que seja possível testar suas funcionalidades principais,
+especialmente os *controllers*. Isso significa que se você está a realizar um
+típico `GET` para um *controller* em um teste funcional de *controller* como este:
 
 ```ruby
 module Blorgh
@@ -1059,16 +1026,17 @@ module Blorgh
 
     def test_index
       get foos_url
-      ...
+      # ...
     end
   end
 end
 ```
 
-It may not function correctly. This is because the application doesn't know how
-to route these requests to the engine unless you explicitly tell it **how**. To
-do this, you must set the `@routes` instance variable to the engine's route set
-in your setup code:
+Ele pode não funcionar corretamente. Isso acontece porque a aplicação não sabe
+como rotear essas requisições para as *engines* a menos que você diga *como* fazer
+isso, de forma explícita. E para isso, você precisa definir a variável de instância
+`@routes` como sendo o conjunto de rotas da *engine* no seu código de
+preparação (setup):
 
 ```ruby
 module Blorgh
@@ -1081,20 +1049,20 @@ module Blorgh
 
     def test_index
       get foos_url
-      ...
+      # ...
     end
   end
 end
 ```
 
-This tells the application that you still want to perform a `GET` request to the
-`index` action of this controller, but you want to use the engine's route to get
-there, rather than the application's one.
+Isso indica à aplicação que você ainda quer executar uma requisição do tipo `GET`,
+para ação `index` desse *controller*, mas você quer usar as rotas da *engine* para
+chegar lá, ao invés das rotas da aplicação.
 
-This also ensures that the engine's URL helpers will work as expected in your
-tests.
+Isso também certifica que os *helpers* de URL da *engine* irão funcionar como
+esperado em seus testes.
 
-Improving engine functionality
+Improving Engine Functionality
 ------------------------------
 
 This section explains how to add and/or override engine MVC functionality in the
@@ -1102,89 +1070,53 @@ main Rails application.
 
 ### Overriding Models and Controllers
 
-Engine model and controller classes can be extended by open classing them in the
-main Rails application (since model and controller classes are just Ruby classes
-that inherit Rails specific functionality). Open classing an Engine class
-redefines it for use in the main application.
+Engine models and controllers can be reopened by the parent application to extend or decorate them.
 
-For simple class modifications, use `Class#class_eval`. For complex class
-modifications, consider using `ActiveSupport::Concern`.
-
-#### A note on Overriding and Loading Code
-
-Because these overrides are not referenced by your Rails application itself,
-Rails' autoloading system will not kick in and load your overrides. This means
-that you need to require them yourself.
-
-Here is some sample code to do this:
+Overrides may be organized in a dedicated directory `app/overrides`, ignored by the autoloader, and preloaded in a `to_prepare` callback:
 
 ```ruby
-# lib/blorgh/engine.rb
-module Blorgh
-  class Engine < ::Rails::Engine
-    isolate_namespace Blorgh
+# config/application.rb
+module MyApp
+  class Application < Rails::Application
+    # ...
+
+    overrides = "#{Rails.root}/app/overrides"
+    Rails.autoloaders.main.ignore(overrides)
 
     config.to_prepare do
-      Dir.glob(Rails.root + "app/overrides/**/*_override*.rb").each do |c|
-        require_dependency(c)
+      Dir.glob("#{overrides}/**/*_override.rb").sort.each do |override|
+        load override
       end
     end
   end
 end
 ```
 
-This doesn't apply to just overrides, but anything that you add in an engine
-that isn't referenced by your main application.
+#### Reopening Existing Classes Using `class_eval`
 
-#### Reopening existing classes using Class#class_eval
-
-**Adding** `Article#time_since_created`:
-
-```ruby
-# MyApp/app/overrides/models/blorgh/article_override.rb
-
-Blorgh::Article.class_eval do
-  def time_since_created
-    Time.current - created_at
-  end
-end
-```
+For example, in order to override the engine model
 
 ```ruby
 # Blorgh/app/models/blorgh/article.rb
 module Blorgh
   class Article < ApplicationRecord
-    has_many :comments
+    # ...
   end
 end
 ```
 
-
-**Overriding** `Article#summary`:
+you just create a file that _reopens_ that class:
 
 ```ruby
 # MyApp/app/overrides/models/blorgh/article_override.rb
-
 Blorgh::Article.class_eval do
-  def summary
-    "#{title} - #{truncate(text)}"
-  end
+  # ...
 end
 ```
 
-```ruby
-# Blorgh/app/models/blorgh/article.rb
-module Blorgh
-  class Article < ApplicationRecord
-    has_many :comments
-    def summary
-      "#{title}"
-    end
-  end
-end
-```
+It is very important that the override _reopens_ the class or module. Using the `class` or `module` keywords would define them if they were not already in memory, which would be incorrect because the definition lives in the engine. Using `class_eval` as shown above ensures you are reopening.
 
-#### Reopening existing classes using ActiveSupport::Concern
+#### Reopening Existing Classes Using ActiveSupport::Concern
 
 Using `Class#class_eval` is great for simple adjustments, but for more complex
 class modifications, you might want to consider using [`ActiveSupport::Concern`]
@@ -1225,9 +1157,9 @@ end
 module Blorgh::Concerns::Models::Article
   extend ActiveSupport::Concern
 
-  # 'included do' causes the included code to be evaluated in the
-  # context where it is included (article.rb), rather than being
-  # executed in the module's context (blorgh/concerns/models/article).
+  # `included do` causes the block to be evaluated in the context
+  # in which the module is included (i.e. Blorgh::Article),
+  # rather than in the module itself.
   included do
     attr_accessor :author_name
     belongs_to :author, class_name: "User"
@@ -1251,6 +1183,12 @@ module Blorgh::Concerns::Models::Article
   end
 end
 ```
+
+### Autoloading and Engines
+
+Please check the [Autoloading and Reloading Constants](autoloading_and_reloading_constants.html#autoloading-and-engines)
+guide for more information about autoloading and engines.
+
 
 ### Overriding Views
 
@@ -1352,7 +1290,7 @@ which case the application's asset would take precedence and the engine's one
 would be ignored.
 
 Imagine that you did have an asset located at
-`app/assets/stylesheets/blorgh/style.css` To include this asset inside an
+`app/assets/stylesheets/blorgh/style.css`. To include this asset inside an
 application, just use `stylesheet_link_tag` and reference the asset as if it
 were inside the engine:
 
@@ -1363,16 +1301,16 @@ were inside the engine:
 You can also specify these assets as dependencies of other assets using Asset
 Pipeline require statements in processed files:
 
-```
+```css
 /*
  *= require blorgh/style
-*/
+ */
 ```
 
 INFO. Remember that in order to use languages like Sass or CoffeeScript, you
 should add the relevant library to your engine's `.gemspec`.
 
-### Separate Assets & Precompiling
+### Separate Assets and Precompiling
 
 There are some situations where your engine's assets are not required by the
 host application. For example, say that you've created an admin functionality
@@ -1381,7 +1319,7 @@ need to require `admin.css` or `admin.js`. Only the gem's admin layout needs
 these assets. It doesn't make sense for the host app to include
 `"blorgh/admin.css"` in its stylesheets. In this situation, you should
 explicitly define these assets for precompilation.  This tells Sprockets to add
-your engine assets when `rails assets:precompile` is triggered.
+your engine assets when `bin/rails assets:precompile` is triggered.
 
 You can define assets for precompilation in `engine.rb`:
 
@@ -1425,8 +1363,8 @@ required, you should require them before the engine's initialization. For
 example:
 
 ```ruby
-require 'other_engine/engine'
-require 'yet_another_engine/engine'
+require "other_engine/engine"
+require "yet_another_engine/engine"
 
 module MyEngine
   class Engine < ::Rails::Engine
@@ -1434,16 +1372,14 @@ module MyEngine
 end
 ```
 
-Active Support On Load Hooks
+Load and Configuration Hooks
 ----------------------------
-
-Active Support is the Ruby on Rails component responsible for providing Ruby language extensions, utilities, and other transversal utilities.
 
 Rails code can often be referenced on load of an application. Rails is responsible for the load order of these frameworks, so when you load frameworks, such as `ActiveRecord::Base`, prematurely you are violating an implicit contract your application has with Rails. Moreover, by loading code such as `ActiveRecord::Base` on boot of your application you are loading entire frameworks which may slow down your boot time and could cause conflicts with load order and boot of your application.
 
-On Load hooks are the API that allow you to hook into this initialization process without violating the load contract with Rails. This will also mitigate boot performance degradation and avoid conflicts.
+Load and configuration hooks are the API that allow you to hook into this initialization process without violating the load contract with Rails. This will also mitigate boot performance degradation and avoid conflicts.
 
-## What are `on_load` hooks?
+### Avoid Loading Rails Frameworks
 
 Since Ruby is a dynamic language, some code will cause different Rails frameworks to load. Take this snippet for instance:
 
@@ -1456,20 +1392,22 @@ This snippet means that when this file is loaded, it will encounter `ActiveRecor
 `ActiveSupport.on_load` is a mechanism that can be used to defer the loading of code until it is actually needed. The snippet above can be changed to:
 
 ```ruby
-ActiveSupport.on_load(:active_record) { include MyActiveRecordHelper }
+ActiveSupport.on_load(:active_record) do
+  include MyActiveRecordHelper
+end
 ```
 
 This new snippet will only include `MyActiveRecordHelper` when `ActiveRecord::Base` is loaded.
 
-## How does it work?
+### When are Hooks called?
 
 In the Rails framework these hooks are called when a specific library is loaded. For example, when `ActionController::Base` is loaded, the `:action_controller_base` hook is called. This means that all `ActiveSupport.on_load` calls with `:action_controller_base` hooks will be called in the context of `ActionController::Base` (that means `self` will be an `ActionController::Base`).
 
-## Modifying code to use `on_load` hooks
+### Modifying Code to Use Load Hooks
 
-Modifying code is generally straightforward. If you have a line of code that refers to a Rails framework such as `ActiveRecord::Base` you can wrap that code in an `on_load` hook.
+Modifying code is generally straightforward. If you have a line of code that refers to a Rails framework such as `ActiveRecord::Base` you can wrap that code in a load hook.
 
-### Example 1
+**Modifying calls to `include`**
 
 ```ruby
 ActiveRecord::Base.include(MyActiveRecordHelper)
@@ -1478,10 +1416,14 @@ ActiveRecord::Base.include(MyActiveRecordHelper)
 becomes
 
 ```ruby
-ActiveSupport.on_load(:active_record) { include MyActiveRecordHelper } # self refers to ActiveRecord::Base here, so we can simply #include
+ActiveSupport.on_load(:active_record) do
+  # self refers to ActiveRecord::Base here,
+  # so we can call .include
+  include MyActiveRecordHelper
+end
 ```
 
-### Example 2
+**Modifying calls to `prepend`**
 
 ```ruby
 ActionController::Base.prepend(MyActionControllerHelper)
@@ -1490,10 +1432,14 @@ ActionController::Base.prepend(MyActionControllerHelper)
 becomes
 
 ```ruby
-ActiveSupport.on_load(:action_controller_base) { prepend MyActionControllerHelper } # self refers to ActionController::Base here, so we can simply #prepend
+ActiveSupport.on_load(:action_controller_base) do
+  # self refers to ActionController::Base here,
+  # so we can call .prepend
+  prepend MyActionControllerHelper
+end
 ```
 
-### Example 3
+**Modifying calls to class methods**
 
 ```ruby
 ActiveRecord::Base.include_root_in_json = true
@@ -1502,57 +1448,73 @@ ActiveRecord::Base.include_root_in_json = true
 becomes
 
 ```ruby
-ActiveSupport.on_load(:active_record) { self.include_root_in_json = true } # self refers to ActiveRecord::Base here
+ActiveSupport.on_load(:active_record) do
+  # self refers to ActiveRecord::Base here
+  self.include_root_in_json = true
+end
 ```
 
-## Available Hooks
+### Available Load Hooks
 
-These are the hooks you can use in your own code.
+These are the load hooks you can use in your own code. To hook into the initialization process of one of the following classes use the available hook.
 
-To hook into the initialization process of one of the following classes use the available hook.
+| Class                                | Hook                                 |
+| -------------------------------------| ------------------------------------ |
+| `ActionCable`                        | `action_cable`                       |
+| `ActionCable::Channel::Base`         | `action_cable_channel`               |
+| `ActionCable::Connection::Base`      | `action_cable_connection`            |
+| `ActionCable::Connection::TestCase`  | `action_cable_connection_test_case`  |
+| `ActionController::API`              | `action_controller_api`              |
+| `ActionController::API`              | `action_controller`                  |
+| `ActionController::Base`             | `action_controller_base`             |
+| `ActionController::Base`             | `action_controller`                  |
+| `ActionController::TestCase`         | `action_controller_test_case`        |
+| `ActionDispatch::IntegrationTest`    | `action_dispatch_integration_test`   |
+| `ActionDispatch::Response`           | `action_dispatch_response`           |
+| `ActionDispatch::Request`            | `action_dispatch_request`            |
+| `ActionDispatch::SystemTestCase`     | `action_dispatch_system_test_case`   |
+| `ActionMailbox::Base`                | `action_mailbox`                     |
+| `ActionMailbox::InboundEmail`        | `action_mailbox_inbound_email`       |
+| `ActionMailbox::Record`              | `action_mailbox_record`              |
+| `ActionMailbox::TestCase`            | `action_mailbox_test_case`           |
+| `ActionMailer::Base`                 | `action_mailer`                      |
+| `ActionMailer::TestCase`             | `action_mailer_test_case`            |
+| `ActionText::Content`                | `action_text_content`                |
+| `ActionText::Record`                 | `action_text_record`                 |
+| `ActionText::RichText`               | `action_text_rich_text`              |
+| `ActionView::Base`                   | `action_view`                        |
+| `ActionView::TestCase`               | `action_view_test_case`              |
+| `ActiveJob::Base`                    | `active_job`                         |
+| `ActiveJob::TestCase`                | `active_job_test_case`               |
+| `ActiveRecord::Base`                 | `active_record`                      |
+| `ActiveStorage::Attachment`          | `active_storage_attachment`          |
+| `ActiveStorage::VariantRecord`       | `active_storage_variant_record`      |
+| `ActiveStorage::Blob`                | `active_storage_blob`                |
+| `ActiveStorage::Record`              | `active_storage_record`              |
+| `ActiveSupport::TestCase`            | `active_support_test_case`           |
+| `i18n`                               | `i18n`                               |
 
-| Class                             | Available Hooks                      |
-| --------------------------------- | ------------------------------------ |
-| `ActionCable`                     | `action_cable`                       |
-| `ActionCable::Channel::Base`      | `action_cable_channel`               |
-| `ActionCable::Connection::Base`   | `action_cable_connection`            |
-| `ActionController::API`           | `action_controller_api`              |
-| `ActionController::API`           | `action_controller`                  |
-| `ActionController::Base`          | `action_controller_base`             |
-| `ActionController::Base`          | `action_controller`                  |
-| `ActionController::TestCase`      | `action_controller_test_case`        |
-| `ActionDispatch::IntegrationTest` | `action_dispatch_integration_test`   |
-| `ActionDispatch::SystemTestCase`  | `action_dispatch_system_test_case`   |
-| `ActionMailbox::Base`             | `action_mailbox`                     |
-| `ActionMailbox::InboundEmail`     | `action_mailbox_inbound_email`       |
-| `ActionMailbox::TestCase`         | `action_mailbox_test_case`           |
-| `ActionMailer::Base`              | `action_mailer`                      |
-| `ActionMailer::TestCase`          | `action_mailer_test_case`            |
-| `ActionText::Content`             | `action_text_content`                |
-| `ActionText::RichText`            | `action_text_rich_text`              |
-| `ActionView::Base`                | `action_view`                        |
-| `ActionView::TestCase`            | `action_view_test_case`              |
-| `ActiveJob::Base`                 | `active_job`                         |
-| `ActiveJob::TestCase`             | `active_job_test_case`               |
-| `ActiveRecord::Base`              | `active_record`                      |
-| `ActiveStorage::Attachment`       | `active_storage_attachment`          |
-| `ActiveStorage::Blob`             | `active_storage_blob`                |
-| `ActiveSupport::TestCase`         | `active_support_test_case`           |
-| `i18n`                            | `i18n`                               |
+### Available Configuration Hooks
 
-## Configuration hooks
-
-These are the available configuration hooks. They do not hook into any particular framework, but instead they run in context of the entire application.
+Configuration hooks do not hook into any particular framework, but instead they run in context of the entire application.
 
 | Hook                   | Use Case                                                                           |
 | ---------------------- | ---------------------------------------------------------------------------------- |
 | `before_configuration` | First configurable block to run. Called before any initializers are run.           |
 | `before_initialize`    | Second configurable block to run. Called before frameworks initialize.             |
-| `before_eager_load`    | Third configurable block to run. Does not run if `config.eager_load` set to false. |
+| `before_eager_load`    | Third configurable block to run. Does not run if [`config.eager_load`][] set to false. |
 | `after_initialize`     | Last configurable block to run. Called after frameworks initialize.                |
 
-### Example
+Configuration hooks can be called in the Engine class.
 
 ```ruby
-config.before_configuration { puts 'I am called before any initializers' }
+module Blorgh
+  class Engine < ::Rails::Engine
+    config.before_configuration do
+      puts 'I am called before any initializers'
+    end
+  end
+end
 ```
+
+[`config.eager_load`]: configuring.html#config-eager-load

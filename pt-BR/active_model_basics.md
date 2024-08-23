@@ -1,34 +1,76 @@
+**NÃO LEIA ESTE ARQUIVO NO GITHUB, OS GUIAS SÃO PUBLICADOS NO https://guiarails.com.br.**
 **DO NOT READ THIS FILE ON GITHUB, GUIDES ARE PUBLISHED ON https://guides.rubyonrails.org.**
 
-Active Model Basics
+Básico do *Active Model*
 ===================
 
-This guide should provide you with all you need to get started using model
-classes. Active Model allows for Action Pack helpers to interact with
-plain Ruby objects. Active Model also helps build custom ORMs for use
-outside of the Rails framework.
+Esse guia deverá prover tudo que você precisa para começar a usar classes de modelo (`models`).
+O *Active Model* permite que o *Action Pack Helpers* interaja com os objetos ruby. O *Active model* também auxilia a criação de *ORMs* (mapeamento de objetos relacionais) para o uso fora do framework Rails.
 
-After reading this guide, you will know:
-
-* How an Active Record model behaves.
-* How Callbacks and validations work.
-* How serializers work.
-* How Active Model integrates with the Rails internationalization (i18n) framework.
+Após a leitura desse guia você saberá:
+* Como um *Active Record* se comporta.
+* Como *Callbacks* e *Validações* funcionam.
+* Como *serializers* funcionam.
+* Como *Active Model* integra com o framework de internacionalização (`i18n`) do Rails.
 
 --------------------------------------------------------------------------------
 
-Introduction
-------------
+O que é *Active Model*?
+-----------------------
 
-Active Model is a library containing various modules used in developing
-classes that need some features present on Active Record.
-Some of these modules are explained below.
+O Active Model é uma biblioteca que contém vários módulos utilizados para desenvolvimento de classes que precisam de algumas funções (`features`) existentes no Active Record.
 
-### Attribute Methods
+Alguns desses módulos serão explicados abaixo.
 
-The `ActiveModel::AttributeMethods` module can add custom prefixes and suffixes
-on methods of a class. It is used by defining the prefixes and suffixes and
-which methods on the object will use them.
+### API
+
+`ActiveModel::API` adiciona a capacidade de uma classe trabalhar com o *Action Pack* e
+*Action View*.
+
+```ruby
+class EmailContact
+  include ActiveModel::API
+
+  attr_accessor :name, :email, :message
+  validates :name, :email, :message, presence: true
+
+  def deliver
+    if valid?
+      # deliver email
+    end
+  end
+end
+```
+
+Quando incluir `ActiveModel::API` você obtém recursos como:
+
+- Nome de *models*
+- Conversões
+- Traduções
+- Validações
+
+Também oferece a capacidade de inicializar um objeto com um *hash* de atributos,
+muito parecido com qualquer objeto Active Record.
+
+```irb
+irb> email_contact = EmailContact.new(name: 'David', email: 'david@example.com', message: 'Hello World')
+irb> email_contact.name
+=> "David"
+irb> email_contact.email
+=> "david@example.com"
+irb> email_contact.valid?
+=> true
+irb> email_contact.persisted?
+=> false
+```
+
+Qualquer classe que inclua `ActiveModel::API` pode ser usada com `form_with`,
+`render` e quaisquer outros métodos auxiliares da *Action View*, assim como objetos que usam Active Record.
+
+### Métodos de Atributo
+
+O `ActiveModel::AttributeMethods`, módulo que pode adicionar prefixos e sufixos customizados nos metodos de uma classe.
+Isso é feito pela definição dos prefixos e sufixos e quais métodos no objeto que vai utilizá-los.
 
 ```ruby
 class Person
@@ -49,20 +91,23 @@ class Person
       send(attribute) > 100
     end
 end
+```
 
-person = Person.new
-person.age = 110
-person.age_highest?  # => true
-person.reset_age     # => 0
-person.age_highest?  # => false
+```irb
+irb> person = Person.new
+irb> person.age = 110
+irb> person.age_highest?
+=> true
+irb> person.reset_age
+=> 0
+irb> person.age_highest?
+=> false
 ```
 
 ### Callbacks
 
-`ActiveModel::Callbacks` gives Active Record style callbacks. This provides an
-ability to define callbacks which run at appropriate times.
-After defining callbacks, you can wrap them with before, after, and around
-custom methods.
+`ActiveModel::Callbacks` trazem os `callbacks` no padrão do Active Record. Isso provê a habilidade de definir o callback que rodará no tempo apropriado.
+Após definir os callbacks, você pode envolvê-los com métodos customizados antes, depois e durante.
 
 ```ruby
 class Person
@@ -74,21 +119,19 @@ class Person
 
   def update
     run_callbacks(:update) do
-      # This method is called when update is called on an object.
+      # Este método é chamado quando a atualização é chamada em um objeto.
     end
   end
 
   def reset_me
-    # This method is called when update is called on an object as a before_update callback is defined.
+    # Este método é chamado quando a atualização é chamada em um objeto, quando um retorno de chamada before_update é definida.
   end
 end
 ```
 
-### Conversion
+### Conversão
 
-If a class defines `persisted?` and `id` methods, then you can include the
-`ActiveModel::Conversion` module in that class, and call the Rails conversion
-methods on objects of that class.
+Se a classe define os métodos `persisted?` e `id`, então você pode incluir o módulo `ActiveModel::Conversion` naquela classe e chamar os métodos de conversão do Rails nos objetos daquela classe.
 
 ```ruby
 class Person
@@ -102,20 +145,22 @@ class Person
     nil
   end
 end
-
-person = Person.new
-person.to_model == person  # => true
-person.to_key              # => nil
-person.to_param            # => nil
 ```
 
-### Dirty
+```irb
+irb> person = Person.new
+irb> person.to_model == person
+=> true
+irb> person.to_key
+=> nil
+irb> person.to_param
+=> nil
+```
 
-An object becomes dirty when it has gone through one or more changes to its
-attributes and has not been saved. `ActiveModel::Dirty` gives the ability to
-check whether an object has been changed or not. It also has attribute based
-accessor methods. Let's consider a Person class with attributes `first_name`
-and `last_name`:
+### Sujeira
+
+Um objeto se torna sujo quando ele passa por uma ou mais mudanças nos seus atributos e isso não foi salvo. O `ActiveModel::Dirty` te concede a habilidade de checar quando um objeto foi alterado ou não. Também possui atributos baseados em métodos de acesso.
+Vamos considerar a classe `Person` com os atributos `first_name` e `last_name`:
 
 ```ruby
 class Person
@@ -141,65 +186,75 @@ class Person
   end
 
   def save
-    # do save work...
+    # salva trabalho...
     changes_applied
   end
 end
 ```
 
-#### Querying object directly for its list of all changed attributes.
+#### Consultando o Objeto Diretamente para Obter uma Lista de Todos os Atributos Alterados.
 
-```ruby
-person = Person.new
-person.changed? # => false
+```irb
+irb> person = Person.new
+irb> person.changed?
+=> false
 
-person.first_name = "First Name"
-person.first_name # => "First Name"
+irb> person.first_name = "First Name"
+irb> person.first_name
+=> "First Name"
 
-# returns true if any of the attributes have unsaved changes.
-person.changed? # => true
+# Retorna true se algum dos atributos tem mudanças não salvas.
+irb> person.changed?
+=> true
 
-# returns a list of attributes that have changed before saving.
-person.changed # => ["first_name"]
+# Retorna uma lista de atributos que mudaram antes de salvar.
+irb> person.changed
+=> ["first_name"]
 
-# returns a Hash of the attributes that have changed with their original values.
-person.changed_attributes # => {"first_name"=>nil}
+# Retorna um Hash dos atributos que mudaram junto com seu valor original.
+irb> person.changed_attributes
+=> {"first_name"=>nil}
 
-# returns a Hash of changes, with the attribute names as the keys, and the
-# values as an array of the old and new values for that field.
-person.changes # => {"first_name"=>[nil, "First Name"]}
+# Retorna um Hash de mudanças, com o nome dos atributos como chave, e o valor da chave como um array de valores antigos e novos para aquele campo.
+irb> person.changes
+=> {"first_name"=>[nil, "First Name"]}
 ```
 
-#### Attribute based accessor methods
+#### Atributos Baseados em Métodos de Acesso
 
-Track whether the particular attribute has been changed or not.
+Rastreia se o atributo específico foi alterado ou não.
 
-```ruby
+```irb
+irb> person.first_name
+=> "First Name"
+
 # attr_name_changed?
-person.first_name # => "First Name"
-person.first_name_changed? # => true
+irb> person.first_name_changed?
+=> true
 ```
 
-Track the previous value of the attribute.
+Rastreia o valor anterior do atributo.
 
-```ruby
+```irb
 # attr_name_was accessor
-person.first_name_was # => nil
+irb> person.first_name_was
+=> nil
 ```
 
-Track both previous and current value of the changed attribute. Returns an array
-if changed, otherwise returns nil.
+Rastreia os valores anterior do atributo alterado. Retorna um *array* se
+alterado; caso contrário, retorna `nil`.
 
-```ruby
+```irb
 # attr_name_change
-person.first_name_change # => [nil, "First Name"]
-person.last_name_change # => nil
+irb> person.first_name_change
+=> [nil, "First Name"]
+irb> person.last_name_change
+=> nil
 ```
 
-### Validations
+### Validações
 
-The `ActiveModel::Validations` module adds the ability to validate objects
-like in Active Record.
+O módulo `ActiveModel::Validations` adiciona a habilidade de validar objetos como no *Active Record*.
 
 ```ruby
 class Person
@@ -211,24 +266,28 @@ class Person
   validates_format_of :email, with: /\A([^\s]+)((?:[-a-z0-9]\.)[a-z]{2,})\z/i
   validates! :token, presence: true
 end
-
-person = Person.new
-person.token = "2b1f325"
-person.valid?                        # => false
-person.name = 'vishnu'
-person.email = 'me'
-person.valid?                        # => false
-person.email = 'me@vishnuatrai.com'
-person.valid?                        # => true
-person.token = nil
-person.valid?                        # => raises ActiveModel::StrictValidationFailed
 ```
 
-### Naming
+```irb
+irb> person = Person.new
+irb> person.token = "2b1f325"
+irb> person.valid?
+=> false
+irb> person.name = 'vishnu'
+irb> person.email = 'me'
+irb> person.valid?
+=> false
+irb> person.email = 'me@vishnuatrai.com'
+irb> person.valid?
+=> true
+irb> person.token = nil
+irb> person.valid?
+ActiveModel::StrictValidationFailed
+```
 
-`ActiveModel::Naming` adds a number of class methods which make naming and routing
-easier to manage. The module defines the `model_name` class method which
-will define a number of accessors using some `ActiveSupport::Inflector` methods.
+### Nomeação
+
+`ActiveModel::Naming` adiciona vários métodos de classe que tornam a nomeação e o roteamento mais fácil de administrar. O módulo define o método da classe `model_name` que definirá vários acessadores usando alguns métodos do `ActiveSupport::Inflector`.
 
 ```ruby
 class Person
@@ -247,10 +306,9 @@ Person.model_name.route_key           # => "people"
 Person.model_name.singular_route_key  # => "person"
 ```
 
-### Model
+### *Model*
 
-`ActiveModel::Model` adds the ability for a class to work with Action Pack and
-Action View right out of the box.
+`ActiveModel::Model` permite implementar *models* semelhantes a `ActiveRecord::Base`
 
 ```ruby
 class EmailContact
@@ -261,41 +319,17 @@ class EmailContact
 
   def deliver
     if valid?
-      # deliver email
+      # envia email
     end
   end
 end
 ```
 
-When including `ActiveModel::Model` you get some features like:
+Ao incluir `ActiveModel::Model` você obtém todos os recursos de `ActiveModel::API`.
 
-- model name introspection
-- conversions
-- translations
-- validations
+### Serialização
 
-It also gives you the ability to initialize an object with a hash of attributes,
-much like any Active Record object.
-
-```ruby
-email_contact = EmailContact.new(name: 'David',
-                                 email: 'david@example.com',
-                                 message: 'Hello World')
-email_contact.name       # => 'David'
-email_contact.email      # => 'david@example.com'
-email_contact.valid?     # => true
-email_contact.persisted? # => false
-```
-
-Any class that includes `ActiveModel::Model` can be used with `form_for`,
-`render` and any other Action View helper methods, just like Active Record
-objects.
-
-### Serialization
-
-`ActiveModel::Serialization` provides basic serialization for your object.
-You need to declare an attributes Hash which contains the attributes you want to
-serialize. Attributes must be strings, not symbols.
+O `ActiveModel::Serialization` fornece serialização básica para o seu objeto. Você precisa declarar um Hash de atributos que contém os atributos que deseja serializar. Os atributos devem ser cadeias, não símbolos.
 
 ```ruby
 class Person
@@ -309,25 +343,24 @@ class Person
 end
 ```
 
-Now you can access a serialized Hash of your object using the `serializable_hash` method.
+Agora você pode acessar um Hash serializado do seu objeto usando o método `serializable_hash`.
 
-```ruby
-person = Person.new
-person.serializable_hash   # => {"name"=>nil}
-person.name = "Bob"
-person.serializable_hash   # => {"name"=>"Bob"}
+```irb
+irb> person = Person.new
+irb> person.serializable_hash
+=> {"name"=>nil}
+irb> person.name = "Bob"
+irb> person.serializable_hash
+=> {"name"=>"Bob"}
 ```
 
 #### ActiveModel::Serializers
 
-Active Model also provides the `ActiveModel::Serializers::JSON` module
-for JSON serializing / deserializing. This module automatically includes the
-previously discussed `ActiveModel::Serialization` module.
+O Active Model também fornece o módulo `ActiveModel::Serializers::JSON` para serialização / desserialização JSON. Este módulo inclui automaticamente o módulo `ActiveModel::Serialization` discutido anteriormente.
 
 ##### ActiveModel::Serializers::JSON
 
-To use `ActiveModel::Serializers::JSON` you only need to change the
-module you are including from `ActiveModel::Serialization` to `ActiveModel::Serializers::JSON`.
+Para usar o `ActiveModel::Serializers::JSON`, você só precisa alterar o módulo que você está incluindo de `ActiveModel::Serialization` para` ActiveModel::Serializers::JSON`.
 
 ```ruby
 class Person
@@ -341,18 +374,18 @@ class Person
 end
 ```
 
-The `as_json` method, similar to `serializable_hash`, provides a Hash representing
-the model.
+O método `as_json`, semelhante ao` serializable_hash`, fornece um Hash representando o modelo.
 
-```ruby
-person = Person.new
-person.as_json # => {"name"=>nil}
-person.name = "Bob"
-person.as_json # => {"name"=>"Bob"}
+```irb
+irb> person = Person.new
+irb> person.as_json
+=> {"name"=>nil}
+irb> person.name = "Bob"
+irb> person.as_json
+=> {"name"=>"Bob"}
 ```
 
-You can also define the attributes for a model from a JSON string.
-However, you need to define the `attributes=` method on your class:
+Você também pode definir os atributos para um modelo a partir de uma sequência JSON. No entanto, você precisa definir o método `attribute=` na sua classe:
 
 ```ruby
 class Person
@@ -372,19 +405,20 @@ class Person
 end
 ```
 
-Now it is possible to create an instance of `Person` and set attributes using `from_json`.
+Agora é possível criar uma instância de `Person` e definir atributos usando `from_json`.
 
-```ruby
-json = { name: 'Bob' }.to_json
-person = Person.new
-person.from_json(json) # => #<Person:0x00000100c773f0 @name="Bob">
-person.name            # => "Bob"
+```irb
+irb> json = { name: 'Bob' }.to_json
+irb> person = Person.new
+irb> person.from_json(json)
+=> #<Person:0x00000100c773f0 @name="Bob">
+irb> person.name
+=> "Bob"
 ```
 
-### Translation
+### Tradução
 
-`ActiveModel::Translation` provides integration between your object and the Rails
-internationalization (i18n) framework.
+O `ActiveModel::Translation` fornece integração entre seu objeto e o Rails internacionalização (i18n).
 
 ```ruby
 class Person
@@ -392,27 +426,25 @@ class Person
 end
 ```
 
-With the `human_attribute_name` method, you can transform attribute names into a
-more human-readable format. The human-readable format is defined in your locale file(s).
+Com o método `human_attribute_name`, você pode transformar nomes de atributos em um formato mais legível por humanos. O formato legível por humanos é definido nos seus arquivos de localidade.
 
 * config/locales/app.pt-BR.yml
 
-  ```yml
-  pt-BR:
-    activemodel:
-      attributes:
-        person:
-          name: 'Nome'
-  ```
+```yaml
+pt-BR:
+  activemodel:
+    attributes:
+      person:
+        name: 'Nome'
+```
 
 ```ruby
 Person.human_attribute_name('name') # => "Nome"
 ```
 
-### Lint Tests
+### Testes de Lint
 
-`ActiveModel::Lint::Tests` allows you to test whether an object is compliant with
-the Active Model API.
+O `ActiveModel::Lint::Tests` permite testar se um objeto é compatível com a API do *model* ativo.
 
 * `app/models/person.rb`
 
@@ -425,7 +457,7 @@ the Active Model API.
 * `test/models/person_test.rb`
 
     ```ruby
-    require 'test_helper'
+    require "test_helper"
 
     class PersonTest < ActiveSupport::TestCase
       include ActiveModel::Lint::Tests
@@ -437,7 +469,7 @@ the Active Model API.
     ```
 
 ```bash
-$ rails test
+$ bin/rails test
 
 Run options: --seed 14596
 
@@ -450,30 +482,25 @@ Finished in 0.024899s, 240.9735 runs/s, 1204.8677 assertions/s.
 6 runs, 30 assertions, 0 failures, 0 errors, 0 skips
 ```
 
-An object is not required to implement all APIs in order to work with
-Action Pack. This module only intends to provide guidance in case you want all
-features out of the box.
+Não é necessário um objeto para implementar todas as APIs para trabalhar com *Action Pack*. Este módulo fornecer orientação caso você queira todos recursos prontos para uso.
 
 ### SecurePassword
 
-`ActiveModel::SecurePassword` provides a way to securely store any
-password in an encrypted form. When you include this module, a
-`has_secure_password` class method is provided which defines
-a `password` accessor with certain validations on it by default.
+O `ActiveModel::SecurePassword` fornece uma maneira de armazenar com segurança qualquer senha de forma criptografada. Quando você inclui este módulo, é fornecido o método da classe `has_secure_password` que define um acessador de `senha` com certas validações por padrão.
 
-#### Requirements
+#### Requerimentos
 
-`ActiveModel::SecurePassword` depends on [`bcrypt`](https://github.com/codahale/bcrypt-ruby 'BCrypt'),
-so include this gem in your `Gemfile` to use `ActiveModel::SecurePassword` correctly.
-In order to make this work, the model must have an accessor named `XXX_digest`.
-Where `XXX` is the attribute name of your desired password.
-The following validations are added automatically:
+O `ActiveModel::SecurePassword` depende de [`bcrypt`](https://github.com/codahale/bcrypt-ruby 'BCrypt'),
+portanto, inclua esta `gem` no seu `Gemfile` para usar o` ActiveModel::SecurePassword` corretamente.
+Para fazer isso funcionar, o *model* deve ter um acessador chamado `XXX_digest`.
+Onde `XXX` é o nome do atributo da sua senha desejada.
+As seguintes validações são adicionadas automaticamente:
 
-1. Password should be present.
-2. Password should be equal to its confirmation (provided `XXX_confirmation` is passed along).
-3. The maximum length of a password is 72 (required by `bcrypt` on which ActiveModel::SecurePassword depends)
+1. A senha deve estar presente.
+2. A senha deve ser igual à sua confirmação (desde que `XXX_confirmation` seja passada adiante).
+3. O tamanho máximo de uma senha é 72 (exigido pelo `bcrypt` do qual o ActiveModel::SecurePassword depende)
 
-#### Examples
+#### Exemplos
 
 ```ruby
 class Person
@@ -483,39 +510,54 @@ class Person
 
   attr_accessor :password_digest, :recovery_password_digest
 end
+```
 
-person = Person.new
+```irb
+irb> person = Person.new
 
-# When password is blank.
-person.valid? # => false
+# Quando a senha está em branco.
+irb> person.valid?
+=> false
 
-# When the confirmation doesn't match the password.
-person.password = 'aditya'
-person.password_confirmation = 'nomatch'
-person.valid? # => false
+# Quando a confirmação não é igual a senha.
+irb> person.password = 'aditya'
+irb> person.password_confirmation = 'nomatch'
+irb> person.valid?
+=> false
 
-# When the length of password exceeds 72.
-person.password = person.password_confirmation = 'a' * 100
-person.valid? # => false
+# Quando o tamanho da senha é maior que 72 caracteres.
+irb> person.password = person.password_confirmation = 'a' * 100
+irb> person.valid?
+=> false
 
-# When only password is supplied with no password_confirmation.
-person.password = 'aditya'
-person.valid? # => true
+# Quando só a senha é enviada sem a password_confirmation.
+irb> person.password = 'aditya'
+irb> person.valid?
+=> true
 
-# When all validations are passed.
-person.password = person.password_confirmation = 'aditya'
-person.valid? # => true
+# Quando todas as validações foram atendidas.
+irb> person.password = person.password_confirmation = 'aditya'
+irb> person.valid?
+=> true
 
-person.recovery_password = "42password"
+irb> person.recovery_password = "42password"
 
-person.authenticate('aditya') # => person
-person.authenticate('notright') # => false
-person.authenticate_password('aditya') # => person
-person.authenticate_password('notright') # => false
+irb> person.authenticate('aditya')
+=> #<Person> # == person
+irb> person.authenticate('notright')
+=> false
+irb> person.authenticate_password('aditya')
+=> #<Person> # == person
+irb> person.authenticate_password('notright')
+=> false
 
-person.authenticate_recovery_password('42password') # => person
-person.authenticate_recovery_password('notright') # => false
+irb> person.authenticate_recovery_password('42password')
+=> #<Person> # == person
+irb> person.authenticate_recovery_password('notright')
+=> false
 
-person.password_digest # => "$2a$04$gF8RfZdoXHvyTjHhiU4ZsO.kQqV9oonYZu31PRE4hLQn3xM2qkpIy"
-person.recovery_password_digest # => "$2a$04$iOfhwahFymCs5weB3BNH/uXkTG65HR.qpW.bNhEjFP3ftli3o5DQC"
+irb> person.password_digest
+=> "$2a$04$gF8RfZdoXHvyTjHhiU4ZsO.kQqV9oonYZu31PRE4hLQn3xM2qkpIy"
+irb> person.recovery_password_digest
+=> "$2a$04$iOfhwahFymCs5weB3BNH/uXkTG65HR.qpW.bNhEjFP3ftli3o5DQC"
 ```

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative './lib/search_index'
+
 namespace :guides do
   desc 'Generate guides (for authors), use ONLY=foo to process just "foo.md"'
   task generate: "generate:html"
@@ -21,13 +23,16 @@ namespace :guides do
     desc "Generate HTML guides"
     task :html do
       ENV["WARNINGS"] = "1" # authors can't disable this
-      ENV["RAILS_VERSION"] = "v6.0.0"
+      ENV["RAILS_VERSION"] = "v7.0.8"
       ENV["GUIDES_LANGUAGE"] = "pt-BR"
+      system 'git apply lib/rails.patch'
       system 'cp -r ./pt-BR rails/guides/source'
       ruby "-Eutf-8:utf-8", "rails/guides/rails_guides.rb"
       system 'rm -rf output'
       system 'mv rails/guides/output output'
+      system 'cp -r ./pt-BR/assets/* output/pt-BR'
       system 'rm -rf rails/guides/source/pt-BR'
+      RailsGuides::SearchIndex.new.generate
     end
 
     desc "Generate .mobi file. The kindlegen executable must be in your PATH. You can get it for free from http://www.amazon.com/gp/feature.html?docId=1000765211"
@@ -40,12 +45,13 @@ namespace :guides do
         abort "Please install ImageMagick"
       end
       ENV["KINDLE"] = "1"
-      ENV["RAILS_VERSION"] = "5.2.2"
+      ENV["RAILS_VERSION"] = "v7.0.8"
       ENV["GUIDES_LANGUAGE"] = "pt-BR"
-      # Rake::Task["guides:generate:html"].invoke
+      system 'git apply lib/rails.patch'
       system 'cp -r ./pt-BR rails/guides/source'
       ruby "-Eutf-8:utf-8", "rails/guides/rails_guides.rb"
-      system 'cp -r rails/guides/output output'
+      system 'mkdir -p output/kindle'
+      system "mv rails/guides/output/kindle/pt-BR/ruby_on_rails_guides_#{ENV['RAILS_VERSION']}.pt-BR.mobi output/kindle"
       system 'rm -rf rails/guides/source/pt-BR && rm -rf rails/guides/output'
     end
   end
@@ -101,3 +107,13 @@ HELP
 end
 
 task default: "guides:help"
+
+namespace :assets do
+  task :precompile do
+    system('rake guides:generate:html')
+    system('rake guides:generate:kindle')
+    system('cp $(find output/pt-BR -name "*.html") site')
+    system('cp -r output/kindle site')
+    system('cp -r pt-BR/assets/* site')
+  end
+end
